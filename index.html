@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+  <meta name="author"             content="Alan G. Labouseur and Si Ya Ni" />
+  <title>Compiler</title>
+
+  <!-- CSS  -->
+  <link rel="stylesheet" href="tsos.css" type="text/css" media="screen" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="materialize/css/materialize.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+  <link href="materialize/css/style.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+
+  <!-- Globals CONSTANTS and _Variables. Must included be first. -->
+  <script type="text/javascript" src="distrib/globals.js"></script>
+  
+     <script type="text/javascript" src="distrib/control.js"></script>
+     <script type="text/javascript" src="distrib/console.js"></script>
+     <script type="text/javascript" src="distrib/lexer.js"></script>
+     <script type="text/javascript" src="distrib/parser.js"></script>
+
+</head>
+<body onload="onDocumentLoad()">
+  <div class="section no-pad-bot" id="index-banner">
+    <div class="container">
+      <h1 class="header center red-text">Wendy Compiler</h1>
+      <div class="row center">
+        <h5 class="header col s12 light">CMPT-432N Project</h5>
+      </div>
+      <div class="row center">
+        <a class="waves-effect waves-light btn">Compile</a>
+      </div>
+      <br><br>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col s12">
+          <h5 class="center"> Console </h1>
+          <pre id="editor">function foo(items) {
+              var i;
+              for (i = 0; i &lt; items.length; i++) {
+                  alert("Ace Rocks " + items[i]);
+              }
+          }</pre>
+      </div>
+    </div>
+  </div>
+  <div class="container">
+    <div class="section">
+
+      <!--   Blocks template   -->
+      <div class="row center">
+        <div class="col s12 m4">
+          block 1
+        </div>
+
+        <div class="col s12 m4">
+          block 2
+        </div>
+
+        <div class="col s12 m4">
+          block 3
+        </div>
+      </div>
+
+    </div>
+    <br><br>
+  </div>
+
+  <footer class="page-footer red darken-3">
+    <div class="container">
+      <div class="row">
+      </div>
+    </div>
+    <div class="footer-copyright">
+      <div class="container">
+      Made by <a class="red-text text-lighten-3" href="http://materializecss.com">Materialize</a>
+      </div>
+    </div>
+  </footer>
+
+
+  <!--  Scripts-->
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script src="materialize/js/materialize.js"></script>
+  <script src="materialize/js/init.js"></script>
+  <script src="distrib/src-min/ace.js" type="text/javascript" charset="utf-8"></script>
+  <script>
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/tomorrow");
+    editor.session.setMode("ace/mode/javascript");
+    editor.renderer.setScrollMargin(10, 10);
+    editor.setOptions({
+      // "scrollPastEnd": 0.8,
+      autoScrollEditorIntoView: true
+    });
+  </script>
+
+  </body>
+</html>
