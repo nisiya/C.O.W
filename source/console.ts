@@ -8,14 +8,14 @@ Requires global.ts.
 
 module Compiler {
 
-    export class Console {
+  export class Console {
 
-        // constructor(public content: string = "") {
-        // }
+    // constructor(public content: string = "") {
+    // }
 
-        public static consoleInit(): void {
-            /* clear console */
-        }
-
+    public static consoleInit(): void {
+        /* clear console */
     }
+
+  }
 }

@@ -8,14 +8,13 @@ Requires global.ts.
 
 module Compiler {
     
-    export class Parser {
+  export class Parser {
+    // constructor(public content: string = "") {
 
-        // constructor(public content: string = "") {
+    // }
 
-        // }
-
-        public init(): void {
-        }
-
+    public init(): void {
     }
+
+  }
 }

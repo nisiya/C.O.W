@@ -7,12 +7,12 @@ Requires global.ts.
 ------------ */
 
 module Compiler {
-    
-    export class Control {
+  
+  export class Control {
 
-        public init(): void {
-        }
-
+    public init(): void {
     }
+
+  }
 
 }
