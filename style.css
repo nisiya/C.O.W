@@ -25,7 +25,7 @@
   height: 350px;
   text-align: center;
 }
-#tokenList{
-  height: 350px;
+textarea{
+  height: 350px !important;
   resize: none;
 }

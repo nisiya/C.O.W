@@ -39,11 +39,38 @@
     <div class="row">
       <div class="col s6">
         <h5 class="center"> Console </h5>
-        <pre id="editor"></pre>
+        <!-- <pre id="editor"></pre> -->
+        <textarea id="input">
+/* Long Test Case - Everything Except Boolean Declaration */
+{
+  /* Int Declaration */
+  int a
+  int b
+
+  a = 0
+  b = 0
+
+  /* While Loop */
+  while (a != 3) {
+      print(a)
+      while (b != 3) {
+            print(b)
+            b = 1 + b
+            if (b == 2) {
+              /* Print Statement */
+                print("there is no spoon"/* This will do nothing */)
+            }
+      }
+
+      b = 0
+      a = 1 + a
+  }
+}$
+        </textarea>
       </div>
       <div class="col s6">
         <h5 class="center"> Lexer </h5>
-        <textarea id="tokenList" disabled></textarea>
+        <textarea id="output" disabled></textarea>
       </div>
     </div>
   </div>
