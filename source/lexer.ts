@@ -19,51 +19,47 @@ module Compiler {
     public static getInput(btn): void {
       // var userPrg = editor.getValue();
       let input = <HTMLInputElement> document.getElementById("input"); 
+      /* method 1
       let userPrg = new Array<string>();
       userPrg = input.value.split('');
       let userPrgClean:string[] = this.removeComments(userPrg);
+      */
+      let userPrg:string = input.value;
+      let userPrgClean:string = this.removeComments(userPrg);
     }
-    public static removeComments(userPrg): string[] {
-      // let commentStart:RegExp = /(\/\*)/;
-      // let commentEnd:RegExp = /(\*\/)/;
-      // let start:number = userPrg.search(commentStart);
-      // console.log("start " + start);
-      // let end:number = userPrg.search(commentEnd);
-      // let beforeComment = userPrg.slice(0,start);
-      // let afterComment = userPrg.slice(end+1, userPrg.length);
-      // while (start != -1){
-      //   while (start <= end){
-      //     if(userPrg.charCodeAt(start) == 10){
-      //       start++;
-      //     } else{
-      //       userPrg[start] = ' ';
-      //       start++;
-      //     }
-      //   }
-      //   userPrg.search(commentStart);
-      // }
-      // var commentRegEx = /(\/\*)(\s|\S)*(\*\/)/;
-      // var commentRegEx2 = /(\*\/)/;
-      // var userPrgClean = userPrg.search(commentRegEx);
-      // var userPrgClean = userPrg.search(commentRegEx2);
-      // var output = <HTMLInputElement> document.getElementById("test"); 
-      // output.value = userPrg.toString();
-      // return userPrg.toString();
-      for (var i=0; i<userPrg.length-1; i++){
-        if (userPrg[i]=='/' && userPrg[i+1]=='*'){
-          userPrg[i] = ' ';
-          userPrg[i+1] = ' ';
-          i+=2;
-          while (userPrg[i]!='*' && userPrg[i+1]!='/'){
-            userPrg[i] = ' ';
-            i++;
+
+    /* Removes comments in code by replacing them with whitespace
+    *  for new line to maintain the format of the code for
+    *  other parts.
+    */
+    public static removeComments(userPrg): string {
+      // locate the comment
+      let commentStart:RegExp = /(\/\*)/;
+      let commentEnd:RegExp = /(\*\/)/;
+      let start:number = userPrg.search(commentStart);
+      let end:number = userPrg.search(commentEnd);
+
+      // need to remove all comments
+      while (start != -1 && end != -1){
+        // leave other areas
+        let beforeComment = userPrg.slice(0,start);
+        let afterComment = userPrg.slice(end+2, userPrg.length);
+        // cannot change character in string so use an array
+        let fillComment = new Array<string>();
+        fillComment = userPrg.slice(start, end+1).split('');
+        for(var i=0; i<fillComment.length; i++){
+          // need to keep line feeds for line numbering
+          if(fillComment[i] != '\n'){
+            fillComment[i] = '  ';
           }
-          userPrg[i] = ' ';
-          userPrg[i+1] = ' ';
-          i+=2;
         }
+        // put the code back together
+        userPrg = beforeComment + fillComment.join('') + afterComment;
+        start = userPrg.search(commentStart);
+        end = userPrg.search(commentEnd);
       }
-      console.log(userPrg);
+      var output = <HTMLInputElement> document.getElementById("test"); 
+      output.value = userPrg.toString();
       return userPrg;
     }
   }

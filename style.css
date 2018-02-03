@@ -28,4 +28,5 @@
 textarea{
   height: 350px !important;
   resize: none;
+  white-space: nowrap;
 }
