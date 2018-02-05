@@ -38,10 +38,10 @@
   <div class="container">
     <div class="row">
       <div class="col s6">
-        <div class="card-panel">
+        <div class="card-panel blue-grey lighten-5">
           <h5 class="center"> Console </h5>
-          <!-- <pre id="editor"></pre> -->
-          <textarea id="input">
+          <!-- <textarea class="white" id="input"> -->
+          <pre id="editor">
 /* Long Test Case - Everything Except Boolean Declaration */
 {
   /* Int Declaration */
@@ -67,13 +67,14 @@
       a = 1 + a
   }
 }$
-          </textarea>
+          <!-- </textarea> -->
+          </pre>
         </div>
       </div>
       <div class="col s6">
-        <div class="card-panel">
+        <div class="card-panel blue-grey lighten-5">
           <h5 class="center"> Lexer </h5>
-          <textarea id="output" disabled></textarea>
+          <textarea class="white" id="output" disabled></textarea>
         </div>
       </div>
     </div>
@@ -122,6 +123,7 @@
     var editor = ace.edit("editor");
     editor.setTheme("ace/theme/tomorrow");
     editor.session.setMode("ace/mode/javascript");
+    editor.session.setUseWorker(false);
     editor.renderer.setScrollMargin(10, 10);
     editor.setOptions({
       // "scrollPastEnd": 0.8,

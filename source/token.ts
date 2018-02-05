@@ -17,10 +17,10 @@ module Compiler {
     public tColumn: number;
 
     constructor(tid, tValue, tLine, tColumn) {
-        this.tid = tid;
-        this.tValue = tValue;
-        this.tLine = tLine;
-        this.tColumn = tColumn;
+      this.tid = tid;
+      this.tValue = tValue;
+      this.tLine = tLine;
+      this.tColumn = tColumn;
     }
   }
 }

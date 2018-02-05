@@ -8,27 +8,46 @@ var Compiler;
 (function (Compiler) {
     var Lexer = /** @class */ (function () {
         function Lexer() {
+            this.tokenBank = new Array();
         }
         Lexer.prototype.init = function () {
-            this.currentLine = 0;
+            this.currentLine = 1;
             this.currentColumn = 0;
         };
-        Lexer.getInput = function (btn) {
-            // var userPrg = editor.getValue();
-            var input = document.getElementById("input");
-            /* method 1
-            let userPrg = new Array<string>();
-            userPrg = input.value.split('');
-            let userPrgClean:string[] = this.removeComments(userPrg);
-            */
-            var userPrg = input.value;
+        Lexer.prototype.performLex = function (btn) {
+            var userPrg = editor.getValue();
             var userPrgClean = this.removeComments(userPrg);
+            var firstPointer = 0;
+            var secondPointer = 0;
+            var currentSegment = '';
+            var currentChar;
+            var alphaNumeric = /[a-z0-9]/;
+            var notSymbol = /\!/;
+            var equal = /\=!/;
+            while (secondPointer < userPrgClean.length) {
+                currentChar = userPrgClean.charAt(secondPointer);
+                if (alphaNumeric.test(currentChar)) {
+                    currentSegment = currentSegment + currentChar;
+                    this.currentColumn++;
+                    secondPointer++;
+                }
+                else {
+                    if (currentSegment.length > 1) {
+                        this.evaluateSegment(currentSegment);
+                    }
+                    if (equal.test(currentChar) || notSymbol.test(currentChar)) {
+                    }
+                    else {
+                        this.createSymbolToken(currentChar);
+                    }
+                }
+            }
         };
         /* Removes comments in code by replacing them with whitespace
         *  for new line to maintain the format of the code for
         *  other parts.
         */
-        Lexer.removeComments = function (userPrg) {
+        Lexer.prototype.removeComments = function (userPrg) {
             // locate the comment
             var commentStart = /(\/\*)/;
             var commentEnd = /(\*\/)/;
@@ -56,6 +75,48 @@ var Compiler;
             var output = document.getElementById("test");
             output.value = userPrg.toString();
             return userPrg;
+        };
+        Lexer.prototype.createSymbolToken = function (symbol) {
+            // let openParen:RegExp = /\(/;
+            // let closeParen:RegExp = /\)/;
+            // let openBracket:RegExp = /\{/;
+            // let closeBracket:RegExp = /\(/;
+            // let plus:RegExp = /\+/;
+            // let eop:RegExp = /\$/;
+            // let quote:RegExp = /\"/;
+            // let newLine:RegExp = /\n/;
+            // let space:RegExp = /\s/;
+            var tid;
+            switch (symbol.charCodeAt(0)) {
+                case 40:// (
+                    tid = "T_OpenParen";
+                    break;
+                case 41:// )
+                    tid = "T_CloseParen";
+                    break;
+                case 123:// {
+                    tid = "T_OpenBracket";
+                    break;
+                case 125:// }
+                    tid = "T_CloseBracket";
+                    break;
+                case 34:// "
+                    tid = "T_Quote";
+                    break;
+                case 43:// +
+                    tid = "T_Addition";
+                    break;
+                case 36:// $
+                    tid = "T_EOP";
+                    break;
+                default:
+                    alert("Should have been symbol");
+                    break;
+            }
+            var token = new Compiler.Token(tid, symbol, this.currentLine, this.currentLine);
+            this.tokenBank.push(token);
+        };
+        Lexer.prototype.evaluateSegment = function (symbol) {
         };
         return Lexer;
     }());
