@@ -280,7 +280,13 @@ var Compiler;
                         // only single digit allowed
                         // report invalid token and stop lexing buffer
                         var notDigit = buffer.search(/[^\d]/);
-                        token = new Compiler.Token("T_Invalid", buffer.slice(0, notDigit), this.currentLine, tempColumn);
+                        if (notDigit = -1) {
+                            tval = buffer;
+                        }
+                        else {
+                            tval = buffer.slice(0, notDigit);
+                        }
+                        token = new Compiler.Token("T_Invalid", tval, this.currentLine, tempColumn);
                         this.tokenBank.push(token);
                         return true;
                     }
