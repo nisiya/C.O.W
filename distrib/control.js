@@ -1,4 +1,5 @@
 ///<reference path="globals.ts" />
+///<reference path="token.ts" />
 /* ------------
 Control.ts
 
@@ -11,7 +12,11 @@ var Compiler;
         }
         Control.startCompile = function (btn) {
             var lexer = new Compiler.Lexer();
-            lexer.start();
+            var output = document.getElementById("output");
+            output.value = " Compiler Activated... \n ============= \n Lexer Start... \n =============";
+            output.scrollTop = output.scrollHeight;
+            var tokenBank = lexer.start();
+            var token;
         };
         return Control;
     }());
