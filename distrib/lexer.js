@@ -29,7 +29,7 @@ var Compiler;
             var equal = /\=/;
             var quote = /\"/;
             var isOpenQuote = false;
-            var newLine = /\n/;
+            var newLine = /\n|\r/;
             var space = /[ ]/;
             var eop = /\$/;
             while (secondPointer <= userPrgClean.length) {
@@ -47,6 +47,7 @@ var Compiler;
                         var hasError = this.evaluateBuffer(buffer);
                         if (hasError) {
                             // stop lexing and return error with current tokens
+                            this.displayTokens();
                             return this.tokenBank;
                         } // else continue
                     }
@@ -94,6 +95,7 @@ var Compiler;
                             else {
                                 token = new Compiler.Token("T_Invalid", currentChar, this.currentLine, this.currentColumn);
                                 this.tokenBank.push(token);
+                                this.displayTokens();
                                 return this.tokenBank;
                             }
                         }
@@ -131,6 +133,7 @@ var Compiler;
                             // ! is invalid, stop lexer and return error with current tokens
                             token = new Compiler.Token("T_Invalid", currentChar, this.currentLine, this.currentColumn);
                             this.tokenBank.push(token);
+                            this.displayTokens();
                             return this.tokenBank;
                         }
                     }
@@ -138,6 +141,7 @@ var Compiler;
                         // character is not in grammar, stop lexer and report error with current tokens
                         token = new Compiler.Token("T_Invalid", currentChar, this.currentLine, this.currentColumn);
                         this.tokenBank.push(token);
+                        this.displayTokens();
                         return this.tokenBank;
                     }
                     // move onto next char and reset first pointer
@@ -303,11 +307,17 @@ var Compiler;
             var lexWarning = 0;
             var index = 0;
             var token = this.tokenBank[index];
-            while (index < this.tokenBank.length - 1 && _VerboseMode) {
-                output.value += "\n   LEXER --> " + token.tid
-                    + " [ " + token.tValue + " ] on line " + token.tLine
-                    + ", column " + token.tColumn;
-                index++;
+            if (_VerboseMode) {
+                while (index < this.tokenBank.length - 1) {
+                    output.value += "\n   LEXER --> " + token.tid
+                        + " [ " + token.tValue + " ] on line " + token.tLine
+                        + ", column " + token.tColumn;
+                    index++;
+                    token = this.tokenBank[index];
+                }
+            }
+            else {
+                index = this.tokenBank.length - 1;
                 token = this.tokenBank[index];
             }
             if (token.tid == "T_Invalid") {
@@ -331,8 +341,13 @@ var Compiler;
                     lexWarning++;
                 }
             }
-            output.value += "\n ============= \n Lexer Completed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
-            output.value += "\n Token bank loaded... \n =============";
+            if (lexError == 0) {
+                output.value += "\n ============= \n Lexer Completed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
+                output.value += "\n Token bank loaded... \n =============";
+            }
+            else {
+                output.value += "\n ============= \n Lexer Failed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
+            }
             output.scrollTop = output.scrollHeight;
         };
         return Lexer;

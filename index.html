@@ -14,12 +14,10 @@
 
   <!-- Globals CONSTANTS and _Variables. Must included be first. -->
   <script type="text/javascript" src="distrib/globals.js"></script>
-  
-     <script type="text/javascript" src="distrib/control.js"></script>
-     <script type="text/javascript" src="distrib/console.js"></script>
-     <script type="text/javascript" src="distrib/token.js"></script>
-     <script type="text/javascript" src="distrib/lexer.js"></script>
-     <script type="text/javascript" src="distrib/parser.js"></script>
+  <script type="text/javascript" src="distrib/control.js"></script>
+  <script type="text/javascript" src="distrib/token.js"></script>
+  <script type="text/javascript" src="distrib/lexer.js"></script>
+  <script type="text/javascript" src="distrib/parser.js"></script>
 
 </head>
 <body onload="onDocumentLoad()">
@@ -49,7 +47,6 @@
       <div class="col s6">
         <div class="card-panel blue-grey lighten-5">
           <h5 class="center"> Console </h5>
-                    <!-- <textarea class="white" id="input"> -->
           <pre id="editor">
 /* Long Test Case - Everything Except Boolean Declaration */
 {
@@ -76,8 +73,7 @@
       a = 1 + a
   }
 }$
-          <!-- </textarea> -->
-</pre>
+          </pre>
         </div>
       </div>
       <div class="col s6">
@@ -135,8 +131,9 @@
     editor.session.setUseWorker(false);
     editor.renderer.setScrollMargin(10, 10);
     editor.setOptions({
-      // "scrollPastEnd": 0.8,
-      autoScrollEditorIntoView: true
+      autoScrollEditorIntoView: true,
+      enableBasicAutocompletion: false
+      // blockScrolling: Infinity
     });
   </script>
 
