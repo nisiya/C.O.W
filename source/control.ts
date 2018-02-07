@@ -10,7 +10,9 @@ module Compiler {
   
   export class Control {
 
-    public init(): void {
+    public static startCompile(btn): void {
+      let lexer: Compiler.Lexer = new Lexer();
+      lexer.start();
     }
 
   }

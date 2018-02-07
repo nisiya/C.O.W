@@ -17,6 +17,7 @@
   
      <script type="text/javascript" src="distrib/control.js"></script>
      <script type="text/javascript" src="distrib/console.js"></script>
+     <script type="text/javascript" src="distrib/token.js"></script>
      <script type="text/javascript" src="distrib/lexer.js"></script>
      <script type="text/javascript" src="distrib/parser.js"></script>
 
@@ -30,7 +31,7 @@
       </div>
       <div class="row center">
         <button class="waves-effect waves-light btn"
-        onclick="Compiler.Lexer.getInput(this);">Compile</a>
+        onclick="Compiler.Control.startCompile(this);">Compile</a>
       </div>
     </div>
   </div>
@@ -40,7 +41,7 @@
       <div class="col s6">
         <div class="card-panel blue-grey lighten-5">
           <h5 class="center"> Console </h5>
-          <!-- <textarea class="white" id="input"> -->
+                    <!-- <textarea class="white" id="input"> -->
           <pre id="editor">
 /* Long Test Case - Everything Except Boolean Declaration */
 {
@@ -68,7 +69,7 @@
   }
 }$
           <!-- </textarea> -->
-          </pre>
+</pre>
         </div>
       </div>
       <div class="col s6">

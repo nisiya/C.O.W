@@ -9,7 +9,9 @@ var Compiler;
     var Control = /** @class */ (function () {
         function Control() {
         }
-        Control.prototype.init = function () {
+        Control.startCompile = function (btn) {
+            var lexer = new Compiler.Lexer();
+            lexer.start();
         };
         return Control;
     }());
