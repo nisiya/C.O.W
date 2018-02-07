@@ -24,11 +24,12 @@ var Compiler;
             var buffer = '';
             var currentChar;
             var alphaNumeric = /[a-z0-9]/;
-            var charList = /^[a-z" "]*$/;
+            var charKey = /[a-z" "]/;
             var singleSymbol = /\(|\)|\{|\}|\$|\+/;
             var notSymbol = /\!/;
             var equal = /\=/;
             var quote = /\"/;
+            var isOpenQuote = false;
             var newLine = /\n/;
             var space = /[ ]/;
             var eop = /\$/;
@@ -62,31 +63,54 @@ var Compiler;
                         this.currentColumn = -1;
                     }
                     else if (quote.test(currentChar)) {
-                        var tempSegment = userPrgClean.substring(secondPointer + 1);
-                        var closeQuote = tempSegment.search(quote);
-                        if (closeQuote == -1) {
-                            this.createQuoteToken();
-                        }
-                        else {
-                            closeQuote = secondPointer + closeQuote + 1; // change to original
-                            var quoteContent = userPrgClean.slice(secondPointer + 1, closeQuote);
-                            if (!charList.test(quoteContent)) {
-                                console.log('invalid token: ' + userPrgClean.slice(secondPointer, closeQuote + 1));
-                                break;
-                            }
-                            else {
+                        this.createQuoteToken();
+                        isOpenQuote = true;
+                        secondPointer++;
+                        this.currentColumn++;
+                        currentChar = userPrgClean.charAt(secondPointer);
+                        while (isOpenQuote) {
+                            console.log("yes open");
+                            if (quote.test(currentChar)) {
                                 this.createQuoteToken();
+                                isOpenQuote = false;
+                            }
+                            else if (charKey.test(currentChar)) {
+                                token = new Compiler.Token("T_Char", currentChar, this.currentLine, this.currentColumn);
+                                this.tokenBank.push(token);
                                 secondPointer++;
                                 this.currentColumn++;
-                                while (secondPointer < closeQuote) {
-                                    token = new Compiler.Token("T_Char", userPrgClean.charAt(secondPointer), this.currentLine, this.currentColumn);
-                                    this.tokenBank.push(token);
-                                    secondPointer++;
-                                    this.currentColumn++;
-                                }
-                                this.createQuoteToken();
+                                currentChar = userPrgClean.charAt(secondPointer);
+                            }
+                            else {
+                                alert("error");
                             }
                         }
+                        // let tempSegment:string = userPrgClean.substring(secondPointer+1);
+                        // let closeQuote:number = tempSegment.search(quote);
+                        // if (closeQuote == -1){
+                        //   this.createQuoteToken();
+                        // } else {
+                        //   closeQuote = secondPointer+closeQuote+1; // change to original
+                        //   let quoteContent = userPrgClean.slice(secondPointer+1, closeQuote);
+                        //   if (!charList.test(quoteContent)){
+                        //     console.log('invalid token: ' + userPrgClean.slice(secondPointer, closeQuote+1));
+                        //     break;
+                        //   } else {
+                        //     this.createQuoteToken();
+                        //     secondPointer++;
+                        //     this.currentColumn++;
+                        //     while (secondPointer < closeQuote){
+                        //       token = new Token("T_Char",
+                        //                         userPrgClean.charAt(secondPointer),
+                        //                         this.currentLine,
+                        //                         this.currentColumn);
+                        //       this.tokenBank.push(token);
+                        //       secondPointer++;
+                        //       this.currentColumn++;
+                        //     }
+                        //     this.createQuoteToken();
+                        //   }
+                        // }
                     }
                     else if (singleSymbol.test(currentChar)) {
                         this.createSymbolToken(currentChar);

@@ -29,11 +29,12 @@ module Compiler {
       let buffer:string = '';
       let currentChar:string;
       let alphaNumeric:RegExp = /[a-z0-9]/;
-      let charList = /^[a-z" "]*$/;
+      let charKey = /[a-z" "]/;
       let singleSymbol:RegExp = /\(|\)|\{|\}|\$|\+/;
       let notSymbol:RegExp = /\!/;
       let equal:RegExp = /\=/;
       let quote:RegExp = /\"/;
+      let isOpenQuote:boolean = false;
       let newLine:RegExp = /\n/;
       let space:RegExp = /[ ]/;
       let eop:RegExp = /\$/;
@@ -67,32 +68,53 @@ module Compiler {
             this.currentLine++;
             this.currentColumn = -1;
           } else if (quote.test(currentChar)){
-            let tempSegment:string = userPrgClean.substring(secondPointer+1);
-            let closeQuote:number = tempSegment.search(quote);
-            if (closeQuote == -1){
-              this.createQuoteToken();
-            } else {
-              closeQuote = secondPointer+closeQuote+1; // change to original
-              let quoteContent = userPrgClean.slice(secondPointer+1, closeQuote);
-              if (!charList.test(quoteContent)){
-                console.log('invalid token: ' + userPrgClean.slice(secondPointer, closeQuote+1));
-                break;
-              } else {
+            this.createQuoteToken();
+            isOpenQuote = true;
+            secondPointer++;
+            this.currentColumn++;
+            currentChar = userPrgClean.charAt(secondPointer);
+            while (isOpenQuote){
+              console.log("yes open");
+              if(quote.test(currentChar)){
                 this.createQuoteToken();
+                isOpenQuote = false;
+              } else if(charKey.test(currentChar)){
+                token = new Token("T_Char", currentChar, this.currentLine, this.currentColumn);
+                this.tokenBank.push(token);
                 secondPointer++;
                 this.currentColumn++;
-                while (secondPointer < closeQuote){
-                  token = new Token("T_Char",
-                                    userPrgClean.charAt(secondPointer),
-                                    this.currentLine,
-                                    this.currentColumn);
-                  this.tokenBank.push(token);
-                  secondPointer++;
-                  this.currentColumn++;
-                }
-                this.createQuoteToken();
+                currentChar = userPrgClean.charAt(secondPointer);           
+              } else {
+                alert("error");
               }
             }
+
+            // let tempSegment:string = userPrgClean.substring(secondPointer+1);
+            // let closeQuote:number = tempSegment.search(quote);
+            // if (closeQuote == -1){
+            //   this.createQuoteToken();
+            // } else {
+            //   closeQuote = secondPointer+closeQuote+1; // change to original
+            //   let quoteContent = userPrgClean.slice(secondPointer+1, closeQuote);
+            //   if (!charList.test(quoteContent)){
+            //     console.log('invalid token: ' + userPrgClean.slice(secondPointer, closeQuote+1));
+            //     break;
+            //   } else {
+            //     this.createQuoteToken();
+            //     secondPointer++;
+            //     this.currentColumn++;
+            //     while (secondPointer < closeQuote){
+            //       token = new Token("T_Char",
+            //                         userPrgClean.charAt(secondPointer),
+            //                         this.currentLine,
+            //                         this.currentColumn);
+            //       this.tokenBank.push(token);
+            //       secondPointer++;
+            //       this.currentColumn++;
+            //     }
+            //     this.createQuoteToken();
+            //   }
+            // }
           } else if (singleSymbol.test(currentChar)){
             this.createSymbolToken(currentChar);
           } else if (equal.test(currentChar)){
