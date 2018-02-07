@@ -145,6 +145,7 @@ var Compiler;
             var commentEnd = /(\*\/)/;
             var start = userPrg.search(commentStart);
             var end = userPrg.search(commentEnd);
+            console.log("userlength before: " + userPrg.length);
             // need to remove all comments
             while (start != -1 && end != -1) {
                 // leave other areas
@@ -152,11 +153,12 @@ var Compiler;
                 var afterComment = userPrg.slice(end + 2, userPrg.length);
                 // cannot change character in string so use an array
                 var fillComment = new Array();
-                fillComment = userPrg.slice(start, end + 1).split('');
+                console.log("======comment: " + userPrg.slice(start, end + 2) + "===========");
+                fillComment = userPrg.slice(start, end + 2).split('');
                 for (var i = 0; i < fillComment.length; i++) {
                     // need to keep line feeds for line numbering
                     if (fillComment[i] != '\n') {
-                        fillComment[i] = '  ';
+                        fillComment[i] = ' ';
                     }
                 }
                 // put the code back together
@@ -166,6 +168,7 @@ var Compiler;
             }
             // var output = <HTMLInputElement> document.getElementById("test"); 
             // output.value = userPrg.toString();
+            console.log("userlength after: " + userPrg.length);
             return userPrg;
         };
         Lexer.prototype.createSymbolToken = function (symbol) {

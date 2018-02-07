@@ -157,7 +157,7 @@ module Compiler {
       let commentEnd:RegExp = /(\*\/)/;
       let start:number = userPrg.search(commentStart);
       let end:number = userPrg.search(commentEnd);
-
+      console.log("userlength before: " + userPrg.length);
       // need to remove all comments
       while (start != -1 && end != -1){
         // leave other areas
@@ -165,11 +165,12 @@ module Compiler {
         let afterComment = userPrg.slice(end+2, userPrg.length);
         // cannot change character in string so use an array
         let fillComment = new Array<string>();
-        fillComment = userPrg.slice(start, end+1).split('');
+        console.log("======comment: "+ userPrg.slice(start, end+2) + "===========");
+        fillComment = userPrg.slice(start, end+2).split('');
         for(var i=0; i<fillComment.length; i++){
           // need to keep line feeds for line numbering
           if(fillComment[i] != '\n'){
-            fillComment[i] = '  ';
+            fillComment[i] = ' ';
           }
         }
         // put the code back together
@@ -179,6 +180,7 @@ module Compiler {
       }
       // var output = <HTMLInputElement> document.getElementById("test"); 
       // output.value = userPrg.toString();
+      console.log("userlength after: " + userPrg.length);
       return userPrg;
     }
 
