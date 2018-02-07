@@ -20,6 +20,9 @@ var _Console; // Utilize TypeScript's type annotation system to ensure that _Con
 // Components
 var _Lexer;
 var _Parser;
+// Global vars
+var _VerboseMode;
 var onDocumentLoad = function () {
-    Compiler.Console.consoleInit();
+    _VerboseMode = true;
+    // Compiler.Console.consoleInit();
 };

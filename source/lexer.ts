@@ -298,7 +298,8 @@ module Compiler {
       let lexWarning: number = 0;
       let index: number = 0;
       let token = this.tokenBank[index];
-      while (index < this.tokenBank.length - 1){
+
+      while (index < this.tokenBank.length - 1 && _VerboseMode){
         output.value += "\n   LEXER --> " + token.tid
                       + " [ " + token.tValue + " ] on line " + token.tLine
                       + ", column " + token.tColumn;
@@ -311,9 +312,11 @@ module Compiler {
                       + ", column " + token.tColumn;
         lexError++;
       } else {
-        output.value += "\n   LEXER --> " + token.tid
-                      + " [ " + token.tValue + " ] on line " + token.tLine
-                      + ", column " + token.tColumn;
+        if (_VerboseMode){
+          output.value += "\n   LEXER --> " + token.tid
+                        + " [ " + token.tValue + " ] on line " + token.tLine
+                        + ", column " + token.tColumn;
+        }
         if(token.tid != "T_EOP"){
           output.value += "\n   LEXER --> WARNING! No End Of Program [$] found."
                       + "\n Inserted at line " + token.tLine + ", column " + (token.tColumn+1);

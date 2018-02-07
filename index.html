@@ -24,14 +24,22 @@
 </head>
 <body onload="onDocumentLoad()">
   <div class="section no-pad-bot" id="index-banner">
-    <div class="container">
-      <h1 class="header center red-text">Wendy Compiler</h1>
-      <div class="row center">
-        <h5 class="header col s12 light">CMPT-432N Project</h5>
+    <div class="container center">
+      <h1 class="header red-text">C.O.W</h1>
+      <div class="row">
+        <h5 class="header col s12 light">Compiler of Wendy</h5>
       </div>
-      <div class="row center">
-        <button class="waves-effect waves-light btn"
-        onclick="Compiler.Control.startCompile(this);">Compile</a>
+      <div class="row">
+        <div class="col s6">  
+          <button class="waves-effect waves-light btn"
+                    onclick="Compiler.Control.startCompile(this);">Compile</button>
+        </div>
+        <div class="col s6">
+          <button class="waves-effect waves-light btn"
+                  id="verboseBtn"
+                  title="Verbose Mode"
+                  onclick="Compiler.Control.verboseMode(this);">Moo Mode: On</button>
+        </div>
       </div>
     </div>
   </div>
@@ -74,16 +82,16 @@
       </div>
       <div class="col s6">
         <div class="card-panel blue-grey lighten-5">
-          <h5 class="center"> Lexer </h5>
+          <h5 class="center"> Log </h5>
           <textarea class="white" id="output" disabled></textarea>
         </div>
       </div>
     </div>
   </div>
-  <div class="container">
+  <!-- <div class="container">
     <div class="section">
 
-      <!--   Blocks template   -->
+        Blocks template  
       <div class="row center">
         <div class="col s12 m4">
           <textarea id="test">apple</textarea>
@@ -100,7 +108,7 @@
 
     </div>
     <br><br>
-  </div>
+  </div> -->
 
   <footer class="page-footer red darken-3">
     <div class="container">
@@ -109,7 +117,7 @@
     </div>
     <div class="footer-copyright">
       <div class="container">
-      Made by <a class="red-text text-lighten-3" href="http://materializecss.com">Materialize</a>
+      Made by <a class="red-text text-lighten-3" href="https://github.com/nisiya/Ni-Compiler"></a>Wendy Ni</a>
       </div>
     </div>
   </footer>

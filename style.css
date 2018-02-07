@@ -36,3 +36,7 @@
   font-family: Courier New, Courier, monospace;
   font-size: 10pt;
 }
+#verboseBtn{
+  background-color: #5c6bc0;
+  color: #ffffff;
+}
