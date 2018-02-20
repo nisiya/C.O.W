@@ -310,12 +310,16 @@ module Compiler {
       let lexWarning: number = 0;
       let index: number = 0;
       let token = this.tokenBank[index];
-
+      
+      // print all tokens
       if(_VerboseMode){
         while(index < this.tokenBank.length-1){
           output.value += "\n   LEXER --> " + token.tid
                         + " [ " + token.tValue + " ] on line " + token.tLine
                         + ", column " + token.tColumn;
+          if(token.tid == "T_EOP"){
+            output.value += "\n ============= \n   LEXER --> START OF NEW PROGRAM \n ============= ";
+          }
           index++; 
           token = this.tokenBank[index];
         }
@@ -323,6 +327,7 @@ module Compiler {
         index = this.tokenBank.length-1;
         token = this.tokenBank[index];
       }
+      // reached the last token
       if(token.tid == "T_Invalid"){
         output.value += "\n   LEXER --> ERROR! Invalid token"
                       + " [ " + token.tValue + " ] on line " + token.tLine
