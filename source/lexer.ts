@@ -177,7 +177,7 @@ module Compiler {
     *  for new line to maintain the format of the code for
     *  other parts.
     */
-    public removeComments(userPrg): string {
+    public removeComments(userPrg:string): string {
       // locate the start and end of comment
       let commentStart:RegExp = /(\/\*)/;
       let commentEnd:RegExp = /(\*\/)/;
@@ -238,7 +238,7 @@ module Compiler {
     }
 
     // finds longest match tokens and errors in a buffer
-    public evaluateBuffer(buffer): boolean{
+    public evaluateBuffer(buffer:string): boolean{
       // RegExp matches order by length
       let booleanKey:RegExp = /^boolean/;
       let printKey:RegExp = /^print/;

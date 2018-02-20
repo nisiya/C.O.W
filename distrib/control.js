@@ -12,11 +12,16 @@ var Compiler;
         }
         Control.startCompile = function (btn) {
             var lexer = new Compiler.Lexer();
+            var parser = new Compiler.Parser();
             var output = document.getElementById("output");
             output.value = " Compiler Activated... \n ============= \n Lexer Start... \n =============";
             output.scrollTop = output.scrollHeight;
             var tokenBank = lexer.start();
-            var token;
+            if (tokenBank != null) {
+                output.value = " Parser Start... \n =============";
+                output.scrollTop = output.scrollHeight;
+                parser.start();
+            }
         };
         Control.verboseMode = function (btn) {
             _VerboseMode = !_VerboseMode;

@@ -13,11 +13,16 @@ module Compiler {
 
     public static startCompile(btn): void {
       let lexer: Compiler.Lexer = new Lexer();
+      let parser: Compiler.Parser = new Parser();
       let output: HTMLInputElement = <HTMLInputElement> document.getElementById("output");
       output.value = " Compiler Activated... \n ============= \n Lexer Start... \n =============";
       output.scrollTop = output.scrollHeight;
       let tokenBank: Token[] = lexer.start();
-      let token:Token;
+      if(tokenBank != null){
+        output.value = " Parser Start... \n =============";
+        output.scrollTop = output.scrollHeight;
+        parser.start();
+      }
     }
 
     public static verboseMode(btn): void {

@@ -16,7 +16,10 @@ module Compiler {
     public tLine: number;
     public tColumn: number;
 
-    constructor(tid, tValue, tLine, tColumn) {
+    constructor(tid:string, 
+                tValue:string, 
+                tLine:number, 
+                tColumn:number) {
       this.tid = tid;
       this.tValue = tValue;
       this.tLine = tLine;
