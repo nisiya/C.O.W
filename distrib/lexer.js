@@ -23,6 +23,8 @@ var Compiler;
             var space = /[ ]/;
             var whitespace = /^\s*$/;
             var eop = /\$/;
+            var commentSlash = /\//;
+            var commentStar = /\*/;
             this.currentLine = 1;
             this.currentColumn = 0;
             this.tokenBank = new Array();
@@ -30,19 +32,19 @@ var Compiler;
             // check if input is not null or just whitespace first
             if (whitespace.test(userPrg)) {
                 var output = document.getElementById("output");
-                output.value += "\n   LEXER --> ABORTED! Missing input or only detected whitespaces"
+                output.value += "\n   LEXER --> ABORTED! Missing input or only contains whitespaces"
                     + "\n ============= \n Lexer Failed... 0 Warning(s) ... 1 Error(s)";
                 return this.tokenBank;
             }
-            var userPrgClean = this.removeComments(userPrg);
+            // let userPrg:string = this.removeComments(userPrg);
             var firstPointer = 0;
             var secondPointer = 0;
             var buffer;
             var currentChar;
             var token;
-            while (secondPointer <= userPrgClean.length) {
-                currentChar = userPrgClean.charAt(secondPointer);
-                buffer = userPrgClean.slice(firstPointer, secondPointer);
+            while (secondPointer <= userPrg.length) {
+                currentChar = userPrg.charAt(secondPointer);
+                buffer = userPrg.slice(firstPointer, secondPointer);
                 if (!alphaNumeric.test(currentChar)) {
                     if (buffer.length > 0) {
                         /* wild non-alphanumeric appeared!
@@ -81,7 +83,7 @@ var Compiler;
                         isOpenQuote = true;
                         secondPointer++;
                         this.currentColumn++;
-                        currentChar = userPrgClean.charAt(secondPointer);
+                        currentChar = userPrg.charAt(secondPointer);
                         /* if a quote appears, everything after that is valid is added as T_Char
                         *   until the close quote
                         * valid = lowercase letters and spaces
@@ -98,14 +100,25 @@ var Compiler;
                                 this.tokenBank.push(token);
                                 secondPointer++;
                                 this.currentColumn++;
-                                currentChar = userPrgClean.charAt(secondPointer);
+                                currentChar = userPrg.charAt(secondPointer);
                             }
                             else {
-                                token = new Compiler.Token("T_Invalid", currentChar, this.currentLine, this.currentColumn);
-                                this.tokenBank.push(token);
-                                this.displayTokens();
+                                this.createErrorToken(currentChar);
                                 return this.tokenBank;
                             }
+                        }
+                    }
+                    else if (commentSlash.test(currentChar)) {
+                        if (commentStar.test(userPrg.charAt(secondPointer + 1))) {
+                            // comments are not allowed in quotes so its evaluated after
+                            // start of a comment
+                            userPrg = this.removeComments(userPrg);
+                            secondPointer++;
+                            this.currentColumn++;
+                        }
+                        else {
+                            this.createErrorToken(currentChar);
+                            return this.tokenBank;
                         }
                     }
                     else if (singleSymbol.test(currentChar)) {
@@ -114,7 +127,7 @@ var Compiler;
                     }
                     else if (equal.test(currentChar)) {
                         // special case of == or =
-                        if (equal.test(userPrgClean.charAt(secondPointer + 1))) {
+                        if (equal.test(userPrg.charAt(secondPointer + 1))) {
                             // boolop ==
                             token = new Compiler.Token("T_Equals", "==", this.currentLine, this.currentColumn);
                             this.tokenBank.push(token);
@@ -130,7 +143,7 @@ var Compiler;
                     }
                     else if (notSymbol.test(currentChar)) {
                         // special case of != or !, which is invalid
-                        if (equal.test(userPrgClean.charAt(secondPointer + 1))) {
+                        if (equal.test(userPrg.charAt(secondPointer + 1))) {
                             token = new Compiler.Token("T_NotEqual", "!=", this.currentLine, this.currentColumn);
                             this.tokenBank.push(token);
                             // again since we looked at next char..
@@ -139,17 +152,13 @@ var Compiler;
                         }
                         else {
                             // ! is invalid, stop lexer and return error with current tokens
-                            token = new Compiler.Token("T_Invalid", currentChar, this.currentLine, this.currentColumn);
-                            this.tokenBank.push(token);
-                            this.displayTokens();
+                            this.createErrorToken(currentChar);
                             return this.tokenBank;
                         }
                     }
                     else {
                         // character is not in grammar, stop lexer and report error with current tokens
-                        token = new Compiler.Token("T_Invalid", currentChar, this.currentLine, this.currentColumn);
-                        this.tokenBank.push(token);
-                        this.displayTokens();
+                        this.createErrorToken(currentChar);
                         return this.tokenBank;
                     }
                     // move onto next char and reset first pointer
@@ -172,30 +181,26 @@ var Compiler;
         *  other parts.
         */
         Lexer.prototype.removeComments = function (userPrg) {
-            // locate the comment
+            // locate the start and end of comment
             var commentStart = /(\/\*)/;
             var commentEnd = /(\*\/)/;
             var start = userPrg.search(commentStart);
             var end = userPrg.search(commentEnd);
-            // need to remove all comments
-            while (start != -1 && end != -1) {
-                // leave other areas
-                var beforeComment = userPrg.slice(0, start);
-                var afterComment = userPrg.slice(end + 2, userPrg.length);
-                // cannot change character in string so use an array
-                var fillComment = new Array();
-                fillComment = userPrg.slice(start, end + 2).split('');
-                for (var i = 0; i < fillComment.length; i++) {
-                    // need to keep line feeds for line numbering
-                    if (fillComment[i] != '\n') {
-                        fillComment[i] = ' ';
-                    }
+            // divide the input into before comment and after comment
+            // in order to replace the comment area with whitespace
+            var beforeComment = userPrg.slice(0, start);
+            var afterComment = userPrg.slice(end + 2, userPrg.length);
+            // cannot change character in string so use an array
+            var fillComment = new Array();
+            fillComment = userPrg.slice(start, end + 2).split('');
+            for (var i = 0; i < fillComment.length; i++) {
+                // need to keep line feeds for line numbering
+                if (fillComment[i] != '\n') {
+                    fillComment[i] = ' ';
                 }
-                // put the code back together
-                userPrg = beforeComment + fillComment.join('') + afterComment;
-                start = userPrg.search(commentStart);
-                end = userPrg.search(commentEnd);
             }
+            // put the code back together
+            userPrg = beforeComment + fillComment.join('') + afterComment;
             return userPrg;
         };
         /* Creates tokens for following single character symbols:
@@ -298,6 +303,11 @@ var Compiler;
             }
             // means no erro occurred
             return false;
+        };
+        Lexer.prototype.createErrorToken = function (currentChar) {
+            var token = new Compiler.Token("T_Invalid", currentChar, this.currentLine, this.currentColumn);
+            this.tokenBank.push(token);
+            this.displayTokens();
         };
         Lexer.prototype.displayTokens = function () {
             var output = document.getElementById("output");

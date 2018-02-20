@@ -27,6 +27,8 @@ module Compiler {
       let space:RegExp = /[ ]/;
       let whitespace:RegExp = /^\s*$/;
       let eop:RegExp = /\$/;
+      let commentSlash:RegExp = /\//;
+      let commentStar:RegExp = /\*/;
 
       this.currentLine = 1;
       this.currentColumn = 0;
@@ -34,25 +36,25 @@ module Compiler {
 
       let userPrg:string = editor.getValue();
       // check if input is not null or just whitespace first
-      if (whitespace.test(userPrg)){
+      if(whitespace.test(userPrg)){
         let output: HTMLInputElement = <HTMLInputElement> document.getElementById("output");
-        output.value += "\n   LEXER --> ABORTED! Missing input or only detected whitespaces"
+        output.value += "\n   LEXER --> ABORTED! Missing input or only contains whitespaces"
                      + "\n ============= \n Lexer Failed... 0 Warning(s) ... 1 Error(s)";
         return this.tokenBank; 
       }
-      let userPrgClean:string = this.removeComments(userPrg);
+      // let userPrg:string = this.removeComments(userPrg);
       let firstPointer:number = 0;
       let secondPointer:number = 0;
       let buffer:string;
       let currentChar:string;
       let token:Token;
     
-      while (secondPointer <= userPrgClean.length){
-        currentChar = userPrgClean.charAt(secondPointer);
-        buffer = userPrgClean.slice(firstPointer, secondPointer);
+      while(secondPointer <= userPrg.length){
+        currentChar = userPrg.charAt(secondPointer);
+        buffer = userPrg.slice(firstPointer, secondPointer);
 
-        if (!alphaNumeric.test(currentChar)){
-          if (buffer.length > 0){
+        if(!alphaNumeric.test(currentChar)){
+          if(buffer.length > 0){
             /* wild non-alphanumeric appeared! 
             * *------------------------------*
             * |    > LEX          CHEESE     |
@@ -61,33 +63,33 @@ module Compiler {
             */
             //        
             let hasError = this.evaluateBuffer(buffer);
-            if (hasError){
+            if(hasError){
               // stop lexing and return error with current tokens
               this.displayTokens();
               return this.tokenBank;
             } // else continue
           }
 
-          if (currentChar == ''){
+          if(currentChar == ''){
             // end of input
             break;
           }          
-          else if (eop.test(currentChar)){
+          else if(eop.test(currentChar)){
             token = new Token("T_EOP", "$", this.currentLine, this.currentColumn);
             this.tokenBank.push(token);
-          } else if (space.test(currentChar)){
+          } else if(space.test(currentChar)){
             // lexer ignores whitespace
-          } else if (newLine.test(currentChar)){
+          } else if(newLine.test(currentChar)){
             // lexer ignores whitespace
             // need to increment line and reset column indices
             this.currentLine++;
             this.currentColumn = -1;
-          } else if (quote.test(currentChar)){
+          } else if(quote.test(currentChar)){
             this.createQuoteToken();
             isOpenQuote = true;
             secondPointer++;
             this.currentColumn++;
-            currentChar = userPrgClean.charAt(secondPointer);
+            currentChar = userPrg.charAt(secondPointer);
 
             /* if a quote appears, everything after that is valid is added as T_Char
             *   until the close quote
@@ -95,7 +97,7 @@ module Compiler {
             * invalid characters after open quotes will stop lexer and report error
             *   along with current tokens
             */
-            while (isOpenQuote){
+            while(isOpenQuote){
               if(quote.test(currentChar)){
                 this.createQuoteToken();
                 isOpenQuote = false;
@@ -104,20 +106,29 @@ module Compiler {
                 this.tokenBank.push(token);
                 secondPointer++;
                 this.currentColumn++;
-                currentChar = userPrgClean.charAt(secondPointer);           
+                currentChar = userPrg.charAt(secondPointer);           
               } else {
-                token = new Token("T_Invalid", currentChar, this.currentLine, this.currentColumn);
-                this.tokenBank.push(token);
-                this.displayTokens();
+                this.createErrorToken(currentChar);
                 return this.tokenBank;
               }
             }
-          } else if (singleSymbol.test(currentChar)){
+          } else if(commentSlash.test(currentChar)){
+            if(commentStar.test(userPrg.charAt(secondPointer+1))){
+              // comments are not allowed in quotes so its evaluated after
+              // start of a comment
+              userPrg = this.removeComments(userPrg);
+              secondPointer++;
+              this.currentColumn++;
+            } else{
+              this.createErrorToken(currentChar);
+              return this.tokenBank;
+            }
+          }else if(singleSymbol.test(currentChar)){
             // for symbols that are one character only
             this.createSymbolToken(currentChar);
-          } else if (equal.test(currentChar)){
+          } else if(equal.test(currentChar)){
             // special case of == or =
-            if (equal.test(userPrgClean.charAt(secondPointer+1))){
+            if(equal.test(userPrg.charAt(secondPointer+1))){
               // boolop ==
               token = new Token("T_Equals", "==", this.currentLine, this.currentColumn);
               this.tokenBank.push(token);
@@ -129,9 +140,9 @@ module Compiler {
               token = new Token("T_Assignment", "=", this.currentLine, this.currentColumn);
               this.tokenBank.push(token);
             }
-          } else if (notSymbol.test(currentChar)){
+          } else if(notSymbol.test(currentChar)){
             // special case of != or !, which is invalid
-            if (equal.test(userPrgClean.charAt(secondPointer+1))){
+            if(equal.test(userPrg.charAt(secondPointer+1))){
               token = new Token("T_NotEqual", "!=", this.currentLine, this.currentColumn);
               this.tokenBank.push(token);
               // again since we looked at next char..
@@ -139,16 +150,12 @@ module Compiler {
               secondPointer++;
             } else{
               // ! is invalid, stop lexer and return error with current tokens
-              token = new Token("T_Invalid", currentChar, this.currentLine, this.currentColumn);
-              this.tokenBank.push(token);
-              this.displayTokens()
+              this.createErrorToken(currentChar);
               return this.tokenBank;
             }
           } else {
             // character is not in grammar, stop lexer and report error with current tokens
-            token = new Token("T_Invalid", currentChar, this.currentLine, this.currentColumn);
-            this.tokenBank.push(token);
-            this.displayTokens();
+            this.createErrorToken(currentChar);
             return this.tokenBank;
           }
           // move onto next char and reset first pointer
@@ -171,30 +178,27 @@ module Compiler {
     *  other parts.
     */
     public removeComments(userPrg): string {
-      // locate the comment
+      // locate the start and end of comment
       let commentStart:RegExp = /(\/\*)/;
       let commentEnd:RegExp = /(\*\/)/;
       let start:number = userPrg.search(commentStart);
       let end:number = userPrg.search(commentEnd);
-      // need to remove all comments
-      while (start != -1 && end != -1){
-        // leave other areas
-        let beforeComment = userPrg.slice(0,start);
-        let afterComment = userPrg.slice(end+2, userPrg.length);
-        // cannot change character in string so use an array
-        let fillComment = new Array<string>();
-        fillComment = userPrg.slice(start, end+2).split('');
-        for(var i=0; i<fillComment.length; i++){
-          // need to keep line feeds for line numbering
-          if(fillComment[i] != '\n'){
-            fillComment[i] = ' ';
-          }
+
+      // divide the input into before comment and after comment
+      // in order to replace the comment area with whitespace
+      let beforeComment = userPrg.slice(0,start);
+      let afterComment = userPrg.slice(end+2, userPrg.length);
+      // cannot change character in string so use an array
+      let fillComment = new Array<string>();
+      fillComment = userPrg.slice(start, end+2).split('');
+      for(var i=0; i<fillComment.length; i++){
+        // need to keep line feeds for line numbering
+        if(fillComment[i] != '\n'){
+          fillComment[i] = ' ';
         }
-        // put the code back together
-        userPrg = beforeComment + fillComment.join('') + afterComment;
-        start = userPrg.search(commentStart);
-        end = userPrg.search(commentEnd);
       }
+      // put the code back together
+      userPrg = beforeComment + fillComment.join('') + afterComment;
       return userPrg;
     }
 
@@ -253,36 +257,36 @@ module Compiler {
       // current column index on symbol, not the buffer before it so..
       let tempColumn:number = this.currentColumn - buffer.length;
 
-      while (buffer.length > 0){
+      while(buffer.length > 0){
         // test for longest match first
-        if (booleanKey.test(buffer)){
+        if(booleanKey.test(buffer)){
           tid = "T_VarType";
           tval = "boolean";
-        } else if (printKey.test(buffer)){
+        } else if(printKey.test(buffer)){
           tid = "T_Print";
           tval = "print";
-        } else if (whileKey.test(buffer)){
+        } else if(whileKey.test(buffer)){
           tid = "T_While";
           tval = "while";
-        } else if (stringKey.test(buffer)){
+        } else if(stringKey.test(buffer)){
           tid = "T_VarType";
           tval = "string";
-        } else if (falseKey.test(buffer)){
+        } else if(falseKey.test(buffer)){
           tid = "T_Boolean";
           tval = "false";
-        } else if (trueKey.test(buffer)){
+        } else if(trueKey.test(buffer)){
           tid = "T_Boolean";
           tval = "true";
-        } else if (intKey.test(buffer)){
+        } else if(intKey.test(buffer)){
           tid = "T_VarType";
           tval = "int";
-        } else if (ifKey.test(buffer)){
+        } else if(ifKey.test(buffer)){
           tid = "T_If";
           tval = "if";
-        } else if (digit.test(buffer)){
+        } else if(digit.test(buffer)){
           tid = "T_Digit";
           tval = buffer.charAt(0);
-        } else if (idKey.test(buffer)){
+        } else if(idKey.test(buffer)){
           tid = "T_Id";
           tval = buffer.charAt(0);
         }
@@ -295,6 +299,11 @@ module Compiler {
       return false;
     }
 
+    public createErrorToken(currentChar): void{
+      let token = new Token("T_Invalid", currentChar, this.currentLine, this.currentColumn);
+      this.tokenBank.push(token);
+      this.displayTokens();
+    }
     public displayTokens(): void{
       let output: HTMLInputElement = <HTMLInputElement> document.getElementById("output");
       let lexError: number = 0;
@@ -302,8 +311,8 @@ module Compiler {
       let index: number = 0;
       let token = this.tokenBank[index];
 
-      if (_VerboseMode){
-        while (index < this.tokenBank.length-1){
+      if(_VerboseMode){
+        while(index < this.tokenBank.length-1){
           output.value += "\n   LEXER --> " + token.tid
                         + " [ " + token.tValue + " ] on line " + token.tLine
                         + ", column " + token.tColumn;
@@ -314,13 +323,13 @@ module Compiler {
         index = this.tokenBank.length-1;
         token = this.tokenBank[index];
       }
-      if (token.tid == "T_Invalid"){
+      if(token.tid == "T_Invalid"){
         output.value += "\n   LEXER --> ERROR! Invalid token"
                       + " [ " + token.tValue + " ] on line " + token.tLine
                       + ", column " + token.tColumn;
         lexError++;
       } else {
-        if (_VerboseMode){
+        if(_VerboseMode){
           output.value += "\n   LEXER --> " + token.tid
                         + " [ " + token.tValue + " ] on line " + token.tLine
                         + ", column " + token.tColumn;
@@ -334,7 +343,7 @@ module Compiler {
           lexWarning++;
         }
       }
-      if (lexError == 0){
+      if(lexError == 0){
         output.value += "\n ============= \n Lexer Completed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
         output.value += "\n Token bank loaded... \n =============";
       } else {
