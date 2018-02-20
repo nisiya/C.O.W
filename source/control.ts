@@ -34,6 +34,12 @@ module Compiler {
       }
     }
 
+    public static flush(btn): void {
+      editor.setValue("");
+      var audio = new Audio('distrib/audio/meow.mp3');
+      audio.play();
+    }
+
   }
 
 }

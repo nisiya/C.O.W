@@ -32,6 +32,11 @@ var Compiler;
                 verboseBtn.style.color = "#000000";
             }
         };
+        Control.flush = function (btn) {
+            editor.setValue("");
+            var audio = new Audio('distrib/audio/meow.mp3');
+            audio.play();
+        };
         return Control;
     }());
     Compiler.Control = Control;
