@@ -11,16 +11,6 @@ var Compiler;
         function Lexer() {
         }
         Lexer.prototype.start = function () {
-            this.currentLine = 1;
-            this.currentColumn = 0;
-            this.tokenBank = new Array();
-            var userPrg = editor.getValue();
-            var userPrgClean = this.removeComments(userPrg);
-            var firstPointer = 0;
-            var secondPointer = 0;
-            var buffer;
-            var currentChar;
-            var token;
             // RegExp
             var alphaNumeric = /[a-z0-9]/;
             var charKey = /[a-z" "]/;
@@ -31,7 +21,25 @@ var Compiler;
             var isOpenQuote = false;
             var newLine = /\n|\r/;
             var space = /[ ]/;
+            var whitespace = /^\s*$/;
             var eop = /\$/;
+            this.currentLine = 1;
+            this.currentColumn = 0;
+            this.tokenBank = new Array();
+            var userPrg = editor.getValue();
+            // check if input is not null or just whitespace first
+            if (whitespace.test(userPrg)) {
+                var output = document.getElementById("output");
+                output.value += "\n   LEXER --> ABORTED! Missing input or only detected whitespaces"
+                    + "\n ============= \n Lexer Failed... 0 Warning(s) ... 1 Error(s)";
+                return this.tokenBank;
+            }
+            var userPrgClean = this.removeComments(userPrg);
+            var firstPointer = 0;
+            var secondPointer = 0;
+            var buffer;
+            var currentChar;
+            var token;
             while (secondPointer <= userPrgClean.length) {
                 currentChar = userPrgClean.charAt(secondPointer);
                 buffer = userPrgClean.slice(firstPointer, secondPointer);
@@ -276,24 +284,8 @@ var Compiler;
                     tval = "if";
                 }
                 else if (digit.test(buffer)) {
-                    if (digit.test(buffer.charAt(1))) {
-                        // only single digit allowed
-                        // report invalid token and stop lexing buffer
-                        var notDigit = buffer.search(/[^\d]/);
-                        if (notDigit = -1) {
-                            tval = buffer;
-                        }
-                        else {
-                            tval = buffer.slice(0, notDigit);
-                        }
-                        token = new Compiler.Token("T_Invalid", tval, this.currentLine, tempColumn);
-                        this.tokenBank.push(token);
-                        return true;
-                    }
-                    else {
-                        tid = "T_Digit";
-                        tval = buffer.charAt(0);
-                    }
+                    tid = "T_Digit";
+                    tval = buffer.charAt(0);
                 }
                 else if (idKey.test(buffer)) {
                     tid = "T_Id";

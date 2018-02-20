@@ -15,18 +15,6 @@ module Compiler {
     public tokenBank: Token[];
 
     public start(): Token[] {
-      this.currentLine = 1;
-      this.currentColumn = 0;
-      this.tokenBank = new Array<Token>();
-
-      let userPrg:string = editor.getValue();
-      let userPrgClean:string = this.removeComments(userPrg);
-      let firstPointer:number = 0;
-      let secondPointer:number = 0;
-      let buffer:string;
-      let currentChar:string;
-      let token:Token;
-
       // RegExp
       let alphaNumeric:RegExp = /[a-z0-9]/;
       let charKey = /[a-z" "]/;
@@ -37,7 +25,27 @@ module Compiler {
       let isOpenQuote:boolean = false;
       let newLine:RegExp = /\n|\r/;
       let space:RegExp = /[ ]/;
+      let whitespace:RegExp = /^\s*$/;
       let eop:RegExp = /\$/;
+
+      this.currentLine = 1;
+      this.currentColumn = 0;
+      this.tokenBank = new Array<Token>();
+
+      let userPrg:string = editor.getValue();
+      // check if input is not null or just whitespace first
+      if (whitespace.test(userPrg)){
+        let output: HTMLInputElement = <HTMLInputElement> document.getElementById("output");
+        output.value += "\n   LEXER --> ABORTED! Missing input or only detected whitespaces"
+                     + "\n ============= \n Lexer Failed... 0 Warning(s) ... 1 Error(s)";
+        return this.tokenBank; 
+      }
+      let userPrgClean:string = this.removeComments(userPrg);
+      let firstPointer:number = 0;
+      let secondPointer:number = 0;
+      let buffer:string;
+      let currentChar:string;
+      let token:Token;
     
       while (secondPointer <= userPrgClean.length){
         currentChar = userPrgClean.charAt(secondPointer);
@@ -272,22 +280,8 @@ module Compiler {
           tid = "T_If";
           tval = "if";
         } else if (digit.test(buffer)){
-          if (digit.test(buffer.charAt(1))){
-            // only single digit allowed
-            // report invalid token and stop lexing buffer
-            let notDigit = buffer.search(/[^\d]/);
-            if(notDigit = -1){
-              tval = buffer;
-            } else{
-              tval = buffer.slice(0,notDigit);
-            }
-            token = new Token("T_Invalid", tval, this.currentLine, tempColumn);
-            this.tokenBank.push(token);
-            return true;
-          } else {
-            tid = "T_Digit";
-            tval = buffer.charAt(0);
-          }
+          tid = "T_Digit";
+          tval = buffer.charAt(0);
         } else if (idKey.test(buffer)){
           tid = "T_Id";
           tval = buffer.charAt(0);

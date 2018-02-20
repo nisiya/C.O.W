@@ -15,8 +15,6 @@ var APP_VERSION = "0.07"; // uhhhh
 //
 // Global Variables
 // TODO: Make a global object and use that instead of the "_" naming convention in the global namespace.
-// UI
-var _Console; // Utilize TypeScript's type annotation system to ensure that _Console is an instance of the Console class.
 // Components
 var _Lexer;
 var _Parser;
