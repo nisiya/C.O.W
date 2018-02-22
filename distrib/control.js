@@ -18,7 +18,7 @@ var Compiler;
             output.scrollTop = output.scrollHeight;
             var tokenBank = lexer.start();
             if (tokenBank != null) {
-                output.value += " Parser Start... \n =============";
+                output.value += "\n Parser Start... \n =============";
                 output.scrollTop = output.scrollHeight;
                 // parser.start();
             }

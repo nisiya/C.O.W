@@ -186,9 +186,17 @@ module Compiler {
       let currToken = this.tokenBank.pop();
       if(currToken.isEqual("T_Quote")){
         if(this.parseCharList()){
-          return true;
+          let currToken = this.tokenBank.pop();
+          if(currToken.isEqual("T_CloseQuote")){
+            return true;
+          } else {
+            // throuw error
+            this.tokenBank.push(currToken);
+            return false;
+          }
         }
       } else{
+        // dont throw error
         this.tokenBank.push(currToken);
         return false;
       }
@@ -209,13 +217,11 @@ module Compiler {
     public parseCharList(): boolean{
       let currToken = this.tokenBank.pop();
       if(currToken.isEqual("T_Char") || currToken.isEqual("T_Space")){
-        if(this.parseCharList()){
-          
-        } else{
-
-        }
+        return this.parseCharList();
       } else{
-        return false;
+        this.tokenBank.push(currToken);
+        return true;
+        // can be empty string
       }
     }
     
@@ -223,7 +229,9 @@ module Compiler {
       let currToken = this.tokenBank.pop();
       if(currToken.isEqual("T_VarType")){
         if(this.parseId()){
-          
+          return true;
+        } else {
+          //error, expected id
         }
       } else{
         this.tokenBank.push(currToken);
@@ -234,11 +242,15 @@ module Compiler {
     public parseId(): boolean{
       let currToken = this.tokenBank.pop();
       if(currToken.isEqual("T_Id")){
-
+        return true;
+      } else{
+        this.tokenBank.push(currToken);
+        return false;
+        // no need to report error
       }
-
-      return false;
     }
+
+
     public printError(): void{
 
     }

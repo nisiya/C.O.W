@@ -69,14 +69,11 @@ module Compiler {
               return this.tokenBank;
             } // else continue
           }
-
           if(currentChar == ''){
             // end of input
             break;
-          }          
-          else if(eop.test(currentChar)){
-            token = new Token("T_EOP", "$", this.currentLine, this.currentColumn);
-            this.tokenBank.push(token);
+          } else if(eop.test(currentChar)){
+            this.createToken("T_EOP", "$");
           } else if(space.test(currentChar)){
             // lexer ignores whitespace
           } else if(newLine.test(currentChar)){
@@ -85,7 +82,7 @@ module Compiler {
             this.currentLine++;
             this.currentColumn = -1;
           } else if(quote.test(currentChar)){
-            this.createQuoteToken();
+            this.createToken("T_OpenQuote", '\"');
             isOpenQuote = true;
             secondPointer++;
             this.currentColumn++;
@@ -99,22 +96,22 @@ module Compiler {
             */
             while(isOpenQuote){
               if(quote.test(currentChar)){
-                this.createQuoteToken();
+                this.createToken("T_CloseQuote", '\"');
                 isOpenQuote = false;
               } else if(charKey.test(currentChar)){
-                token = new Token("T_Char", currentChar, this.currentLine, this.currentColumn);
-                this.tokenBank.push(token);
+                this.createToken("T_Char", currentChar);
                 secondPointer++;
                 this.currentColumn++;
                 currentChar = userPrg.charAt(secondPointer);           
               } else if(space.test(currentChar)){
-                token = new Token("T_Space", currentChar, this.currentLine, this.currentColumn);
-                this.tokenBank.push(token);
+                this.createToken("T_Space", currentChar);
                 secondPointer++;
                 this.currentColumn++;
                 currentChar = userPrg.charAt(secondPointer);
               } else {
-                this.createErrorToken(currentChar);
+                // error token created
+                this.createToken("T_Invalid", currentChar);
+                this.displayTokens();
                 return this.tokenBank;
               }
             }
@@ -126,7 +123,9 @@ module Compiler {
               secondPointer++;
               this.currentColumn++;
             } else{
-              this.createErrorToken(currentChar);
+              // error token created
+              this.createToken("T_Invalid", currentChar);
+              this.displayTokens();
               return this.tokenBank;
             }
           }else if(singleSymbol.test(currentChar)){
@@ -136,32 +135,31 @@ module Compiler {
             // special case of == or =
             if(equal.test(userPrg.charAt(secondPointer+1))){
               // boolop ==
-              token = new Token("T_Equals", "==", this.currentLine, this.currentColumn);
-              this.tokenBank.push(token);
+              this.createToken("T_Equals", "==");
               // since we look at next char..
               this.currentColumn++;
               secondPointer++;
             } else{
               // assignment ==
-              token = new Token("T_Assignment", "=", this.currentLine, this.currentColumn);
-              this.tokenBank.push(token);
+              this.createToken("T_Assignment", "=");
             }
           } else if(notSymbol.test(currentChar)){
             // special case of != or !, which is invalid
             if(equal.test(userPrg.charAt(secondPointer+1))){
-              token = new Token("T_NotEqual", "!=", this.currentLine, this.currentColumn);
-              this.tokenBank.push(token);
+              this.createToken("T_NotEqual", "!=");
               // again since we looked at next char..
               this.currentColumn++;
               secondPointer++;
             } else{
               // ! is invalid, stop lexer and return error with current tokens
-              this.createErrorToken(currentChar);
+              this.createToken("T_Invalid", currentChar);
+              this.displayTokens();
               return this.tokenBank;
             }
           } else {
             // character is not in grammar, stop lexer and report error with current tokens
-            this.createErrorToken(currentChar);
+            this.createToken("T_Invalid", currentChar);
+            this.displayTokens();
             return this.tokenBank;
           }
           // move onto next char and reset first pointer
@@ -233,13 +231,12 @@ module Compiler {
           // won't happen
           break;
       }
-      let token = new Token(tid, symbol, this.currentLine, this.currentColumn);
-      this.tokenBank.push(token);
+      this.createToken(tid, symbol);
     }
 
-    // Creates a token for quote character
-    public createQuoteToken(): void{
-      let token:Token = new Token("T_Quote", '\"', this.currentLine, this.currentColumn);
+    // Creates a token for given character and id
+    public createToken(tid, tValue): void{
+      let token:Token = new Token(tid, tValue, this.currentLine, this.currentColumn);
       this.tokenBank.push(token);
     }
 
@@ -296,6 +293,7 @@ module Compiler {
           tid = "T_Id";
           tval = buffer.charAt(0);
         }
+        // cannot use create token here because column is not this.currentColumn
         token = new Token(tid, tval, this.currentLine, tempColumn);
         this.tokenBank.push(token);
         tempColumn += tval.length;
@@ -303,12 +301,6 @@ module Compiler {
       }
       // means no erro occurred
       return false;
-    }
-
-    public createErrorToken(currentChar): void{
-      let token = new Token("T_Invalid", currentChar, this.currentLine, this.currentColumn);
-      this.tokenBank.push(token);
-      this.displayTokens();
     }
     public displayTokens(): void{
       let output: HTMLInputElement = <HTMLInputElement> document.getElementById("output");

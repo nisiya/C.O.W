@@ -180,10 +180,19 @@ var Compiler;
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_Quote")) {
                 if (this.parseCharList()) {
-                    return true;
+                    var currToken_1 = this.tokenBank.pop();
+                    if (currToken_1.isEqual("T_CloseQuote")) {
+                        return true;
+                    }
+                    else {
+                        // throuw error
+                        this.tokenBank.push(currToken_1);
+                        return false;
+                    }
                 }
             }
             else {
+                // dont throw error
                 this.tokenBank.push(currToken);
                 return false;
             }
@@ -204,19 +213,22 @@ var Compiler;
         Parser.prototype.parseCharList = function () {
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_Char") || currToken.isEqual("T_Space")) {
-                if (this.parseCharList()) {
-                }
-                else {
-                }
+                return this.parseCharList();
             }
             else {
-                return false;
+                this.tokenBank.push(currToken);
+                return true;
+                // can be empty string
             }
         };
         Parser.prototype.parseType = function () {
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_VarType")) {
                 if (this.parseId()) {
+                    return true;
+                }
+                else {
+                    //error, expected id
                 }
             }
             else {
@@ -227,8 +239,13 @@ var Compiler;
         Parser.prototype.parseId = function () {
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_Id")) {
+                return true;
             }
-            return false;
+            else {
+                this.tokenBank.push(currToken);
+                return false;
+                // no need to report error
+            }
         };
         Parser.prototype.printError = function () {
         };
