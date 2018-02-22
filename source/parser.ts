@@ -185,7 +185,9 @@ module Compiler {
     public parseStrExpr(): boolean{
       let currToken = this.tokenBank.pop();
       if(currToken.isEqual("T_Quote")){
-        return true;
+        if(this.parseCharList()){
+          return true;
+        }
       } else{
         this.tokenBank.push(currToken);
         return false;
@@ -200,6 +202,19 @@ module Compiler {
         return true;
       } else{
         this.tokenBank.push(currToken);
+        return false;
+      }
+    }
+
+    public parseCharList(): boolean{
+      let currToken = this.tokenBank.pop();
+      if(currToken.isEqual("T_Char") || currToken.isEqual("T_Space")){
+        if(this.parseCharList()){
+          
+        } else{
+
+        }
+      } else{
         return false;
       }
     }

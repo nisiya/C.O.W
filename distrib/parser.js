@@ -179,7 +179,9 @@ var Compiler;
         Parser.prototype.parseStrExpr = function () {
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_Quote")) {
-                return true;
+                if (this.parseCharList()) {
+                    return true;
+                }
             }
             else {
                 this.tokenBank.push(currToken);
@@ -196,6 +198,18 @@ var Compiler;
             }
             else {
                 this.tokenBank.push(currToken);
+                return false;
+            }
+        };
+        Parser.prototype.parseCharList = function () {
+            var currToken = this.tokenBank.pop();
+            if (currToken.isEqual("T_Char") || currToken.isEqual("T_Space")) {
+                if (this.parseCharList()) {
+                }
+                else {
+                }
+            }
+            else {
                 return false;
             }
         };
