@@ -17,7 +17,7 @@ module Compiler {
     public start(): Token[] {
       // RegExp
       let alphaNumeric:RegExp = /[a-z0-9]/;
-      let charKey = /[a-z" "]/;
+      let charKey = /[a-z]/;
       let singleSymbol:RegExp = /\(|\)|\{|\}|\$|\+/;
       let notSymbol:RegExp = /\!/;
       let equal:RegExp = /\=/;
@@ -107,6 +107,12 @@ module Compiler {
                 secondPointer++;
                 this.currentColumn++;
                 currentChar = userPrg.charAt(secondPointer);           
+              } else if(space.test(currentChar)){
+                token = new Token("T_Space", currentChar, this.currentLine, this.currentColumn);
+                this.tokenBank.push(token);
+                secondPointer++;
+                this.currentColumn++;
+                currentChar = userPrg.charAt(secondPointer);
               } else {
                 this.createErrorToken(currentChar);
                 return this.tokenBank;
@@ -272,10 +278,10 @@ module Compiler {
           tid = "T_VarType";
           tval = "string";
         } else if(falseKey.test(buffer)){
-          tid = "T_Boolean";
+          tid = "T_BoolVal";
           tval = "false";
         } else if(trueKey.test(buffer)){
-          tid = "T_Boolean";
+          tid = "T_BoolVal";
           tval = "true";
         } else if(intKey.test(buffer)){
           tid = "T_VarType";
@@ -314,10 +320,8 @@ module Compiler {
       // print all tokens
       if(_VerboseMode){
         while(index < this.tokenBank.length-1){
-          output.value += "\n   LEXER --> " + token.tid
-                        + " [ " + token.tValue + " ] on line " + token.tLine
-                        + ", column " + token.tColumn;
-          if(token.tid == "T_EOP"){
+          output.value += "\n   LEXER --> " + token.toString();
+          if(token.isEqual("T_EOP")){
             output.value += "\n ============= \n   LEXER --> START OF NEW PROGRAM \n ============= ";
           }
           index++; 
@@ -328,18 +332,16 @@ module Compiler {
         token = this.tokenBank[index];
       }
       // reached the last token
-      if(token.tid == "T_Invalid"){
+      if(token.isEqual("T_Invalid")){
         output.value += "\n   LEXER --> ERROR! Invalid token"
                       + " [ " + token.tValue + " ] on line " + token.tLine
                       + ", column " + token.tColumn;
         lexError++;
       } else {
         if(_VerboseMode){
-          output.value += "\n   LEXER --> " + token.tid
-                        + " [ " + token.tValue + " ] on line " + token.tLine
-                        + ", column " + token.tColumn;
+          output.value += "\n   LEXER --> " + token.toString();
         }
-        if(token.tid != "T_EOP"){
+        if(!token.isEqual("T_EOP")){
           output.value += "\n   LEXER --> WARNING! No End Of Program [$] found."
                       + "\n Inserted at line " + token.tLine + ", column " + (token.tColumn+1);
           let eopToken: Token = new Token("T_EOP", "$", token.tLine, token.tColumn+1);

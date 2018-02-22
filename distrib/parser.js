@@ -1,5 +1,6 @@
 ///<reference path="globals.ts" />
 ///<reference path="tree.ts" />
+///<reference path="token.ts" />
 /* ------------
 Parser.ts
 
@@ -48,9 +49,174 @@ var Compiler;
         35. <intop> -> <+>
         */
         Parser.prototype.start = function (tokenBank) {
-            tokenBank = tokenBank.reverse();
+            this.tokenBank = tokenBank.reverse();
+            // let currToken = tokenBank.pop();
             this.csTree = new Compiler.Tree();
-            csTree.addBranchNode("Program");
+            this.csTree.addBranchNode("Program");
+            if (this.parseBlock()) {
+                var currToken = this.tokenBank.pop();
+                if (currToken.isEqual("T_EOP")) {
+                    return this.csTree;
+                }
+            }
+            return null;
+        };
+        Parser.prototype.parseBlock = function () {
+            var currToken = this.tokenBank.pop();
+            if (currToken.isEqual("T_OpenBracket")) {
+                if (this.parseStmtList()) {
+                    currToken = this.tokenBank.pop();
+                    if (currToken.isEqual("T_CloseBracket")) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
+        Parser.prototype.parseStmtList = function () {
+            var currToken = this.tokenBank.pop();
+            if (this.parsePrintStmt()) {
+                this.parseStmtList();
+            }
+            else if (this.parseAssignStmt()) {
+                this.parseStmtList();
+            }
+            else if (this.parseVarDecl()) {
+                this.parseStmtList();
+            }
+            else if (this.parseWhileStmt()) {
+                this.parseStmtList();
+            }
+            else if (this.parseIfStmt()) {
+                this.parseStmtList();
+            }
+            else if (this.parseBlock()) {
+                this.parseStmtList();
+            }
+            else {
+                return true;
+            }
+        };
+        Parser.prototype.parsePrintStmt = function () {
+            var currToken = this.tokenBank.pop();
+            if (currToken.isEqual("T_Print")) {
+                currToken = this.tokenBank.pop();
+                if (currToken.isEqual("T_OpenParen")) {
+                    if (this.parseExpr()) {
+                    }
+                }
+                else {
+                }
+            }
+            else {
+                this.tokenBank.push(currToken);
+                return false;
+            }
+        };
+        Parser.prototype.parseAssignStmt = function () {
+            var currToken = this.tokenBank.pop();
+            if (currToken.isEqual("T_Id")) {
+                currToken = this.tokenBank.pop();
+                if (currToken.isEqual("T_Assignment")) {
+                    if (this.parseExpr()) {
+                    }
+                }
+            }
+            else {
+                this.tokenBank.push(currToken);
+                return false;
+            }
+        };
+        Parser.prototype.parseVarDecl = function () {
+            return this.parseType();
+        };
+        Parser.prototype.parseWhileStmt = function () {
+            var currToken = this.tokenBank.pop();
+            if (currToken.isEqual("T_While")) {
+            }
+            else {
+                this.tokenBank.push(currToken);
+                return false;
+            }
+        };
+        Parser.prototype.parseIfStmt = function () {
+            var currToken = this.tokenBank.pop();
+            if (currToken.isEqual("T_If")) {
+            }
+            else {
+                this.tokenBank.push(currToken);
+                return false;
+            }
+        };
+        Parser.prototype.parseExpr = function () {
+            if (this.parseIntExpr()) {
+            }
+            else if (this.parseStrExpr()) {
+            }
+            else if (this.parseBoolExpr()) {
+            }
+            else {
+                return false;
+            }
+        };
+        Parser.prototype.parseIntExpr = function () {
+            var currToken = this.tokenBank.pop();
+            if (currToken.isEqual("T_Digit")) {
+                currToken = this.tokenBank.pop();
+                if (currToken.isEqual("T_Addition")) {
+                    return true;
+                }
+                else {
+                    //error
+                    return false;
+                }
+            }
+            else {
+                this.tokenBank.push(currToken);
+                return false;
+            }
+        };
+        Parser.prototype.parseStrExpr = function () {
+            var currToken = this.tokenBank.pop();
+            if (currToken.isEqual("T_Quote")) {
+                return true;
+            }
+            else {
+                this.tokenBank.push(currToken);
+                return false;
+            }
+        };
+        Parser.prototype.parseBoolExpr = function () {
+            var currToken = this.tokenBank.pop();
+            if (currToken.isEqual("T_OpenParen")) {
+                return true;
+            }
+            else if (currToken.isEqual("T_BoolVal")) {
+                return true;
+            }
+            else {
+                this.tokenBank.push(currToken);
+                return false;
+            }
+        };
+        Parser.prototype.parseType = function () {
+            var currToken = this.tokenBank.pop();
+            if (currToken.isEqual("T_VarType")) {
+                if (this.parseId()) {
+                }
+            }
+            else {
+                this.tokenBank.push(currToken);
+                return false;
+            }
+        };
+        Parser.prototype.parseId = function () {
+            var currToken = this.tokenBank.pop();
+            if (currToken.isEqual("T_Id")) {
+            }
+            return false;
+        };
+        Parser.prototype.printError = function () {
         };
         return Parser;
     }());

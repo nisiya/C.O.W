@@ -25,5 +25,18 @@ module Compiler {
       this.tLine = tLine;
       this.tColumn = tColumn;
     }
+
+    public isEqual(tid: string): boolean{
+      return this.tid == tid;
+    }
+
+    public toString(): string{
+      return this.tid + " [ " + this.tValue + " ] on line " + this.tLine + ", column " + this.tColumn;
+    }
+
+    public match(regExp: RegExp){
+      return regExp.test(this.tValue); 
+    }
+
   }
 }

@@ -19,9 +19,9 @@ module Compiler {
       output.scrollTop = output.scrollHeight;
       let tokenBank: Token[] = lexer.start();
       if(tokenBank != null){
-        output.value = " Parser Start... \n =============";
+        output.value += " Parser Start... \n =============";
         output.scrollTop = output.scrollHeight;
-        parser.start();
+        // parser.start();
       }
     }
 
