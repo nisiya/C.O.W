@@ -135,7 +135,7 @@ module Compiler {
             // special case of == or =
             if(equal.test(userPrg.charAt(secondPointer+1))){
               // boolop ==
-              this.createToken("T_Equals", "==");
+              this.createToken("T_Equal", "==");
               // since we look at next char..
               this.currentColumn++;
               secondPointer++;

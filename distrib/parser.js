@@ -75,37 +75,45 @@ var Compiler;
         };
         Parser.prototype.parseStmtList = function () {
             var currToken = this.tokenBank.pop();
-            if (this.parsePrintStmt()) {
-                this.parseStmtList();
-            }
-            else if (this.parseAssignStmt()) {
-                this.parseStmtList();
-            }
-            else if (this.parseVarDecl()) {
-                this.parseStmtList();
-            }
-            else if (this.parseWhileStmt()) {
-                this.parseStmtList();
-            }
-            else if (this.parseIfStmt()) {
-                this.parseStmtList();
-            }
-            else if (this.parseBlock()) {
-                this.parseStmtList();
+            if (this.parsePrintStmt() || this.parseAssignStmt()
+                || this.parseVarDecl() || this.parseWhileStmt()
+                || this.parseIfStmt() || this.parseBlock()) {
+                if (this.parseStmtList()) {
+                    // umm...
+                }
+                else {
+                    return false;
+                }
             }
             else {
+                // can be empty
                 return true;
             }
         };
+        // done?
         Parser.prototype.parsePrintStmt = function () {
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_Print")) {
                 currToken = this.tokenBank.pop();
                 if (currToken.isEqual("T_OpenParen")) {
                     if (this.parseExpr()) {
+                        currToken = this.tokenBank.pop();
+                        if (currToken.isEqual("T_CloseParen")) {
+                            return true;
+                        }
+                        else {
+                            // expected )
+                            return false;
+                        }
+                    }
+                    else {
+                        // expected expr
+                        return false;
                     }
                 }
                 else {
+                    // expected open paren
+                    return false;
                 }
             }
             else {
@@ -113,13 +121,23 @@ var Compiler;
                 return false;
             }
         };
+        // done?
         Parser.prototype.parseAssignStmt = function () {
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_Id")) {
                 currToken = this.tokenBank.pop();
                 if (currToken.isEqual("T_Assignment")) {
                     if (this.parseExpr()) {
+                        return true;
                     }
+                    else {
+                        // expected expr
+                        return false;
+                    }
+                }
+                else {
+                    // expected assignment
+                    return false;
                 }
             }
             else {
@@ -127,33 +145,78 @@ var Compiler;
                 return false;
             }
         };
+        // done?
         Parser.prototype.parseVarDecl = function () {
-            return this.parseType();
+            var currToken = this.tokenBank.pop();
+            if (currToken.isEqual("T_VarType")) {
+                this.csTree.addBranchNode(currToken.tValue);
+                if (this.parseId()) {
+                    return true;
+                }
+                else {
+                    //error, expected id
+                    return false;
+                }
+            }
+            else {
+                // no error
+                this.tokenBank.push(currToken);
+                return false;
+            }
         };
+        // done?
         Parser.prototype.parseWhileStmt = function () {
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_While")) {
+                this.csTree.addBranchNode(currToken.tValue);
+                if (this.parseBoolExpr()) {
+                    if (this.parseBlock()) {
+                        return true;
+                    }
+                    else {
+                        // expected block
+                        return false;
+                    }
+                }
+                else {
+                    // expected boolexpr
+                    return false;
+                }
             }
             else {
                 this.tokenBank.push(currToken);
                 return false;
             }
         };
+        // done?
         Parser.prototype.parseIfStmt = function () {
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_If")) {
+                this.csTree.addBranchNode(currToken.tValue);
+                if (this.parseBoolExpr()) {
+                    if (this.parseBlock()) {
+                        return true;
+                    }
+                    else {
+                        // expected block
+                        return false;
+                    }
+                }
+                else {
+                    // expected boolexpr
+                    return false;
+                }
             }
             else {
                 this.tokenBank.push(currToken);
                 return false;
             }
         };
+        // done?
         Parser.prototype.parseExpr = function () {
-            if (this.parseIntExpr()) {
-            }
-            else if (this.parseStrExpr()) {
-            }
-            else if (this.parseBoolExpr()) {
+            if (this.parseIntExpr() || this.parseStrExpr()
+                || this.parseBoolExpr() || this.parseId()) {
+                return true;
             }
             else {
                 return false;
@@ -164,11 +227,18 @@ var Compiler;
             if (currToken.isEqual("T_Digit")) {
                 currToken = this.tokenBank.pop();
                 if (currToken.isEqual("T_Addition")) {
-                    return true;
+                    if (this.parseExpr()) {
+                        return true;
+                    }
+                    else {
+                        // expected parseExpr
+                        return false;
+                    }
                 }
                 else {
-                    //error
-                    return false;
+                    // just digit, still valid
+                    this.tokenBank.push(currToken);
+                    return true;
                 }
             }
             else {
@@ -197,12 +267,41 @@ var Compiler;
                 return false;
             }
         };
+        // done ?
         Parser.prototype.parseBoolExpr = function () {
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_OpenParen")) {
-                return true;
+                this.csTree.addBranchNode(currToken.tValue);
+                if (this.parseExpr()) {
+                    currToken = this.tokenBank.pop();
+                    if (currToken.isEqual("T_NotEqual") || currToken.isEqual("T_Equal")) {
+                        this.csTree.addBranchNode(currToken.tValue);
+                        if (this.parseExpr()) {
+                            currToken = this.tokenBank.pop();
+                            if (currToken.isEqual("T_CloseParen")) {
+                                this.csTree.addBranchNode(currToken.tValue);
+                                return true;
+                            }
+                            else {
+                                // expected close paren
+                                this.tokenBank.push(currToken);
+                                return false;
+                            }
+                        }
+                        // expected expr
+                        return false;
+                    }
+                    else {
+                        // expected boolop
+                        this.tokenBank.push(currToken);
+                        return false;
+                    }
+                }
+                // expected expr
+                return false;
             }
             else if (currToken.isEqual("T_BoolVal")) {
+                this.csTree.addBranchNode(currToken.tValue);
                 return true;
             }
             else {
@@ -213,32 +312,20 @@ var Compiler;
         Parser.prototype.parseCharList = function () {
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_Char") || currToken.isEqual("T_Space")) {
+                this.csTree.addBranchNode(currToken.tValue);
                 return this.parseCharList();
             }
             else {
+                // add node or no?
                 this.tokenBank.push(currToken);
                 return true;
                 // can be empty string
             }
         };
-        Parser.prototype.parseType = function () {
-            var currToken = this.tokenBank.pop();
-            if (currToken.isEqual("T_VarType")) {
-                if (this.parseId()) {
-                    return true;
-                }
-                else {
-                    //error, expected id
-                }
-            }
-            else {
-                this.tokenBank.push(currToken);
-                return false;
-            }
-        };
         Parser.prototype.parseId = function () {
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_Id")) {
+                this.csTree.addBranchNode(currToken.tValue);
                 return true;
             }
             else {
