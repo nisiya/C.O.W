@@ -14,15 +14,23 @@ module Compiler {
     public root: TreeNode;
     public current: TreeNode;
 
-    constructor() {
-      this.root = null;
-      this.current = null;
+    constructor(value) {
+      this.root = new TreeNode(value, null);
+      this.current = this.root;
     }
     
     public addBranchNode(value): void{
       let node:TreeNode = new TreeNode(value, this.current);
       this.current.childrenNode.push(node);
       this.current = node;
+    }
+
+    public addLeafNode(value): void{
+      
+    }
+
+    public moveUp(): void{
+      this.current = this.current.parentNode;
     }
   }
 

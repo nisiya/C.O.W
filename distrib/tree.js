@@ -10,14 +10,19 @@ tColumn - the column index of the token
 var Compiler;
 (function (Compiler) {
     var Tree = /** @class */ (function () {
-        function Tree() {
-            this.root = null;
-            this.current = null;
+        function Tree(value) {
+            this.root = new TreeNode(value, null);
+            this.current = this.root;
         }
         Tree.prototype.addBranchNode = function (value) {
             var node = new TreeNode(value, this.current);
             this.current.childrenNode.push(node);
             this.current = node;
+        };
+        Tree.prototype.addLeafNode = function (value) {
+        };
+        Tree.prototype.moveUp = function () {
+            this.current = this.current.parentNode;
         };
         return Tree;
     }());
