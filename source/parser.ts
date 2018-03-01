@@ -23,25 +23,29 @@ module Compiler {
         if(currToken.isEqual("T_EOP")){
           this.csTree.addBranchNode(currToken.tValue);
           // finished
+          console.log("yay");
           return this.csTree;
         } // no need for error bc EOP token always theres
       } else{
-        // error will already be handled in recursion
-        // but return null
-        return null;
+        let errorToken = this.tokenBank.pop();
+        this.printError("{", errorToken.tValue);
+        console.log("oh no");
+        return this.csTree;
       }
     }
 
     // 2. <Block> -> { <StatementList> }
     public parseBlock(): boolean{
-      this.csTree.addBranchNode("Block");
       let currToken = this.tokenBank.pop();
       if(currToken.isEqual("T_OpenBracket")){
+        this.print("{", currToken.tValue);
+        this.csTree.addBranchNode("Block");
         this.csTree.addBranchNode(currToken.tValue);
         this.csTree.moveUp();
         if(this.parseStmtList()){
           currToken = this.tokenBank.pop();
           if(currToken.isEqual("T_CloseBracket")){
+            this.print("}", currToken.tValue);
             this.csTree.addBranchNode(currToken.tValue);
             this.csTree.moveUp(); // return to prg
             return true;
@@ -56,7 +60,8 @@ module Compiler {
         }
       } else{
         // expected { error
-        this.printError("{", currToken.tValue);
+        // this.printError("{", currToken.tValue);
+        this.tokenBank.push(currToken);
         return false;
       }
     }
@@ -132,7 +137,7 @@ module Compiler {
     // 12. <AssignmentStatement> -> <Id> = <Expr>
     public parseAssignStmt(): boolean{
       let currToken = this.tokenBank.pop();
-      if(this.parseId()){ // confliction!!
+      if(currToken.isEqual("T_Id")){ // confliction!! temp fix
         // start of AssignmentStatement
         this.csTree.addBranchNode("Statement");
         this.csTree.addBranchNode("AssignmentStatement");
@@ -167,6 +172,7 @@ module Compiler {
       let currToken = this.tokenBank.pop();
       // 29. <type> -> <int> | <string> | <boolean>
       if(currToken.isEqual("T_VarType")){
+        this.print("T_VarType", currToken.tValue);
         this.csTree.addBranchNode("Statement");
         this.csTree.addBranchNode("VarDecl");
         this.csTree.addBranchNode(currToken.tValue);
@@ -299,7 +305,7 @@ module Compiler {
     // 22. <StringExpr> -> " <CharList> "
     public parseStrExpr(): boolean{
       let currToken = this.tokenBank.pop();
-      if(currToken.isEqual("T_Quote")){
+      if(currToken.isEqual("T_OpenQuote")){
         // start of StringExpr
         this.csTree.addBranchNode("StringExpr");
         this.csTree.addBranchNode(currToken.tValue);
@@ -402,6 +408,7 @@ module Compiler {
     public parseId(): boolean{
       let currToken = this.tokenBank.pop();
       if(currToken.isEqual("T_Id")){
+        this.print("T_Id", currToken.tValue);
         this.csTree.addBranchNode(currToken.tValue);
         this.csTree.moveUp(); // VarDecl, Expr, or AssignmentStatement 
         return true;
@@ -414,6 +421,14 @@ module Compiler {
 
 
     public printError(expectedVal: String, foundVal: String): void{
+      console.log("error");
+      let output: HTMLInputElement = <HTMLInputElement> document.getElementById("output");
+      output.value += "Expected [" + expectedVal + "]. Found [" + foundVal + "].";
+      output.scrollTop = output.scrollHeight;
+    }
+
+    public print(expectedVal: String, foundVal: String): void{
+      console.log("print");
       let output: HTMLInputElement = <HTMLInputElement> document.getElementById("output");
       output.value += "Expected [" + expectedVal + "]. Found [" + foundVal + "].";
       output.scrollTop = output.scrollHeight;

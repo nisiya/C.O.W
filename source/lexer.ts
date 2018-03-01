@@ -24,7 +24,7 @@ module Compiler {
       let quote:RegExp = /\"/;
       let isOpenQuote:boolean = false;
       let newLine:RegExp = /\n|\r/;
-      let space:RegExp = /[ ]/;
+      let space:RegExp = /[ ]|\t/;
       let whitespace:RegExp = /^\s*$/;
       let eop:RegExp = /\$/;
       let commentSlash:RegExp = /\//;

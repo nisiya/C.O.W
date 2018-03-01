@@ -34,8 +34,8 @@ module Compiler {
       return this.tid + " [ " + this.tValue + " ] on line " + this.tLine + ", column " + this.tColumn;
     }
 
-    public match(regExp: RegExp){
-      return regExp.test(this.tValue); 
+    public match(value: string){
+      return this.tValue == value;
     }
 
   }

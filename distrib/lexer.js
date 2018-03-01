@@ -20,7 +20,7 @@ var Compiler;
             var quote = /\"/;
             var isOpenQuote = false;
             var newLine = /\n|\r/;
-            var space = /[ ]/;
+            var space = /[ ]|\t/;
             var whitespace = /^\s*$/;
             var eop = /\$/;
             var commentSlash = /\//;

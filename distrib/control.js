@@ -20,7 +20,8 @@ var Compiler;
             if (tokenBank != null) {
                 output.value += "\n Parser Start... \n =============";
                 output.scrollTop = output.scrollHeight;
-                // parser.start();
+                var csTree = parser.start(tokenBank);
+                console.log(csTree);
             }
         };
         Control.verboseMode = function (btn) {

@@ -21,7 +21,8 @@ module Compiler {
       if(tokenBank != null){
         output.value += "\n Parser Start... \n =============";
         output.scrollTop = output.scrollHeight;
-        // parser.start();
+        let csTree: Tree = parser.start(tokenBank);
+        console.log(csTree);
       }
     }
 

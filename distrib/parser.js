@@ -20,25 +20,29 @@ var Compiler;
                 if (currToken.isEqual("T_EOP")) {
                     this.csTree.addBranchNode(currToken.tValue);
                     // finished
+                    console.log("yay");
                     return this.csTree;
                 } // no need for error bc EOP token always theres
             }
             else {
-                // error will already be handled in recursion
-                // but return null
-                return null;
+                var errorToken = this.tokenBank.pop();
+                this.printError("{", errorToken.tValue);
+                console.log("oh no");
+                return this.csTree;
             }
         };
         // 2. <Block> -> { <StatementList> }
         Parser.prototype.parseBlock = function () {
-            this.csTree.addBranchNode("Block");
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_OpenBracket")) {
+                this.print("{", currToken.tValue);
+                this.csTree.addBranchNode("Block");
                 this.csTree.addBranchNode(currToken.tValue);
                 this.csTree.moveUp();
                 if (this.parseStmtList()) {
                     currToken = this.tokenBank.pop();
                     if (currToken.isEqual("T_CloseBracket")) {
+                        this.print("}", currToken.tValue);
                         this.csTree.addBranchNode(currToken.tValue);
                         this.csTree.moveUp(); // return to prg
                         return true;
@@ -56,7 +60,8 @@ var Compiler;
             }
             else {
                 // expected { error
-                this.printError("{", currToken.tValue);
+                // this.printError("{", currToken.tValue);
+                this.tokenBank.push(currToken);
                 return false;
             }
         };
@@ -134,7 +139,7 @@ var Compiler;
         // 12. <AssignmentStatement> -> <Id> = <Expr>
         Parser.prototype.parseAssignStmt = function () {
             var currToken = this.tokenBank.pop();
-            if (this.parseId()) {
+            if (currToken.isEqual("T_Id")) {
                 // start of AssignmentStatement
                 this.csTree.addBranchNode("Statement");
                 this.csTree.addBranchNode("AssignmentStatement");
@@ -171,6 +176,7 @@ var Compiler;
             var currToken = this.tokenBank.pop();
             // 29. <type> -> <int> | <string> | <boolean>
             if (currToken.isEqual("T_VarType")) {
+                this.print("T_VarType", currToken.tValue);
                 this.csTree.addBranchNode("Statement");
                 this.csTree.addBranchNode("VarDecl");
                 this.csTree.addBranchNode(currToken.tValue);
@@ -310,7 +316,7 @@ var Compiler;
         // 22. <StringExpr> -> " <CharList> "
         Parser.prototype.parseStrExpr = function () {
             var currToken = this.tokenBank.pop();
-            if (currToken.isEqual("T_Quote")) {
+            if (currToken.isEqual("T_OpenQuote")) {
                 // start of StringExpr
                 this.csTree.addBranchNode("StringExpr");
                 this.csTree.addBranchNode(currToken.tValue);
@@ -417,6 +423,7 @@ var Compiler;
         Parser.prototype.parseId = function () {
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_Id")) {
+                this.print("T_Id", currToken.tValue);
                 this.csTree.addBranchNode(currToken.tValue);
                 this.csTree.moveUp(); // VarDecl, Expr, or AssignmentStatement 
                 return true;
@@ -428,6 +435,13 @@ var Compiler;
             }
         };
         Parser.prototype.printError = function (expectedVal, foundVal) {
+            console.log("error");
+            var output = document.getElementById("output");
+            output.value += "Expected [" + expectedVal + "]. Found [" + foundVal + "].";
+            output.scrollTop = output.scrollHeight;
+        };
+        Parser.prototype.print = function (expectedVal, foundVal) {
+            console.log("print");
             var output = document.getElementById("output");
             output.value += "Expected [" + expectedVal + "]. Found [" + foundVal + "].";
             output.scrollTop = output.scrollHeight;
