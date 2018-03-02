@@ -100,7 +100,7 @@ LEXER --> ERROR! Invalid token [ ] on line 2, column 7
 {int a
 a = 123}$
 ```
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**Result:** ERROR detected
+*~nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**Result:** ERROR detected~* LEX allows this. Parser will catch it
 ```
 LEXER --> ERROR! Invalid token [ 123 ] on line 2, column 4
 ```
