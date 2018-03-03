@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link href="materialize/css/materialize.css" type="text/css" rel="stylesheet" media="screen,projection"/>
   <link href="materialize/css/style.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
   <!-- Globals CONSTANTS and _Variables. Must included be first. -->
   <script type="text/javascript" src="distrib/globals.js"></script>
@@ -35,16 +36,53 @@
         </div>
         <div class="col s3">
           <!-- Dropdown Trigger -->
-          <a class='dropdown-button indigo lighten-1 waves-effect waves-light btn' href='#' data-activates='dropdown1'>Test Cases</a>
-
-          <!-- Dropdown Structure -->
-          <ul id='dropdown1' class='dropdown-content'>
+          <a class='dropdown-button indigo lighten-1 waves-effect waves-light btn' href='#' data-activates='dropdown1' data-beloworigin="true">
+            Test Cases<i class="material-icons right">arrow_drop_down</i>
+          </a>
+          <ul id='dropdown1' class='dropdown-content grey lighten-5'>
+            <li><a class='dropdown-button2 d' href='#' data-activates='goodPrg' data-hover="hover" data-alignment="left">
+              Good Programs<i class="tiny material-icons right">chevron_right</i>
+            </a></li>
+            <li><a class='dropdown-button2 d' href='#' data-activates='warningPrg' data-hover="hover" data-alignment="left">
+              Warning Programs<i class="tiny material-icons right">chevron_right</i>
+            </a></li>
+            <li><a class='dropdown-button2 d' href='#' data-activates='lexFail' data-hover="hover" data-alignment="left">
+              Lex Fail<i class="tiny material-icons right">chevron_right</i>
+            </a></li>
+            <li><a class='dropdown-button2 d' href='#' data-activates='parseFail' data-hover="hover" data-alignment="left">
+              Parse Fail<i class="tiny material-icons right">chevron_right</i>
+            </a></li>
+            <li><a class='dropdown-button2 d' href='#' data-activates='saFail' data-hover="hover" data-alignment="left">
+              SA Fail<i class="tiny material-icons right">chevron_right</i>
+            </a></li>
+          </ul>
+          <ul id='goodPrg' class='dropdown-content grey lighten-5'>
+            <li><a id="simple" href="#!" onclick="Compiler.Control.changeInput(this);">Simple</a></li>
+            <li><a id="fugly" href="#!" onclick="Compiler.Control.changeInput(this);">Fugly Good</a></li>
+          </ul>
+          <ul id='warningPrg' class='dropdown-content grey lighten-5'>
+            <li><a id="warningLex" href="#!" onclick="Compiler.Control.changeInput(this);">
+                Missing EOP
+            </a></li>
+          </ul>
+          <ul id='lexFail' class='dropdown-content grey lighten-5'>
+            <li><a id="lexSymbol" href="#!" onclick="Compiler.Control.changeInput(this);">
+              Symbol Error
+            </a></li>
+            <li><a id="lexString" href="#!" onclick="Compiler.Control.changeInput(this);">
+                String Error
+            </a></li>
+          </ul>
+          <ul id='parseFail' class='dropdown-content grey lighten-5'>
+            <li><a id="parsePrint" href="#!" onclick="Compiler.Control.changeInput(this);">
+                Print Error
+            </a></li>
+          </ul>
+          <ul id='saFail' class='dropdown-content grey lighten-5'>
             <li><a href="#!">one</a></li>
             <li><a href="#!">two</a></li>
-            <li class="divider"></li>
+            <!-- <li class="divider"></li> -->
             <li><a href="#!">three</a></li>
-            <li><a href="#!"><i class="material-icons">view_module</i>four</a></li>
-            <li><a href="#!"><i class="material-icons">cloud</i>five</a></li>
           </ul>
         </div>
         <div class="col s3">
@@ -100,32 +138,68 @@
       <div class="col s6">
         <div class="card-panel blue-grey lighten-5">
           <h5 class="center"> Log </h5>
-          <textarea class="white" id="output" disabled></textarea>
+          <textarea class="white output" id="log" disabled></textarea>
         </div>
       </div>
     </div>
   </div>
-  <!-- <div class="container">
-    <div class="section">
-
-        Blocks template  
+  <div class="container">
+    <div class="section"> 
       <div class="row center">
-        <div class="col s12 m4">
-          <textarea id="test">apple</textarea>
+        <div class="col s6">
+          <ul class="collapsible" data-collapsible="accordination">
+            <li>
+              <div class="collapsible-header active" id="csTreeCollapse">
+                CST <i class="material-icons right">unfold_more</i>
+              </div>
+              <div class="collapsible-body">
+                <div class="card-panel blue-grey lighten-5">
+                  <textarea class="white output" id="csTree" disabled></textarea>
+                </div>
+              </div>
+            </li>
+            <li>
+              <div class="collapsible-header">
+                AST <i class="material-icons right">unfold_more</i>
+              </div>
+              <div class="collapsible-body">
+                <div class="card-panel blue-grey lighten-5">
+]                  <textarea class="white output" id="asTree" disabled></textarea>
+                </div>
+              </div>
+            </li>
+          </ul>
         </div>
-
-        <div class="col s12 m4">
-          block 2
-        </div>
-
-        <div class="col s12 m4">
-          block 3
+        <div class="col s6">
+          <ul class="collapsible" data-collapsible="accordination">
+              <li>
+                <div class="collapsible-header active" id="csTreeCollapse">
+                  Symbol Table <i class="material-icons right">unfold_more</i>
+                </div>
+                <div class="collapsible-body">
+                  <div class="card-panel blue-grey lighten-5">
+                    <textarea class="white output" id="symbolTable" disabled></textarea>
+                  </div>
+                </div>
+              </li>
+              <li>
+                <div class="collapsible-header">
+                  Symbol Tree <i class="material-icons right">unfold_more</i>
+                </div>
+                <div class="collapsible-body">
+                  <div class="card-panel blue-grey lighten-5">
+                    <h5 class="center"> AST </h5>
+                    <textarea class="white output" id="symbolTree" disabled></textarea>
+                  </div>
+                </div>
+              </li>
+            </ul>
         </div>
       </div>
 
     </div>
     <br><br>
-  </div> -->
+  </div>
 
   <footer class="page-footer red darken-3">
     <div class="container">
@@ -157,6 +231,16 @@
       // blockScrolling: Infinity
     });
   </script>
-
+  <script>
+    $('.dropdown-button2').dropdown({
+      inDuration: 300,
+      outDuration: 225,
+      constrain_width: false, // Does not change width of dropdown to that of the activator
+      hover: true, // Activate on hover
+      gutter: ($('.dropdown-button').width()*3)/2.5 + 5, // Spacing from edge
+      belowOrigin: false, // Displays dropdown below the button
+      alignment: 'left' // Displays dropdown with edge aligned to the left of button
+    });
+  </script>
   </body>
 </html>

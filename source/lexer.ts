@@ -1,5 +1,6 @@
 ///<reference path="globals.ts" />
 ///<reference path="token.ts" />
+///<reference path="parser.ts" />
 
 /* ------------
 Lexer.ts
@@ -14,7 +15,7 @@ module Compiler {
     public currentColumn: number;
     public tokenBank: Token[];
 
-    public start(): Token[] {
+    public start(userPrg): Token[] {
       // RegExp
       let alphaNumeric:RegExp = /[a-z0-9]/;
       let charKey = /[a-z]/;
@@ -25,7 +26,6 @@ module Compiler {
       let isOpenQuote:boolean = false;
       let newLine:RegExp = /\n|\r/;
       let space:RegExp = /[ ]|\t/;
-      let whitespace:RegExp = /^\s*$/;
       let eop:RegExp = /\$/;
       let commentSlash:RegExp = /\//;
       let commentStar:RegExp = /\*/;
@@ -34,14 +34,6 @@ module Compiler {
       this.currentColumn = 0;
       this.tokenBank = new Array<Token>();
 
-      let userPrg:string = editor.getValue();
-      // check if input is not null or just whitespace first
-      if(whitespace.test(userPrg)){
-        let output: HTMLInputElement = <HTMLInputElement> document.getElementById("output");
-        output.value += "\n   LEXER --> ABORTED! Missing input or only contains whitespaces"
-                     + "\n ============= \n Lexer Failed... 0 Warning(s) ... 1 Error(s)";
-        return this.tokenBank; 
-      }
       // let userPrg:string = this.removeComments(userPrg);
       let firstPointer:number = 0;
       let secondPointer:number = 0;
@@ -74,6 +66,7 @@ module Compiler {
             break;
           } else if(eop.test(currentChar)){
             this.createToken("T_EOP", "$");
+            break;
           } else if(space.test(currentChar)){
             // lexer ignores whitespace
           } else if(newLine.test(currentChar)){
@@ -299,11 +292,11 @@ module Compiler {
         tempColumn += tval.length;
         buffer = buffer.substring(tval.length);
       }
-      // means no erro occurred
+      // means no error occurred
       return false;
     }
     public displayTokens(): void{
-      let output: HTMLInputElement = <HTMLInputElement> document.getElementById("output");
+      let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
       let lexError: number = 0;
       let lexWarning: number = 0;
       let index: number = 0;
@@ -312,10 +305,7 @@ module Compiler {
       // print all tokens
       if(_VerboseMode){
         while(index < this.tokenBank.length-1){
-          output.value += "\n   LEXER --> " + token.toString();
-          if(token.isEqual("T_EOP")){
-            output.value += "\n ============= \n   LEXER --> START OF NEW PROGRAM \n ============= ";
-          }
+          log.value += "\n   LEXER --> " + token.toString();
           index++; 
           token = this.tokenBank[index];
         }
@@ -325,16 +315,16 @@ module Compiler {
       }
       // reached the last token
       if(token.isEqual("T_Invalid")){
-        output.value += "\n   LEXER --> ERROR! Invalid token"
+        log.value += "\n   LEXER --> ERROR! Invalid token"
                       + " [ " + token.tValue + " ] on line " + token.tLine
                       + ", column " + token.tColumn;
         lexError++;
       } else {
         if(_VerboseMode){
-          output.value += "\n   LEXER --> " + token.toString();
+          log.value += "\n   LEXER --> " + token.toString();
         }
         if(!token.isEqual("T_EOP")){
-          output.value += "\n   LEXER --> WARNING! No End Of Program [$] found."
+          log.value += "\n   LEXER --> WARNING! No End Of Program [$] found."
                       + "\n Inserted at line " + token.tLine + ", column " + (token.tColumn+1);
           let eopToken: Token = new Token("T_EOP", "$", token.tLine, token.tColumn+1);
           this.tokenBank.push(eopToken);
@@ -343,12 +333,12 @@ module Compiler {
         }
       }
       if(lexError == 0){
-        output.value += "\n ============= \n Lexer Completed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
-        output.value += "\n Token bank loaded... \n =============";
+        log.value += "\n ============= \n Lexer Completed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
+        log.value += "\n Token bank loaded... \n =============";
       } else {
-        output.value += "\n ============= \n Lexer Failed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
+        log.value += "\n ============= \n Lexer Failed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
       }
-      output.scrollTop = output.scrollHeight;
+      log.scrollTop = log.scrollHeight;
     }
   }
 }

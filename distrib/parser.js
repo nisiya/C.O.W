@@ -14,19 +14,26 @@ var Compiler;
         // 1. <Program> -> <Block> $
         Parser.prototype.start = function (tokenBank) {
             this.tokenBank = tokenBank.reverse();
+            this.error = false;
+            this.printStage("parse()");
             this.csTree = new Compiler.Tree("Program");
+            this.printStage("parseProgram()");
             if (this.parseBlock()) {
                 var currToken = this.tokenBank.pop();
                 if (currToken.isEqual("T_EOP")) {
-                    this.csTree.addBranchNode(currToken.tValue);
+                    this.csTree.addLeafNode(currToken.tValue);
                     // finished
-                    console.log("yay");
+                    this.printStage("Parse completed successfully");
+                    this.csTree.printTree();
                     return this.csTree;
                 } // no need for error bc EOP token always theres
             }
             else {
                 var errorToken = this.tokenBank.pop();
-                this.printError("{", errorToken.tValue);
+                if (!this.error) {
+                    this.printError("{", errorToken);
+                    this.error = true;
+                }
                 console.log("oh no");
                 return this.csTree;
             }
@@ -35,21 +42,23 @@ var Compiler;
         Parser.prototype.parseBlock = function () {
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_OpenBracket")) {
-                this.print("{", currToken.tValue);
+                // this.print("{", currToken.tValue);
+                this.printStage("parseBlock()");
                 this.csTree.addBranchNode("Block");
-                this.csTree.addBranchNode(currToken.tValue);
-                this.csTree.moveUp();
+                this.csTree.addLeafNode(currToken.tValue);
                 if (this.parseStmtList()) {
                     currToken = this.tokenBank.pop();
                     if (currToken.isEqual("T_CloseBracket")) {
-                        this.print("}", currToken.tValue);
-                        this.csTree.addBranchNode(currToken.tValue);
-                        this.csTree.moveUp(); // return to prg
+                        // this.print("}", currToken.tValue);
+                        this.csTree.addLeafNode(currToken.tValue);
                         return true;
                     }
                     else {
                         // expected } error
-                        this.printError("}", currToken.tValue);
+                        if (!this.error) {
+                            this.printError("T_CloseBracket", currToken);
+                            this.error = true;
+                        }
                         return false;
                     }
                 }
@@ -69,6 +78,7 @@ var Compiler;
         // 4.                 -> end
         Parser.prototype.parseStmtList = function () {
             this.csTree.addBranchNode("StatementList");
+            this.printStage("parseStatementList()");
             /*
              * 5. <Statement> -> <PrintStatement>
              * 6.             -> <AssignmentStatement>
@@ -80,7 +90,8 @@ var Compiler;
             if (this.parsePrintStmt() || this.parseAssignStmt()
                 || this.parseVarDecl() || this.parseWhileStmt()
                 || this.parseIfStmt() || this.parseBlock()) {
-                this.csTree.moveUp(); // to Statement
+                this.printStage("parseStatement()");
+                // this.csTree.moveUp(); // to Statement
                 this.csTree.moveUp(); // to StatementList
                 return this.parseStmtList();
             }
@@ -98,34 +109,41 @@ var Compiler;
                 // start of print statement
                 this.csTree.addBranchNode("Statement");
                 this.csTree.addBranchNode("PrintStatement");
-                this.csTree.addBranchNode(currToken.tValue);
-                this.csTree.moveUp();
+                this.printStage("parsePrintStatement()");
+                this.csTree.addLeafNode(currToken.tValue);
                 currToken = this.tokenBank.pop();
                 if (currToken.isEqual("T_OpenParen")) {
-                    this.csTree.addBranchNode(currToken.tValue);
-                    this.csTree.moveUp();
+                    this.csTree.addLeafNode(currToken.tValue);
                     if (this.parseExpr()) {
                         currToken = this.tokenBank.pop();
                         if (currToken.isEqual("T_CloseParen")) {
-                            this.csTree.addBranchNode(currToken.tValue);
-                            this.csTree.moveUp(); // to PrintStatement
+                            this.csTree.addLeafNode(currToken.tValue);
                             return true; // current = PrintStatement
                         }
                         else {
                             // expected )
-                            this.printError(")", currToken.tValue);
+                            if (!this.error) {
+                                this.printError("T_CloseParen", currToken);
+                                this.error = true;
+                            }
                             return false;
                         }
                     }
                     else {
                         // expected expr
-                        this.printError("Expr", currToken.tValue);
+                        if (!this.error) {
+                            this.printError("Expr", currToken);
+                            this.error = true;
+                        }
                         return false;
                     }
                 }
                 else {
                     // expected (
-                    this.printError("(", currToken.tValue);
+                    if (!this.error) {
+                        this.printError("T_OpenParen", currToken);
+                        this.error = true;
+                    }
                     return false;
                 }
             }
@@ -143,24 +161,32 @@ var Compiler;
                 // start of AssignmentStatement
                 this.csTree.addBranchNode("Statement");
                 this.csTree.addBranchNode("AssignmentStatement");
-                this.csTree.addBranchNode(currToken.tValue);
+                this.printStage("parseAssignmentStatement()");
+                this.csTree.addBranchNode("Id");
+                this.printStage("parseId()");
+                this.csTree.addLeafNode(currToken.tValue);
                 this.csTree.moveUp();
                 currToken = this.tokenBank.pop();
                 if (currToken.isEqual("T_Assignment")) {
-                    this.csTree.addBranchNode(currToken.tValue);
-                    this.csTree.moveUp(); // to AssignmentStatementS
+                    this.csTree.addLeafNode(currToken.tValue);
                     if (this.parseExpr()) {
                         return true; // current = AssignmentStatements
                     }
                     else {
                         // expected expr
-                        this.printError("Expr", currToken.tValue);
+                        if (!this.error) {
+                            this.printError("Expr", currToken);
+                            this.error = true;
+                        }
                         return false;
                     }
                 }
                 else {
                     // expected =
-                    this.printError("=", currToken.tValue);
+                    if (!this.error) {
+                        this.printError("T_Assignment", currToken);
+                        this.error = true;
+                    }
                     return false;
                 }
             }
@@ -176,16 +202,21 @@ var Compiler;
             var currToken = this.tokenBank.pop();
             // 29. <type> -> <int> | <string> | <boolean>
             if (currToken.isEqual("T_VarType")) {
-                this.print("T_VarType", currToken.tValue);
+                // this.print("T_VarType", currToken.tValue);
                 this.csTree.addBranchNode("Statement");
                 this.csTree.addBranchNode("VarDecl");
-                this.csTree.addBranchNode(currToken.tValue);
+                this.printStage("parseVarDecl()");
+                this.csTree.addBranchNode("type");
+                this.csTree.addLeafNode(currToken.tValue);
                 this.csTree.moveUp();
                 if (this.parseId()) {
                     return true; // current = VarDecl
                 }
                 else {
-                    this.printError("Id", currToken.tValue);
+                    if (!this.error) {
+                        this.printError("T_Id", currToken);
+                        this.error = true;
+                    }
                     return false;
                 }
             }
@@ -202,21 +233,27 @@ var Compiler;
             if (currToken.isEqual("T_While")) {
                 this.csTree.addBranchNode("Statement");
                 this.csTree.addBranchNode("WhileStatement");
-                this.csTree.addBranchNode(currToken.tValue);
-                this.csTree.moveUp();
+                this.printStage("parseWhileStatement()");
+                this.csTree.addLeafNode(currToken.tValue);
                 if (this.parseBoolExpr()) {
                     if (this.parseBlock()) {
                         return true; // current = WhileStatement
                     }
                     else {
                         // expected block
-                        this.printError("Block", currToken.tValue);
+                        if (!this.error) {
+                            this.printError("Block", currToken);
+                            this.error = true;
+                        }
                         return false;
                     }
                 }
                 else {
                     // expected boolexpr
-                    this.printError("BoolExpr", currToken.tValue);
+                    if (!this.error) {
+                        this.printError("BoolExpr", currToken);
+                        this.error = true;
+                    }
                     return false;
                 }
             }
@@ -233,21 +270,27 @@ var Compiler;
             if (currToken.isEqual("T_If")) {
                 this.csTree.addBranchNode("Statement");
                 this.csTree.addBranchNode("IfStatement");
-                this.csTree.addBranchNode(currToken.tValue);
-                this.csTree.moveUp();
+                this.printStage("parseIfStatement()");
+                this.csTree.addLeafNode(currToken.tValue);
                 if (this.parseBoolExpr()) {
                     if (this.parseBlock()) {
                         return true; // current = IfStatement
                     }
                     else {
                         // expected block
-                        this.printError("Block", currToken.tValue);
+                        if (!this.error) {
+                            this.printError("Block", currToken);
+                            this.error = true;
+                        }
                         return false;
                     }
                 }
                 else {
                     // expected boolexpr
-                    this.printError("BoolExpr", currToken.tValue);
+                    if (!this.error) {
+                        this.printError("BoolExpr", currToken);
+                        this.error = true;
+                    }
                     return false;
                 }
             }
@@ -268,7 +311,7 @@ var Compiler;
             this.csTree.addBranchNode("Expr");
             if (this.parseIntExpr() || this.parseStrExpr()
                 || this.parseBoolExpr() || this.parseId()) {
-                this.csTree.moveUp(); // to Expr
+                this.printStage("parseExpr()");
                 this.csTree.moveUp(); // before Expr
                 return true;
             }
@@ -285,19 +328,23 @@ var Compiler;
             if (currToken.isEqual("T_Digit")) {
                 // start of IntExpr
                 this.csTree.addBranchNode("IntExpr");
-                this.csTree.addBranchNode(currToken.tValue);
+                this.printStage("parseIntExpr()");
+                this.csTree.addBranchNode("digit");
+                this.csTree.addLeafNode(currToken.tValue);
                 this.csTree.moveUp();
                 currToken = this.tokenBank.pop();
                 // 35. <intop> -> <+>
                 if (currToken.isEqual("T_Addition")) {
-                    this.csTree.addBranchNode(currToken.tValue);
-                    this.csTree.moveUp();
+                    this.csTree.addLeafNode(currToken.tValue);
                     if (this.parseExpr()) {
                         return true;
                     }
                     else {
                         // expected Expr
-                        this.printError("Expr", currToken.tValue);
+                        if (!this.error) {
+                            this.printError("Expr", currToken);
+                            this.error = true;
+                        }
                         return false;
                     }
                 }
@@ -319,17 +366,19 @@ var Compiler;
             if (currToken.isEqual("T_OpenQuote")) {
                 // start of StringExpr
                 this.csTree.addBranchNode("StringExpr");
-                this.csTree.addBranchNode(currToken.tValue);
-                this.csTree.moveUp();
+                this.printStage("parseStringExpr()");
+                this.csTree.addLeafNode(currToken.tValue);
                 if (this.parseCharList()) {
                     var currToken_1 = this.tokenBank.pop();
                     if (currToken_1.isEqual("T_CloseQuote")) {
-                        this.csTree.addBranchNode(currToken_1.tValue);
-                        this.csTree.moveUp(); // back to StringExpr
+                        this.csTree.addLeafNode(currToken_1.tValue);
                         return true;
                     }
                     else {
-                        this.printError("\"", currToken_1.tValue);
+                        if (!this.error) {
+                            this.printError("T_CloseQuote", currToken_1);
+                            this.error = true;
+                        }
                         this.tokenBank.push(currToken_1);
                         return false;
                     }
@@ -348,47 +397,60 @@ var Compiler;
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_OpenParen")) {
                 this.csTree.addBranchNode("BooleanExpr");
-                this.csTree.addBranchNode(currToken.tValue);
-                this.csTree.moveUp();
+                this.printStage("parseBooleanExpr()");
+                this.csTree.addLeafNode(currToken.tValue);
                 if (this.parseExpr()) {
                     currToken = this.tokenBank.pop();
                     // 33. <boolop> -> <==> | <!=>
                     if (currToken.isEqual("T_NotEqual") || currToken.isEqual("T_Equal")) {
-                        this.csTree.addBranchNode(currToken.tValue);
+                        this.csTree.addBranchNode("boolop");
+                        this.csTree.addLeafNode(currToken.tValue);
                         this.csTree.moveUp();
                         if (this.parseExpr()) {
                             currToken = this.tokenBank.pop();
                             if (currToken.isEqual("T_CloseParen")) {
-                                this.csTree.addBranchNode(currToken.tValue);
-                                this.csTree.moveUp(); // BooleanExpr
+                                this.csTree.addLeafNode(currToken.tValue);
                                 return true;
                             }
                             else {
                                 // expected )
-                                this.printError(")", currToken.tValue);
+                                if (!this.error) {
+                                    this.printError("T_CloseParen", currToken);
+                                    this.error = true;
+                                }
                                 this.tokenBank.push(currToken);
                                 return false;
                             }
                         }
                         // expected expr
-                        this.printError("Expr", currToken.tValue);
+                        if (!this.error) {
+                            this.printError("Expr", currToken);
+                            this.error = true;
+                        }
                         return false;
                     }
                     else {
-                        this.printError("== | !=", currToken.tValue);
+                        if (!this.error) {
+                            this.printError("BoolOp", currToken);
+                            this.error = true;
+                        }
                         this.tokenBank.push(currToken);
                         return false;
                     }
                 }
                 // expected expr
-                this.printError("Expr", currToken.tValue);
+                if (!this.error) {
+                    this.printError("Expr", currToken);
+                    this.error = true;
+                }
                 return false;
             }
             else if (currToken.isEqual("T_BoolVal")) {
                 // 34. <boolval> -> <false> | <true>
                 this.csTree.addBranchNode("BooleanExpr");
-                this.csTree.addBranchNode(currToken.tValue);
-                this.csTree.moveUp(); // BooleanExpr
+                this.csTree.addBranchNode("boolval");
+                this.csTree.addLeafNode(currToken.tValue);
+                this.csTree.moveUp();
                 return true; // 
             }
             else {
@@ -408,7 +470,9 @@ var Compiler;
             // 31. <space> -> space
             if (currToken.isEqual("T_Char") || currToken.isEqual("T_Space")) {
                 this.csTree.addBranchNode("CharList");
-                this.csTree.addBranchNode(currToken.tValue);
+                this.printStage("parseCharList()");
+                this.csTree.addBranchNode("char");
+                this.csTree.addLeafNode(currToken.tValue);
                 this.csTree.moveUp();
                 return this.parseCharList();
             }
@@ -423,9 +487,11 @@ var Compiler;
         Parser.prototype.parseId = function () {
             var currToken = this.tokenBank.pop();
             if (currToken.isEqual("T_Id")) {
-                this.print("T_Id", currToken.tValue);
-                this.csTree.addBranchNode(currToken.tValue);
-                this.csTree.moveUp(); // VarDecl, Expr, or AssignmentStatement 
+                // this.print("T_Id", currToken.tValue);
+                this.csTree.addBranchNode("Id");
+                this.printStage("parseId()");
+                this.csTree.addLeafNode(currToken.tValue);
+                this.csTree.moveUp();
                 return true;
             }
             else {
@@ -434,17 +500,26 @@ var Compiler;
                 return false;
             }
         };
-        Parser.prototype.printError = function (expectedVal, foundVal) {
+        Parser.prototype.printError = function (expectedVal, token) {
             console.log("error");
-            var output = document.getElementById("output");
-            output.value += "Expected [" + expectedVal + "]. Found [" + foundVal + "].";
-            output.scrollTop = output.scrollHeight;
+            var log = document.getElementById("log");
+            log.value += "\n   PARSER --> ERROR! Expected [" + expectedVal + "] got [" + token.tid + "] with value '"
+                + token.tValue + "' on line " + token.tLine + ", column " + token.tColumn;
+            log.value += "\n   PARSER --> Parse failed with 1 error";
+            log.scrollTop = log.scrollHeight;
         };
         Parser.prototype.print = function (expectedVal, foundVal) {
             console.log("print");
-            var output = document.getElementById("output");
-            output.value += "Expected [" + expectedVal + "]. Found [" + foundVal + "].";
-            output.scrollTop = output.scrollHeight;
+            var log = document.getElementById("log");
+            log.value += "\n   PARSER --> PASSED! Expected [" + expectedVal + "]. Found [" + foundVal + "].";
+            log.scrollTop = log.scrollHeight;
+        };
+        Parser.prototype.printStage = function (stage) {
+            if (_VerboseMode) {
+                var log = document.getElementById("log");
+                log.value += "\n   PARSER --> " + stage;
+                log.scrollTop = log.scrollHeight;
+            }
         };
         return Parser;
     }());

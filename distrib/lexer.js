@@ -1,5 +1,6 @@
 ///<reference path="globals.ts" />
 ///<reference path="token.ts" />
+///<reference path="parser.ts" />
 /* ------------
 Lexer.ts
 
@@ -10,7 +11,7 @@ var Compiler;
     var Lexer = /** @class */ (function () {
         function Lexer() {
         }
-        Lexer.prototype.start = function () {
+        Lexer.prototype.start = function (userPrg) {
             // RegExp
             var alphaNumeric = /[a-z0-9]/;
             var charKey = /[a-z]/;
@@ -21,21 +22,12 @@ var Compiler;
             var isOpenQuote = false;
             var newLine = /\n|\r/;
             var space = /[ ]|\t/;
-            var whitespace = /^\s*$/;
             var eop = /\$/;
             var commentSlash = /\//;
             var commentStar = /\*/;
             this.currentLine = 1;
             this.currentColumn = 0;
             this.tokenBank = new Array();
-            var userPrg = editor.getValue();
-            // check if input is not null or just whitespace first
-            if (whitespace.test(userPrg)) {
-                var output = document.getElementById("output");
-                output.value += "\n   LEXER --> ABORTED! Missing input or only contains whitespaces"
-                    + "\n ============= \n Lexer Failed... 0 Warning(s) ... 1 Error(s)";
-                return this.tokenBank;
-            }
             // let userPrg:string = this.removeComments(userPrg);
             var firstPointer = 0;
             var secondPointer = 0;
@@ -67,6 +59,7 @@ var Compiler;
                     }
                     else if (eop.test(currentChar)) {
                         this.createToken("T_EOP", "$");
+                        break;
                     }
                     else if (space.test(currentChar)) {
                         // lexer ignores whitespace
@@ -308,11 +301,11 @@ var Compiler;
                 tempColumn += tval.length;
                 buffer = buffer.substring(tval.length);
             }
-            // means no erro occurred
+            // means no error occurred
             return false;
         };
         Lexer.prototype.displayTokens = function () {
-            var output = document.getElementById("output");
+            var log = document.getElementById("log");
             var lexError = 0;
             var lexWarning = 0;
             var index = 0;
@@ -320,10 +313,7 @@ var Compiler;
             // print all tokens
             if (_VerboseMode) {
                 while (index < this.tokenBank.length - 1) {
-                    output.value += "\n   LEXER --> " + token.toString();
-                    if (token.isEqual("T_EOP")) {
-                        output.value += "\n ============= \n   LEXER --> START OF NEW PROGRAM \n ============= ";
-                    }
+                    log.value += "\n   LEXER --> " + token.toString();
                     index++;
                     token = this.tokenBank[index];
                 }
@@ -334,17 +324,17 @@ var Compiler;
             }
             // reached the last token
             if (token.isEqual("T_Invalid")) {
-                output.value += "\n   LEXER --> ERROR! Invalid token"
+                log.value += "\n   LEXER --> ERROR! Invalid token"
                     + " [ " + token.tValue + " ] on line " + token.tLine
                     + ", column " + token.tColumn;
                 lexError++;
             }
             else {
                 if (_VerboseMode) {
-                    output.value += "\n   LEXER --> " + token.toString();
+                    log.value += "\n   LEXER --> " + token.toString();
                 }
                 if (!token.isEqual("T_EOP")) {
-                    output.value += "\n   LEXER --> WARNING! No End Of Program [$] found."
+                    log.value += "\n   LEXER --> WARNING! No End Of Program [$] found."
                         + "\n Inserted at line " + token.tLine + ", column " + (token.tColumn + 1);
                     var eopToken = new Compiler.Token("T_EOP", "$", token.tLine, token.tColumn + 1);
                     this.tokenBank.push(eopToken);
@@ -353,13 +343,13 @@ var Compiler;
                 }
             }
             if (lexError == 0) {
-                output.value += "\n ============= \n Lexer Completed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
-                output.value += "\n Token bank loaded... \n =============";
+                log.value += "\n ============= \n Lexer Completed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
+                log.value += "\n Token bank loaded... \n =============";
             }
             else {
-                output.value += "\n ============= \n Lexer Failed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
+                log.value += "\n ============= \n Lexer Failed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
             }
-            output.scrollTop = output.scrollHeight;
+            log.scrollTop = log.scrollHeight;
         };
         return Lexer;
     }());

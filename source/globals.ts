@@ -24,8 +24,6 @@ let _Parser: Compiler.Parser;
 
 // Global vars
 let _VerboseMode: boolean;
-
-
 var onDocumentLoad = function() {
     _VerboseMode = true;
 	// Compiler.Console.consoleInit();
