@@ -1,30 +1,19 @@
 /* ------------
-Token.ts
+Symbol.ts
 
-Token produced by the lexer will have these properties:
-tid - Token ID
-tValue - the value of the token
-tLine - the number of the line it is on
-tColumn - the column index of the token 
+Symbol - Has a key (id) and type of a variable
 ------------ */
 
 module Compiler {
-    
-  export class SymbolTable {
-
-
-  }
 
   export class Symbol {
-    public value: string;
-    public parentNode: TreeNode;
-    public childrenNode: Array<TreeNode>;
+    public key: string;
+    public type: string;
 
-    constructor(value:string, 
-                parentNode:TreeNode){
-      this.value = value;
-      this. parentNode = parentNode;
-      this.childrenNode = new Array<TreeNode>();
+    constructor(key:string, 
+                type:string){
+      this.key = key;
+      this.type = type;
     }
   }
 }

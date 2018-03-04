@@ -1,10 +1,11 @@
 ///<reference path="globals.ts" />
 ///<reference path="tree.ts" />
+///<reference path="symbol.ts" />
 ///<reference path="token.ts" />
 /* ------------
 Parser.ts
 
-Requires global.ts.
+Requires global.ts, tree.ts, symbol.ts, and token.ts
 ------------ */
 var Compiler;
 (function (Compiler) {
@@ -37,7 +38,6 @@ var Compiler;
                     this.printError("T_OpenBracket", errorToken);
                     this.error = true;
                 }
-                console.log("oh no");
                 return null;
             }
         };
@@ -94,7 +94,7 @@ var Compiler;
                 || this.parseVarDecl() || this.parseWhileStmt()
                 || this.parseIfStmt() || this.parseBlock()) {
                 this.printStage("parseStatement()");
-                // this.csTree.moveUp(); // to Statement
+                this.csTree.moveUp(); // to Statement
                 this.csTree.moveUp(); // to StatementList
                 return this.parseStmtList();
             }
@@ -213,6 +213,7 @@ var Compiler;
                 this.csTree.addLeafNode(currToken.tValue);
                 this.csTree.moveUp();
                 if (this.parseId()) {
+                    var symbol = new Compiler.Symbol(this.csTree.current.childrenNode[0].value, this.csTree.current.childrenNode[1].value);
                     return true; // current = VarDecl
                 }
                 else {
@@ -504,7 +505,6 @@ var Compiler;
             }
         };
         Parser.prototype.printError = function (expectedVal, token) {
-            console.log("error");
             var log = document.getElementById("log");
             log.value += "\n   PARSER --> ERROR! Expected [" + expectedVal + "] got [" + token.tid + "] with value '"
                 + token.tValue + "' on line " + token.tLine + ", column " + token.tColumn;
@@ -512,7 +512,6 @@ var Compiler;
             log.scrollTop = log.scrollHeight;
         };
         // public print(expectedVal: string, foundVal: string): void{
-        //   console.log("print");
         //   let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
         //   log.value += "\n   PARSER --> PASSED! Expected [" + expectedVal + "]. Found [" + foundVal + "].";
         //   log.scrollTop = log.scrollHeight;

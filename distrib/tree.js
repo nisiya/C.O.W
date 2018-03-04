@@ -1,11 +1,9 @@
 /* ------------
-Token.ts
+Tree.ts
 
-Token produced by the lexer will have these properties:
-tid - Token ID
-tValue - the value of the token
-tLine - the number of the line it is on
-tColumn - the column index of the token
+Tree - Concrete Syntax Tree created by Parser
+       and Abstract Syntax Tree created by Semantic Analyzer
+Tree Node - Has a Value, Parent Node, and array of Children Nodes
 ------------ */
 var Compiler;
 (function (Compiler) {
@@ -23,12 +21,10 @@ var Compiler;
             this.level += "-";
             value = this.level + "<" + value + ">";
             this.output += "\n" + value;
-            console.log(node);
         };
         Tree.prototype.addLeafNode = function (value) {
             var node = new TreeNode(value, this.current);
             this.current.childrenNode.push(node);
-            this.current = node;
             value = this.level + "-[" + value + "]";
             this.output += "\n" + value;
         };
