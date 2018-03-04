@@ -32,14 +32,21 @@ module Compiler {
           input = input.slice(index+1, input.length);
           let lexer: Compiler.Lexer = new Lexer();
           let parser: Compiler.Parser = new Parser();
-          log.value += "\n Lexer Start... \n ============= \n   LEXER --> Lexing Program " + prgNum + "...";
+          log.value += "\n Lexer start for Program " + prgNum + "... \n ============= \n   LEXER --> Lexing Program " + prgNum + "...";
           log.scrollTop = log.scrollHeight;
           let tokenBank: Token[] = lexer.start(userPrg);
           if(tokenBank != null){
-            log.value += "\n Parser Start... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";
+            log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";
             log.scrollTop = log.scrollHeight;
             let csTree: Tree = parser.start(tokenBank);
-            console.log(csTree);
+            if(csTree){
+              csTree.printTree();
+            } else{
+              csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n";
+            }
+          } else {
+            log.value += "\n =============\n Parser skipped due to LEXER error(s) \n ============= ";
+            csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to LEXER error(s) \n";
           }
           prgNum++;
       }
@@ -68,22 +75,35 @@ module Compiler {
     public static changeInput(btn): void{
       switch(btn.id){
         case "fugly":
-          editor.setValue("{intaintbintxa=1b=2x=aprint(x)}$");
+          editor.setValue("{/*ValidOneLineCode*/intaintbintxa=1b=2x=aprint(x)}$");
           break;
         case "simple":
-          editor.setValue("{}$");
+          editor.setValue("{/*Simpliest program is an empty block*/}$");
           break;
         case "warningLex":
-          editor.setValue("{intaintbintxa=1b=2x=a+bprint(x)}");
+          editor.setValue("{intaintbintxa=1b=2x=a+bprint(x) /*Gives missing $ warning*/}");
+          break;
+        case "lexSpaces":
+          editor.setValue("{/*Lexer ignores whitespace*/\n    while\n               (true){\n      print(\"this is true\")\n            }\n        inta=         0\n        print (a         )\n}$");
           break;
         case "lexSymbol":
-          editor.setValue("@int a\nint b}$");
+          editor.setValue("{/*Invalid symbol error*/ @int a\nint b}$");
           break;
         case "lexString":
-          editor.setValue("{\n  \"i am\n  the cheese\"\n}$");
+          editor.setValue("{/*Broken string error*/ \n  \"i am\n  the cheese\"\n}$");
           break;
-        case "parsePrint":
-          editor.setValue("{\n  int a\n  a = 0\n  print(a+1)\n}$");
+        case "lexUppercase":
+          editor.setValue("{/*Uppercase not allowed*/ int A\n  a = 1}$");
+          break;
+        case "parseIntExpr":
+          editor.setValue("{\n  int a\n /*digit should be before id in Int Expr*/ a = a+1\n}$");
+          break;
+        case "parseBoolop":
+          editor.setValue("{/*Boolop on its own should have no parenthesis */\n while(true){ \n print (a) \n}$");
+          break;
+        case "parseMultiple":
+          editor.setValue("{}$	\n{{{{{{}}}}}}$	\n{{{{{{}}}	/*	comments	are	ignored	*/	}}}}$	\n{	/*	comments	are	still	ignored	*/	int	@}$");
+          break;
         default:
           editor.setValue("clearing");
           break;

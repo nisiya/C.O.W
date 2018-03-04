@@ -56,9 +56,9 @@ module Compiler {
             //        
             let hasError = this.evaluateBuffer(buffer);
             if(hasError){
-              // stop lexing and return error with current tokens
+              // stop lexing and return nothing
               this.displayTokens();
-              return this.tokenBank;
+              return null;
             } // else continue
           }
           if(currentChar == ''){
@@ -105,7 +105,7 @@ module Compiler {
                 // error token created
                 this.createToken("T_Invalid", currentChar);
                 this.displayTokens();
-                return this.tokenBank;
+                return null;
               }
             }
           } else if(commentSlash.test(currentChar)){
@@ -119,7 +119,7 @@ module Compiler {
               // error token created
               this.createToken("T_Invalid", currentChar);
               this.displayTokens();
-              return this.tokenBank;
+              return null;
             }
           }else if(singleSymbol.test(currentChar)){
             // for symbols that are one character only
@@ -147,13 +147,13 @@ module Compiler {
               // ! is invalid, stop lexer and return error with current tokens
               this.createToken("T_Invalid", currentChar);
               this.displayTokens();
-              return this.tokenBank;
+              return null;
             }
           } else {
             // character is not in grammar, stop lexer and report error with current tokens
             this.createToken("T_Invalid", currentChar);
             this.displayTokens();
-            return this.tokenBank;
+            return null;
           }
           // move onto next char and reset first pointer
           secondPointer++;
@@ -166,6 +166,7 @@ module Compiler {
         this.currentColumn++;
       }
       // end of lex because no more user input
+      // success or has warning
       this.displayTokens();
       return this.tokenBank;
     }
@@ -328,7 +329,6 @@ module Compiler {
                       + "\n Inserted at line " + token.tLine + ", column " + (token.tColumn+1);
           let eopToken: Token = new Token("T_EOP", "$", token.tLine, token.tColumn+1);
           this.tokenBank.push(eopToken);
-          console.log(this.tokenBank);
           lexWarning++;
         }
       }

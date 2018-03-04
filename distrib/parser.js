@@ -24,18 +24,21 @@ var Compiler;
                     this.csTree.addLeafNode(currToken.tValue);
                     // finished
                     this.printStage("Parse completed successfully");
-                    this.csTree.printTree();
                     return this.csTree;
-                } // no need for error bc EOP token always theres
+                }
+                else {
+                    this.printError("T_EOP", currToken);
+                    return null;
+                }
             }
             else {
                 var errorToken = this.tokenBank.pop();
                 if (!this.error) {
-                    this.printError("{", errorToken);
+                    this.printError("T_OpenBracket", errorToken);
                     this.error = true;
                 }
                 console.log("oh no");
-                return this.csTree;
+                return null;
             }
         };
         // 2. <Block> -> { <StatementList> }
@@ -508,12 +511,12 @@ var Compiler;
             log.value += "\n   PARSER --> Parse failed with 1 error";
             log.scrollTop = log.scrollHeight;
         };
-        Parser.prototype.print = function (expectedVal, foundVal) {
-            console.log("print");
-            var log = document.getElementById("log");
-            log.value += "\n   PARSER --> PASSED! Expected [" + expectedVal + "]. Found [" + foundVal + "].";
-            log.scrollTop = log.scrollHeight;
-        };
+        // public print(expectedVal: string, foundVal: string): void{
+        //   console.log("print");
+        //   let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
+        //   log.value += "\n   PARSER --> PASSED! Expected [" + expectedVal + "]. Found [" + foundVal + "].";
+        //   log.scrollTop = log.scrollHeight;
+        // }
         Parser.prototype.printStage = function (stage) {
             if (_VerboseMode) {
                 var log = document.getElementById("log");

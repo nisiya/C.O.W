@@ -40,49 +40,71 @@
             Test Cases<i class="material-icons right">arrow_drop_down</i>
           </a>
           <ul id='dropdown1' class='dropdown-content grey lighten-5'>
-            <li><a class='dropdown-button2 d' href='#' data-activates='goodPrg' data-hover="hover" data-alignment="left">
-              Good Programs<i class="tiny material-icons right">chevron_right</i>
+            <li><a class='dropdown-button2 d' href='#' data-activates='validPrg' data-hover="hover" data-alignment="left">
+              Valid Programs<i class="tiny material-icons right">chevron_right</i>
             </a></li>
             <li><a class='dropdown-button2 d' href='#' data-activates='warningPrg' data-hover="hover" data-alignment="left">
               Warning Programs<i class="tiny material-icons right">chevron_right</i>
             </a></li>
-            <li><a class='dropdown-button2 d' href='#' data-activates='lexFail' data-hover="hover" data-alignment="left">
+            <li><a class='dropdown-button2 d' href='#' data-activates='lexPrg' data-hover="hover" data-alignment="left">
               Lex Fail<i class="tiny material-icons right">chevron_right</i>
             </a></li>
-            <li><a class='dropdown-button2 d' href='#' data-activates='parseFail' data-hover="hover" data-alignment="left">
+            <li><a class='dropdown-button2 d' href='#' data-activates='parsePrg' data-hover="hover" data-alignment="left">
               Parse Fail<i class="tiny material-icons right">chevron_right</i>
             </a></li>
             <li><a class='dropdown-button2 d' href='#' data-activates='saFail' data-hover="hover" data-alignment="left">
               SA Fail<i class="tiny material-icons right">chevron_right</i>
             </a></li>
           </ul>
-          <ul id='goodPrg' class='dropdown-content grey lighten-5'>
-            <li><a id="simple" href="#!" onclick="Compiler.Control.changeInput(this);">Simple</a></li>
-            <li><a id="fugly" href="#!" onclick="Compiler.Control.changeInput(this);">Fugly Good</a></li>
+          <ul id='validPrg' class='dropdown-content grey lighten-5'>
+            <li><a id="simple" href="#!" onclick="Compiler.Control.changeInput(this);">
+              Simple
+            </a></li>
+            <li><a id="fugly" href="#!" onclick="Compiler.Control.changeInput(this);">
+              Fugly Good
+            </a></li>
+
           </ul>
           <ul id='warningPrg' class='dropdown-content grey lighten-5'>
             <li><a id="warningLex" href="#!" onclick="Compiler.Control.changeInput(this);">
                 Missing EOP
             </a></li>
           </ul>
-          <ul id='lexFail' class='dropdown-content grey lighten-5'>
-            <li><a id="lexSymbol" href="#!" onclick="Compiler.Control.changeInput(this);">
+          <ul id='lexPrg' class='dropdown-content grey lighten-5'>
+            <li><a id="lexSpaces" href="#!" onclick="Compiler.Control.changeInput(this);">
+              Weird Spacing
+            </a></li>
+            <li class="divider"></li>
+            <li><a id="lexSymbol" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
               Symbol Error
             </a></li>
-            <li><a id="lexString" href="#!" onclick="Compiler.Control.changeInput(this);">
+            <li><a id="lexString" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
                 String Error
             </a></li>
+            <li><a id="lexUppercase" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
+                Uppercase Error
+            </a></li>
           </ul>
-          <ul id='parseFail' class='dropdown-content grey lighten-5'>
-            <li><a id="parsePrint" href="#!" onclick="Compiler.Control.changeInput(this);">
-                Print Error
+          <ul id='parsePrg' class='dropdown-content grey lighten-5'>
+            <li><a id="parseValid" href="#!" onclick="Compiler.Control.changeInput(this);">
+              Valid Parse
+            </a></li>
+            <li class="divider"></li>
+            <li><a id="parseIntExpr" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
+              IntExpr Error
+            </a></li>
+            <li><a id="parseBoolop" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
+              Boolop Error
+            </a></li>
+            <li><a id="parseMultiple" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
+                Error in Multiple Programs
             </a></li>
           </ul>
           <ul id='saFail' class='dropdown-content grey lighten-5'>
-            <li><a href="#!">one</a></li>
+            <!-- <li><a href="#!">one</a></li>
             <li><a href="#!">two</a></li>
-            <!-- <li class="divider"></li> -->
-            <li><a href="#!">three</a></li>
+            <li class="divider"></li>
+            <li><a href="#!">three</a></li> -->
           </ul>
         </div>
         <div class="col s3">

@@ -58,3 +58,11 @@
   font-size: 14px !important;
   margin-right: -35px !important;
 }
+
+.errorPrg{
+  color: #f44336 !important;
+}
+
+body{
+  background-color: #f9f9f9;
+}
