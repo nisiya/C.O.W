@@ -13,6 +13,7 @@ var Compiler;
         }
         Lexer.prototype.start = function (userPrg) {
             // RegExp
+            console.log(userPrg);
             var alphaNumeric = /[a-z0-9]/;
             var charKey = /[a-z]/;
             var singleSymbol = /\(|\)|\{|\}|\$|\+/;
@@ -28,7 +29,6 @@ var Compiler;
             this.currentLine = 1;
             this.currentColumn = 0;
             this.tokenBank = new Array();
-            // let userPrg:string = this.removeComments(userPrg);
             var firstPointer = 0;
             var secondPointer = 0;
             var buffer;
@@ -108,10 +108,13 @@ var Compiler;
                         }
                     }
                     else if (commentSlash.test(currentChar)) {
-                        if (commentStar.test(userPrg.charAt(secondPointer + 1))) {
+                        var commentEnd = /(\*\/)/;
+                        var end = userPrg.search(commentEnd);
+                        if (commentStar.test(userPrg.charAt(secondPointer + 1)) && end != -1) {
                             // comments are not allowed in quotes so its evaluated after
-                            // start of a comment
-                            userPrg = this.removeComments(userPrg);
+                            userPrg = this.removeComments(end, userPrg);
+                            console.log("after");
+                            console.log(userPrg);
                             secondPointer++;
                             this.currentColumn++;
                         }
@@ -181,12 +184,9 @@ var Compiler;
         *  for new line to maintain the format of the code for
         *  other parts.
         */
-        Lexer.prototype.removeComments = function (userPrg) {
-            // locate the start and end of comment
-            var commentStart = /(\/\*)/;
-            var commentEnd = /(\*\/)/;
-            var start = userPrg.search(commentStart);
-            var end = userPrg.search(commentEnd);
+        Lexer.prototype.removeComments = function (end, userPrg) {
+            var commentEnd = /(\/\*)/;
+            var start = userPrg.search(commentEnd);
             // divide the input into before comment and after comment
             // in order to replace the comment area with whitespace
             var beforeComment = userPrg.slice(0, start);

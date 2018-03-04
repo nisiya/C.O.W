@@ -17,6 +17,7 @@ module Compiler {
 
     public start(userPrg): Token[] {
       // RegExp
+      console.log(userPrg);
       let alphaNumeric:RegExp = /[a-z0-9]/;
       let charKey = /[a-z]/;
       let singleSymbol:RegExp = /\(|\)|\{|\}|\$|\+/;
@@ -34,7 +35,6 @@ module Compiler {
       this.currentColumn = 0;
       this.tokenBank = new Array<Token>();
 
-      // let userPrg:string = this.removeComments(userPrg);
       let firstPointer:number = 0;
       let secondPointer:number = 0;
       let buffer:string;
@@ -109,10 +109,13 @@ module Compiler {
               }
             }
           } else if(commentSlash.test(currentChar)){
-            if(commentStar.test(userPrg.charAt(secondPointer+1))){
+            let commentEnd:RegExp = /(\*\/)/;
+            let end:number = userPrg.search(commentEnd);
+            if(commentStar.test(userPrg.charAt(secondPointer+1)) && end != -1){
               // comments are not allowed in quotes so its evaluated after
-              // start of a comment
-              userPrg = this.removeComments(userPrg);
+              userPrg = this.removeComments(end, userPrg);
+              console.log("after");
+              console.log(userPrg);
               secondPointer++;
               this.currentColumn++;
             } else{
@@ -175,13 +178,9 @@ module Compiler {
     *  for new line to maintain the format of the code for
     *  other parts.
     */
-    public removeComments(userPrg:string): string {
-      // locate the start and end of comment
-      let commentStart:RegExp = /(\/\*)/;
-      let commentEnd:RegExp = /(\*\/)/;
-      let start:number = userPrg.search(commentStart);
-      let end:number = userPrg.search(commentEnd);
-
+    public removeComments(end:number, userPrg:string): string {
+      let commentEnd:RegExp = /(\/\*)/;
+      let start:number = userPrg.search(commentEnd);
       // divide the input into before comment and after comment
       // in order to replace the comment area with whitespace
       let beforeComment = userPrg.slice(0,start);

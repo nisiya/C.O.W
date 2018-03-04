@@ -111,7 +111,7 @@ var Compiler;
                     editor.setValue("{/*Simpliest program is an empty block*/}$");
                     break;
                 case "warningLex":
-                    editor.setValue("{intaintbintxa=1b=2x=a+bprint(x) /*Gives missing $ warning*/}");
+                    editor.setValue("{intaintbintxa=1b=2x=a+bprint(x) /*Gives missing EOP warning*/}");
                     break;
                 case "lexSpaces":
                     editor.setValue("{/*Lexer ignores whitespace*/\n    while\n               (true){\n      print(\"this is true\")\n            }\n        inta=         0\n        print (a         )\n}$");
