@@ -14,38 +14,54 @@ module Compiler {
     public static startCompile(btn): void {
       let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
       let csTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("csTree");
+      var symbolTableBody: HTMLTableSectionElement = <HTMLTableSectionElement> document.getElementById("symbolTableBody");
+      let lexer: Compiler.Lexer = new Lexer();
+      let parser: Compiler.Parser = new Parser();
+
+      // reset outputs
       csTreeOut.value = "";
+      while(symbolTableBody.hasChildNodes()){
+        symbolTableBody.removeChild(symbolTableBody.firstChild);
+      }
       log.value = " Compiler Activated... \n ============= ";
-      let input = editor.getValue();
-      let prgNum = 1;
+      
+      let input:string = editor.getValue();
+      let prgNum:number = 1;
       let whitespace:RegExp = /^\s*$/;
       let eop:RegExp = /\$/;
+
       // check if input is not null or just whitespace first
       if(whitespace.test(input)){
         log.value += "\n   COMPILER --> ERROR! Missing input or only contains whitespaces";
         return;
       }
+
+      // input found
       while(!whitespace.test(input)){
           log.value += "\n\n ============= \n   COMPILER --> START OF PROGRAM "+ prgNum +" \n ============= ";
+          // get one program from input to compile
           let index = input.search(eop) == -1 ? input.length : input.search(eop);
           let userPrg = input.slice(0, index+1);
           input = input.slice(index+1, input.length);
-          let lexer: Compiler.Lexer = new Lexer();
-          let parser: Compiler.Parser = new Parser();
+
           log.value += "\n Lexer start for Program " + prgNum + "... \n ============= \n   LEXER --> Lexing Program " + prgNum + "...";
-          log.scrollTop = log.scrollHeight;
           let tokenBank: Token[] = lexer.start(userPrg);
+
           if(tokenBank != null){
-            log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";
-            log.scrollTop = log.scrollHeight;
-            
+            // Lex passed
+            log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";            
             let csTree: Tree;
             let symbolTable: Array<Symbol>;
-            [csTree, symbolTable] = parser.start(tokenBank);
-            if(csTree && symbolTable){
+
+            let parseReturn = parser.start(tokenBank);
+            if(parseReturn){
+              // Parse passed
+              [csTree, symbolTable] = parseReturn;
+              // print CST
               csTree.printTree();
+
+              // update symbol table
               symbolTable.reverse();
-              var symbolTableBody: HTMLTableSectionElement = <HTMLTableSectionElement> document.getElementById("symbolTableBody");
               for(let i=0; i<symbolTable.length; i++){
                 var row: HTMLTableRowElement = <HTMLTableRowElement> document.createElement("tr");
                 var cell: HTMLTableCellElement = <HTMLTableCellElement> document.createElement("td");
@@ -60,9 +76,11 @@ module Compiler {
                 symbolTableBody.appendChild(row);
               }
             } else{
+              // Parse failed
               csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n";
             }
           } else {
+            // Lex failed
             log.value += "\n =============\n Parser skipped due to LEXER error(s) \n ============= ";
             csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to LEXER error(s) \n";
           }
@@ -70,6 +88,7 @@ module Compiler {
       }
     }
 
+    // detailed log will be generated
     public static verboseMode(btn): void {
       _VerboseMode = !_VerboseMode;
       let verboseBtn: HTMLButtonElement = <HTMLButtonElement> document.getElementById("verboseBtn");
@@ -84,12 +103,14 @@ module Compiler {
       }
     }
 
+    // clear console
     public static flush(btn): void {
       editor.setValue("");
       var audio = new Audio('distrib/audio/meow.mp3');
       audio.play();
     }
 
+    // change test case in console
     public static changeInput(btn): void{
       switch(btn.id){
         case "fugly":

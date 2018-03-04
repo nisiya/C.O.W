@@ -13,7 +13,14 @@ var Compiler;
         Control.startCompile = function (btn) {
             var log = document.getElementById("log");
             var csTreeOut = document.getElementById("csTree");
+            var symbolTableBody = document.getElementById("symbolTableBody");
+            var lexer = new Compiler.Lexer();
+            var parser = new Compiler.Parser();
+            // reset outputs
             csTreeOut.value = "";
+            while (symbolTableBody.hasChildNodes()) {
+                symbolTableBody.removeChild(symbolTableBody.firstChild);
+            }
             log.value = " Compiler Activated... \n ============= ";
             var input = editor.getValue();
             var prgNum = 1;
@@ -24,26 +31,28 @@ var Compiler;
                 log.value += "\n   COMPILER --> ERROR! Missing input or only contains whitespaces";
                 return;
             }
+            // input found
             while (!whitespace.test(input)) {
                 log.value += "\n\n ============= \n   COMPILER --> START OF PROGRAM " + prgNum + " \n ============= ";
+                // get one program from input to compile
                 var index = input.search(eop) == -1 ? input.length : input.search(eop);
                 var userPrg = input.slice(0, index + 1);
                 input = input.slice(index + 1, input.length);
-                var lexer = new Compiler.Lexer();
-                var parser = new Compiler.Parser();
                 log.value += "\n Lexer start for Program " + prgNum + "... \n ============= \n   LEXER --> Lexing Program " + prgNum + "...";
-                log.scrollTop = log.scrollHeight;
                 var tokenBank = lexer.start(userPrg);
                 if (tokenBank != null) {
+                    // Lex passed
                     log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";
-                    log.scrollTop = log.scrollHeight;
                     var csTree = void 0;
                     var symbolTable = void 0;
-                    _a = parser.start(tokenBank), csTree = _a[0], symbolTable = _a[1];
-                    if (csTree && symbolTable) {
+                    var parseReturn = parser.start(tokenBank);
+                    if (parseReturn) {
+                        // Parse passed
+                        csTree = parseReturn[0], symbolTable = parseReturn[1];
+                        // print CST
                         csTree.printTree();
+                        // update symbol table
                         symbolTable.reverse();
-                        var symbolTableBody = document.getElementById("symbolTableBody");
                         for (var i = 0; i < symbolTable.length; i++) {
                             var row = document.createElement("tr");
                             var cell = document.createElement("td");
@@ -59,17 +68,19 @@ var Compiler;
                         }
                     }
                     else {
+                        // Parse failed
                         csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n";
                     }
                 }
                 else {
+                    // Lex failed
                     log.value += "\n =============\n Parser skipped due to LEXER error(s) \n ============= ";
                     csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to LEXER error(s) \n";
                 }
                 prgNum++;
             }
-            var _a;
         };
+        // detailed log will be generated
         Control.verboseMode = function (btn) {
             _VerboseMode = !_VerboseMode;
             var verboseBtn = document.getElementById("verboseBtn");
@@ -84,11 +95,13 @@ var Compiler;
                 verboseBtn.style.color = "#000000";
             }
         };
+        // clear console
         Control.flush = function (btn) {
             editor.setValue("");
             var audio = new Audio('distrib/audio/meow.mp3');
             audio.play();
         };
+        // change test case in console
         Control.changeInput = function (btn) {
             switch (btn.id) {
                 case "fugly":

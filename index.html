@@ -36,7 +36,6 @@
                     onclick="Compiler.Control.startCompile(this);">Compile</button>
         </div>
         <div class="col s3">
-          <!-- Dropdown Trigger -->
           <a class='dropdown-button indigo lighten-1 waves-effect waves-light btn' href='#' data-activates='dropdown1' data-beloworigin="true">
             Test Cases<i class="material-icons right">arrow_drop_down</i>
           </a>
@@ -64,7 +63,6 @@
             <li><a id="fugly" href="#!" onclick="Compiler.Control.changeInput(this);">
               Fugly Good
             </a></li>
-
           </ul>
           <ul id='warningPrg' class='dropdown-content grey lighten-5'>
             <li><a id="warningLex" href="#!" onclick="Compiler.Control.changeInput(this);">
@@ -187,7 +185,7 @@
               </div>
               <div class="collapsible-body">
                 <div class="card-panel blue-grey lighten-5">
-]                  <textarea class="white output" id="asTree" disabled></textarea>
+                  <textarea class="white output" id="asTree" disabled></textarea>
                 </div>
               </div>
             </li>
@@ -201,17 +199,18 @@
                 </div>
                 <div class="collapsible-body">
                   <div class="card-panel blue-grey lighten-5">
-                    <!-- <textarea class="white output" id="symbolTable" disabled></textarea> -->
-                    <table class="striped centered" id="symbolTable">
-                      <thead>
-                        <tr>
-                            <th>Key</th>
-                            <th>Type</th>
-                        </tr>
-                      </thead>
-                      <tbody id="symbolTableBody">
-                      </tbody>
-                    </table>
+                    <div style="background-color:#ffffff;">
+                      <table class="striped centered" id="symbolTable">
+                        <thead>
+                          <tr>
+                              <th>Key</th>
+                              <th>Type</th>
+                          </tr>
+                        </thead>
+                        <tbody id="symbolTableBody">
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </li>

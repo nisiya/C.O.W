@@ -25,6 +25,7 @@ module Compiler {
       let node:TreeNode = new TreeNode(value, this.current);
       this.current.childrenNode.push(node);
       this.current = node;
+      // outputs
       this.level += "-";
       value = this.level + "<" + value + ">";
       this.output += "\n" + value;
@@ -33,6 +34,7 @@ module Compiler {
     public addLeafNode(value): void{
       let node:TreeNode = new TreeNode(value, this.current);
       this.current.childrenNode.push(node);
+      // outputs
       value = this.level + "-[" + value + "]";
       this.output += "\n" + value;
     }

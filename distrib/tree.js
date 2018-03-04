@@ -18,6 +18,7 @@ var Compiler;
             var node = new TreeNode(value, this.current);
             this.current.childrenNode.push(node);
             this.current = node;
+            // outputs
             this.level += "-";
             value = this.level + "<" + value + ">";
             this.output += "\n" + value;
@@ -25,6 +26,7 @@ var Compiler;
         Tree.prototype.addLeafNode = function (value) {
             var node = new TreeNode(value, this.current);
             this.current.childrenNode.push(node);
+            // outputs
             value = this.level + "-[" + value + "]";
             this.output += "\n" + value;
         };
