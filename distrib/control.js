@@ -37,9 +37,26 @@ var Compiler;
                 if (tokenBank != null) {
                     log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";
                     log.scrollTop = log.scrollHeight;
-                    var csTree = parser.start(tokenBank);
-                    if (csTree) {
+                    var csTree = void 0;
+                    var symbolTable = void 0;
+                    _a = parser.start(tokenBank), csTree = _a[0], symbolTable = _a[1];
+                    if (csTree && symbolTable) {
                         csTree.printTree();
+                        symbolTable.reverse();
+                        var symbolTableBody = document.getElementById("symbolTableBody");
+                        for (var i = 0; i < symbolTable.length; i++) {
+                            var row = document.createElement("tr");
+                            var cell = document.createElement("td");
+                            var symbol = symbolTable[i];
+                            var cellText = document.createTextNode(symbol.key);
+                            cell.appendChild(cellText);
+                            row.appendChild(cell);
+                            cell = document.createElement("td");
+                            cellText = document.createTextNode(symbol.type);
+                            cell.appendChild(cellText);
+                            row.appendChild(cell);
+                            symbolTableBody.appendChild(row);
+                        }
                     }
                     else {
                         csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n";
@@ -51,6 +68,7 @@ var Compiler;
                 }
                 prgNum++;
             }
+            var _a;
         };
         Control.verboseMode = function (btn) {
             _VerboseMode = !_VerboseMode;

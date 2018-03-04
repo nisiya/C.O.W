@@ -18,11 +18,12 @@ module Compiler {
     public error: boolean;
 
     // 1. <Program> -> <Block> $
-    public start(tokenBank:Array<Token>): Tree{
+    public start(tokenBank:Array<Token>): [Tree, Array<Symbol>]{
       this.tokenBank = tokenBank.reverse();
       this.error = false;
       this.printStage("parse()");
       this.csTree = new Tree("Program");
+      this.symbolTable = new Array<Symbol>();
       this.printStage("parseProgram()");
       if(this.parseBlock()){
         let currToken = this.tokenBank.pop();
@@ -30,7 +31,8 @@ module Compiler {
           this.csTree.addLeafNode(currToken.tValue);
           // finished
           this.printStage("Parse completed successfully");
-          return this.csTree;
+          let symbolTable = this.symbolTable;
+          return [this.csTree, symbolTable];
         } else {
           this.printError("T_EOP", currToken);
           return null;
@@ -210,7 +212,9 @@ module Compiler {
         this.csTree.addLeafNode(currToken.tValue);
         this.csTree.moveUp();
         if(this.parseId()){
-          let symbol: Symbol = new Symbol(this.csTree.current.childrenNode[0].value, this.csTree.current.childrenNode[1].value);
+          let currentNode = this.csTree.current;
+          let symbol: Symbol = new Symbol(currentNode.childrenNode[1].childrenNode[0].value, currentNode.childrenNode[0].childrenNode[0].value);
+          this.symbolTable.push(symbol);
           return true; // current = VarDecl
         } else{
           if(!this.error){

@@ -38,9 +38,27 @@ module Compiler {
           if(tokenBank != null){
             log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";
             log.scrollTop = log.scrollHeight;
-            let csTree: Tree = parser.start(tokenBank);
-            if(csTree){
+            
+            let csTree: Tree;
+            let symbolTable: Array<Symbol>;
+            [csTree, symbolTable] = parser.start(tokenBank);
+            if(csTree && symbolTable){
               csTree.printTree();
+              symbolTable.reverse();
+              var symbolTableBody: HTMLTableSectionElement = <HTMLTableSectionElement> document.getElementById("symbolTableBody");
+              for(let i=0; i<symbolTable.length; i++){
+                var row: HTMLTableRowElement = <HTMLTableRowElement> document.createElement("tr");
+                var cell: HTMLTableCellElement = <HTMLTableCellElement> document.createElement("td");
+                let symbol: Symbol = symbolTable[i];
+                var cellText = document.createTextNode(symbol.key);
+                cell.appendChild(cellText);
+                row.appendChild(cell);
+                cell = document.createElement("td");
+                cellText = document.createTextNode(symbol.type);
+                cell.appendChild(cellText);
+                row.appendChild(cell);
+                symbolTableBody.appendChild(row);
+              }
             } else{
               csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n";
             }

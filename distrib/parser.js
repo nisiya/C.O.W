@@ -18,6 +18,7 @@ var Compiler;
             this.error = false;
             this.printStage("parse()");
             this.csTree = new Compiler.Tree("Program");
+            this.symbolTable = new Array();
             this.printStage("parseProgram()");
             if (this.parseBlock()) {
                 var currToken = this.tokenBank.pop();
@@ -25,7 +26,8 @@ var Compiler;
                     this.csTree.addLeafNode(currToken.tValue);
                     // finished
                     this.printStage("Parse completed successfully");
-                    return this.csTree;
+                    var symbolTable = this.symbolTable;
+                    return [this.csTree, symbolTable];
                 }
                 else {
                     this.printError("T_EOP", currToken);
@@ -213,7 +215,9 @@ var Compiler;
                 this.csTree.addLeafNode(currToken.tValue);
                 this.csTree.moveUp();
                 if (this.parseId()) {
-                    var symbol = new Compiler.Symbol(this.csTree.current.childrenNode[0].value, this.csTree.current.childrenNode[1].value);
+                    var currentNode = this.csTree.current;
+                    var symbol = new Compiler.Symbol(currentNode.childrenNode[1].childrenNode[0].value, currentNode.childrenNode[0].childrenNode[0].value);
+                    this.symbolTable.push(symbol);
                     return true; // current = VarDecl
                 }
                 else {
