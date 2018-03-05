@@ -25,22 +25,21 @@ var Compiler;
             var input = editor.getValue();
             var prgNum = 1;
             var whitespace = /^\s*$/;
-            var eop = /\$/;
             // check if input is not null or just whitespace first
             if (whitespace.test(input)) {
                 log.value += "\n   COMPILER --> ERROR! Missing input or only contains whitespaces";
                 return;
             }
             // input found
+            // lexer lexes one program and returns the token bank and rest of user input
+            // allows mulitiple programs to be lexed and parsed
             while (!whitespace.test(input)) {
                 log.value += "\n\n ============= \n   COMPILER --> START OF PROGRAM " + prgNum + " \n ============= ";
-                // get one program from input to compile
-                var index = input.search(eop) == -1 ? input.length : input.search(eop);
-                var userPrg = input.slice(0, index + 1);
-                input = input.slice(index + 1, input.length);
                 log.value += "\n Lexer start for Program " + prgNum + "... \n ============= \n   LEXER --> Lexing Program " + prgNum + "...";
-                var tokenBank = lexer.start(userPrg);
-                if (tokenBank != null) {
+                var lexerReturn = lexer.start(input);
+                var tokenBank = void 0;
+                tokenBank = lexerReturn[0], input = lexerReturn[1];
+                if (tokenBank.length != 0) {
                     // Lex passed
                     log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";
                     var csTree = void 0;
@@ -51,6 +50,7 @@ var Compiler;
                         csTree = parseReturn[0], symbolTable = parseReturn[1];
                         // print CST
                         csTree.printTree();
+                        log.value += "\n Parse completed successfully";
                         // update symbol table
                         symbolTable.reverse();
                         for (var i = 0; i < symbolTable.length; i++) {
@@ -69,13 +69,13 @@ var Compiler;
                     }
                     else {
                         // Parse failed
-                        csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n";
+                        csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n\n";
                     }
                 }
                 else {
                     // Lex failed
                     log.value += "\n =============\n Parser skipped due to LEXER error(s) \n ============= ";
-                    csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to LEXER error(s) \n";
+                    csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to LEXER error(s) \n\n";
                 }
                 prgNum++;
             }
@@ -124,6 +124,9 @@ var Compiler;
                     break;
                 case "lexUppercase":
                     editor.setValue("{/*Uppercase not allowed*/ int A\n  a = 1}$");
+                    break;
+                case "parseValid":
+                    editor.setValue("{\n    while(b == true){\n    print(\"hello there\")\n    }\n    \n    if(b != false){\n     b = 2\n    }\n    }$");
                     break;
                 case "parseIntExpr":
                     editor.setValue("{\n  int a\n /*digit should be before id in Int Expr*/ a = a+1\n}$");

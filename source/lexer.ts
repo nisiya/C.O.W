@@ -14,10 +14,10 @@ module Compiler {
     public currentLine: number;
     public currentColumn: number;
     public tokenBank: Token[];
+    public errorFound: boolean;
 
-    public start(userPrg): Token[] {
+    public start(userPrg:string): [Token[], string] {
       // RegExp
-      console.log(userPrg);
       let alphaNumeric:RegExp = /[a-z0-9]/;
       let charKey = /[a-z]/;
       let singleSymbol:RegExp = /\(|\)|\{|\}|\$|\+/;
@@ -34,6 +34,7 @@ module Compiler {
       this.currentLine = 1;
       this.currentColumn = 0;
       this.tokenBank = new Array<Token>();
+      this.errorFound = false;
 
       let firstPointer:number = 0;
       let secondPointer:number = 0;
@@ -54,11 +55,10 @@ module Compiler {
             * *------------------------------*
             */
             //        
-            let hasError = this.evaluateBuffer(buffer);
-            if(hasError){
+            if(this.evaluateBuffer(buffer)){
               // stop lexing and return nothing
-              this.displayTokens();
-              return null;
+              this.errorFound = true;
+              break;
             } // else continue
           }
           if(currentChar == ''){
@@ -104,9 +104,12 @@ module Compiler {
               } else {
                 // error token created
                 this.createToken("T_Invalid", currentChar);
-                this.displayTokens();
-                return null;
+                this.errorFound = true;
+                break;
               }
+            }
+            if(this.errorFound){
+              break;
             }
           } else if(commentSlash.test(currentChar)){
             let commentEnd:RegExp = /(\*\/)/;
@@ -114,15 +117,13 @@ module Compiler {
             if(commentStar.test(userPrg.charAt(secondPointer+1)) && end != -1){
               // comments are not allowed in quotes so its evaluated after
               userPrg = this.removeComments(end, userPrg);
-              console.log("after");
-              console.log(userPrg);
               secondPointer++;
               this.currentColumn++;
             } else{
               // error token created
               this.createToken("T_Invalid", currentChar);
-              this.displayTokens();
-              return null;
+              this.errorFound = true;
+              break;
             }
           }else if(singleSymbol.test(currentChar)){
             // for symbols that are one character only
@@ -149,14 +150,14 @@ module Compiler {
             } else{
               // ! is invalid, stop lexer and return error with current tokens
               this.createToken("T_Invalid", currentChar);
-              this.displayTokens();
-              return null;
+              this.errorFound = true;
+              break;
             }
           } else {
             // character is not in grammar, stop lexer and report error with current tokens
             this.createToken("T_Invalid", currentChar);
-            this.displayTokens();
-            return null;
+            this.errorFound = true;
+            break;
           }
           // move onto next char and reset first pointer
           secondPointer++;
@@ -168,10 +169,22 @@ module Compiler {
         // make sure to keep track of column index
         this.currentColumn++;
       }
-      // end of lex because no more user input
-      // success or has warning
-      this.displayTokens();
-      return this.tokenBank;
+
+      if(this.errorFound){              
+        // error encountered, return empty token bank and rest of the program(s)  
+        this.displayTokens();
+        let index = userPrg.search(eop) == -1 ? userPrg.length : userPrg.search(eop);
+        userPrg = userPrg.slice(index+1, userPrg.length);
+        console.log("lex error\n" + userPrg);
+        return [new Array<Token>(), userPrg];
+      } else{
+        // end of lex because eop or no more user input
+        // success or has warning
+        this.displayTokens();
+        userPrg = userPrg.slice(secondPointer+1, userPrg.length);
+        console.log("lex pass\n" + userPrg);
+        return [this.tokenBank, userPrg];
+      }
     }
 
     /* Removes comments in code by replacing them with whitespace
@@ -295,6 +308,7 @@ module Compiler {
       // means no error occurred
       return false;
     }
+
     public displayTokens(): void{
       let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
       let lexError: number = 0;
@@ -332,7 +346,7 @@ module Compiler {
         }
       }
       if(lexError == 0){
-        log.value += "\n ============= \n Lexer Completed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
+        log.value += "\n ============= \n Lexer completed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
         log.value += "\n Token bank loaded... \n =============";
       } else {
         log.value += "\n ============= \n Lexer Failed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
