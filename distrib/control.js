@@ -51,7 +51,7 @@ var Compiler;
                         csTree = parseReturn[0], symbolTable = parseReturn[1];
                         // print CST
                         csTree.printTree();
-                        // csTree.displayTree();
+                        csTree.displayTree();
                         log.value += "\n Parse completed successfully";
                         // update symbol table
                         symbolTable.reverse();

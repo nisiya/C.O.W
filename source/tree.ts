@@ -13,27 +13,48 @@ module Compiler {
     public current: TreeNode;
     public level: string;
     public output: string;
+    public jsonTree;
 
     constructor(value) {
       this.root = new TreeNode(value, null);
       this.output = "<" + value + ">";
       this.current = this.root;
       this.level = "";
+      this.jsonTree = {
+        chart: {
+            container: "#pretty-tree"
+        },
+        
+        nodeStructure: {
+            text: { name: value },
+            children: [
+            ]
+        }
+      };
     }
     
     public addBranchNode(value): void{
       let node:TreeNode = new TreeNode(value, this.current);
-      this.current.childrenNode.push(node);
+      this.current.childrenNodes.push(node);
       this.current = node;
+      // pretty tree out
+      // let tmp = {
+      //   text: {name: value},
+      //   children:[
+
+      //   ]
+      // }
+      // this.jsonTree.nodeStructure.children.push(tmp);
       // outputs
       this.level += "-";
       value = this.level + "<" + value + ">";
       this.output += "\n" + value;
+
     }
 
     public addLeafNode(value): void{
       let node:TreeNode = new TreeNode(value, this.current);
-      this.current.childrenNode.push(node);
+      this.current.childrenNodes.push(node);
       // outputs
       value = this.level + "-[" + value + "]";
       this.output += "\n" + value;
@@ -186,73 +207,27 @@ module Compiler {
         .text(function(d) { return d.data.name; });
     } 
     */
-      public displayTree(): void{
-        simple_chart_config = {
-          chart: {
-              container: "#tree-simple"
-          },
-          
-          nodeStructure: {
-              text: { name: "Parent node" },
-              children: [
-                  {
-                      text: { name: "First child" },
-                      children: [
-                        {
-                          text: {name: "gello"},
-                          children: [
-                            {
-                              text: {name: "gello"},
-                              children: [
-                                {
-                                  text: {name: "gello"},
-                                  children: [
-                                    {
-                                      text: {name: "gello"}
-                                    }
-                                  ]
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                  },
-                  {
-                      text: { name: "Second child" }
-                  },
-                  {
-                    text: { name: "Second child" }
-                },
-                {
-                  text: { name: "Second child" }
-              },
-              {
-                text: { name: "Second child" }
-            },
-            {
-              text: { name: "Second child" }
-          },
-          {
-            text: { name: "Second child" }
-        }
-              ]
-          }
-      };
-      var my_chart = new Treant(simple_chart_config);
+    public displayTree(): void{
+      let my_chart = new Treant(this.jsonTree);
     }
+
+    public walkTree(): void{
+      let node = this.root;
+      let children = node.childrenNodes;
+    }
+
   }
 
   export class TreeNode {
     public value: string;
     public parentNode: TreeNode;
-    public childrenNode: Array<TreeNode>;
+    public childrenNodes: Array<TreeNode>;
 
     constructor(value:string, 
                 parentNode:TreeNode){
       this.value = value;
       this. parentNode = parentNode;
-      this.childrenNode = new Array<TreeNode>();
+      this.childrenNodes = new Array<TreeNode>();
     }
   }
 }

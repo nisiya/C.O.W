@@ -13,11 +13,27 @@ var Compiler;
             this.output = "<" + value + ">";
             this.current = this.root;
             this.level = "";
+            this.jsonTree = {
+                chart: {
+                    container: "#pretty-tree"
+                },
+                nodeStructure: {
+                    text: { name: value },
+                    children: []
+                }
+            };
         }
         Tree.prototype.addBranchNode = function (value) {
             var node = new TreeNode(value, this.current);
-            this.current.childrenNode.push(node);
+            this.current.childrenNodes.push(node);
             this.current = node;
+            // pretty tree out
+            // let tmp = {
+            //   text: {name: value},
+            //   children:[
+            //   ]
+            // }
+            // this.jsonTree.nodeStructure.children.push(tmp);
             // outputs
             this.level += "-";
             value = this.level + "<" + value + ">";
@@ -25,7 +41,7 @@ var Compiler;
         };
         Tree.prototype.addLeafNode = function (value) {
             var node = new TreeNode(value, this.current);
-            this.current.childrenNode.push(node);
+            this.current.childrenNodes.push(node);
             // outputs
             value = this.level + "-[" + value + "]";
             this.output += "\n" + value;
@@ -176,58 +192,11 @@ var Compiler;
         }
         */
         Tree.prototype.displayTree = function () {
-            simple_chart_config = {
-                chart: {
-                    container: "#tree-simple"
-                },
-                nodeStructure: {
-                    text: { name: "Parent node" },
-                    children: [
-                        {
-                            text: { name: "First child" },
-                            children: [
-                                {
-                                    text: { name: "gello" },
-                                    children: [
-                                        {
-                                            text: { name: "gello" },
-                                            children: [
-                                                {
-                                                    text: { name: "gello" },
-                                                    children: [
-                                                        {
-                                                            text: { name: "gello" }
-                                                        }
-                                                    ]
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
-                        {
-                            text: { name: "Second child" }
-                        },
-                        {
-                            text: { name: "Second child" }
-                        },
-                        {
-                            text: { name: "Second child" }
-                        },
-                        {
-                            text: { name: "Second child" }
-                        },
-                        {
-                            text: { name: "Second child" }
-                        },
-                        {
-                            text: { name: "Second child" }
-                        }
-                    ]
-                }
-            };
-            var my_chart = new Treant(simple_chart_config);
+            var my_chart = new Treant(this.jsonTree);
+        };
+        Tree.prototype.walkTree = function () {
+            var node = this.root;
+            var children = node.childrenNodes;
         };
         return Tree;
     }());
@@ -236,7 +205,7 @@ var Compiler;
         function TreeNode(value, parentNode) {
             this.value = value;
             this.parentNode = parentNode;
-            this.childrenNode = new Array();
+            this.childrenNodes = new Array();
         }
         return TreeNode;
     }());

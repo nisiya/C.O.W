@@ -207,7 +207,7 @@ var Compiler;
                 if (this.parseId()) {
                     this.csTree.moveUp(); // to VarDecl
                     var currentNode = this.csTree.current;
-                    var symbol = new Compiler.Symbol(currentNode.childrenNode[1].childrenNode[0].value, currentNode.childrenNode[0].childrenNode[0].value);
+                    var symbol = new Compiler.Symbol(currentNode.childrenNodes[1].childrenNodes[0].value, currentNode.childrenNodes[0].childrenNodes[0].value);
                     this.symbolTable.push(symbol);
                     return true;
                 }

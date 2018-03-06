@@ -209,7 +209,7 @@ module Compiler {
         if(this.parseId()){
           this.csTree.moveUp(); // to VarDecl
           let currentNode = this.csTree.current;
-          let symbol: Symbol = new Symbol(currentNode.childrenNode[1].childrenNode[0].value, currentNode.childrenNode[0].childrenNode[0].value);
+          let symbol: Symbol = new Symbol(currentNode.childrenNodes[1].childrenNodes[0].value, currentNode.childrenNodes[0].childrenNodes[0].value);
           this.symbolTable.push(symbol);
           return true;
         } else{
