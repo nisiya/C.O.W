@@ -426,7 +426,8 @@ module Compiler {
     public parseCharList(): boolean{
       this.csTree.addBranchNode("CharList");
       this.printStage("parseCharList()");
-      if(this.parseChar()){
+      let space:RegExp = /[ ]/;
+      if(this.parseSpace() || this.parseChar()){
         return this.parseCharList();
       } else {
         while (this.csTree.current.value == "CharList"){
@@ -439,9 +440,25 @@ module Compiler {
     // 30. <char> -> a | b | ...
     public parseChar(): boolean{
       let currToken = this.tokenBank.pop();
-      if(currToken.isEqual("T_Char") || currToken.isEqual("T_Space")){
+      if(currToken.isEqual("T_Char")){
         this.csTree.addBranchNode("char");
         this.printStage("parseChar()");
+        this.csTree.addLeafNode(currToken.tValue);
+        this.csTree.moveUp(); // to CharList
+        return true;
+      } else{
+        // can be empty string
+        this.tokenBank.push(currToken);
+        return false;
+      }
+    }
+
+    // 31. <space> -> the space character
+    public parseSpace(): boolean{
+      let currToken = this.tokenBank.pop();
+      if(currToken.isEqual("T_Space")){
+        this.csTree.addBranchNode("space");
+        this.printStage("parseSpace()");
         this.csTree.addLeafNode(currToken.tValue);
         this.csTree.moveUp(); // to CharList
         return true;

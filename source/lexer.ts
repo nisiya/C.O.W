@@ -316,6 +316,12 @@ module Compiler {
       let index: number = 0;
       let token = this.tokenBank[index];
       
+      if(this.tokenBank.length == 0){
+        log.value += "\n   LEXER --> ERROR! No program(s) found";
+        log.value += "\n ============= \n Lexer Failed... 0 Warning(s) ... 1 Error(s)";
+        return;
+      }
+
       // print all tokens
       if(_VerboseMode){
         while(index < this.tokenBank.length-1){

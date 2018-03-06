@@ -39,6 +39,7 @@ var Compiler;
                 var lexerReturn = lexer.start(input);
                 var tokenBank = void 0;
                 tokenBank = lexerReturn[0], input = lexerReturn[1];
+                console.log(tokenBank);
                 if (tokenBank.length != 0) {
                     // Lex passed
                     log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";
@@ -50,6 +51,7 @@ var Compiler;
                         csTree = parseReturn[0], symbolTable = parseReturn[1];
                         // print CST
                         csTree.printTree();
+                        // csTree.displayTree();
                         log.value += "\n Parse completed successfully";
                         // update symbol table
                         symbolTable.reverse();
@@ -74,6 +76,9 @@ var Compiler;
                 }
                 else {
                     // Lex failed
+                    if (whitespace.test(input)) {
+                        "\n   LEXER --> ERROR! Invalid token";
+                    }
                     log.value += "\n =============\n Parser skipped due to LEXER error(s) \n ============= ";
                     csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to LEXER error(s) \n\n";
                 }

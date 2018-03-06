@@ -435,7 +435,8 @@ var Compiler;
         Parser.prototype.parseCharList = function () {
             this.csTree.addBranchNode("CharList");
             this.printStage("parseCharList()");
-            if (this.parseChar()) {
+            var space = /[ ]/;
+            if (this.parseSpace() || this.parseChar()) {
                 return this.parseCharList();
             }
             else {
@@ -448,9 +449,25 @@ var Compiler;
         // 30. <char> -> a | b | ...
         Parser.prototype.parseChar = function () {
             var currToken = this.tokenBank.pop();
-            if (currToken.isEqual("T_Char") || currToken.isEqual("T_Space")) {
+            if (currToken.isEqual("T_Char")) {
                 this.csTree.addBranchNode("char");
                 this.printStage("parseChar()");
+                this.csTree.addLeafNode(currToken.tValue);
+                this.csTree.moveUp(); // to CharList
+                return true;
+            }
+            else {
+                // can be empty string
+                this.tokenBank.push(currToken);
+                return false;
+            }
+        };
+        // 31. <space> -> the space character
+        Parser.prototype.parseSpace = function () {
+            var currToken = this.tokenBank.pop();
+            if (currToken.isEqual("T_Space")) {
+                this.csTree.addBranchNode("space");
+                this.printStage("parseSpace()");
                 this.csTree.addLeafNode(currToken.tValue);
                 this.csTree.moveUp(); // to CharList
                 return true;

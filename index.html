@@ -12,12 +12,14 @@
   <link href="materialize/css/materialize.css" type="text/css" rel="stylesheet" media="screen,projection"/>
   <link href="materialize/css/style.css" type="text/css" rel="stylesheet" media="screen,projection"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="distrib/Treant/Treant.css" type="text/css"/>
 
   <!-- Globals CONSTANTS and _Variables. Must included be first. -->
   <script type="text/javascript" src="distrib/globals.js"></script>
   <script type="text/javascript" src="distrib/control.js"></script>
   <script type="text/javascript" src="distrib/token.js"></script>
   <script type="text/javascript" src="distrib/lexer.js"></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
   <script type="text/javascript" src="distrib/tree.js"></script>
   <script type="text/javascript" src="distrib/symbol.js"></script>
   <script type="text/javascript" src="distrib/parser.js"></script>
@@ -124,7 +126,7 @@
 
   <div class="container">
     <div class="row">
-      <div class="col s6">
+      <div class="col s7">
         <div class="card-panel blue-grey lighten-5">
           <h5 class="center"> Console </h5>
           <pre id="editor">
@@ -156,7 +158,7 @@
           </pre>
         </div>
       </div>
-      <div class="col s6">
+      <div class="col s5">
         <div class="card-panel blue-grey lighten-5">
           <h5 class="center"> Log </h5>
           <textarea class="white output" id="log" disabled></textarea>
@@ -164,10 +166,11 @@
       </div>
     </div>
   </div>
+
   <div class="container">
     <div class="section"> 
       <div class="row center">
-        <div class="col s6">
+        <div class="col s7">
           <ul class="collapsible" data-collapsible="accordination">
             <li>
               <div class="collapsible-header active" id="csTreeCollapse">
@@ -191,7 +194,7 @@
             </li>
           </ul>
         </div>
-        <div class="col s6">
+        <div class="col s5">
           <ul class="collapsible" data-collapsible="accordination">
               <li>
                 <div class="collapsible-header active" id="csTreeCollapse">
@@ -221,7 +224,6 @@
                 <div class="collapsible-body">
                   <div class="card-panel blue-grey lighten-5">
                     <h5 class="center"> AST </h5>
-                    <textarea class="white output" id="symbolTree" disabled></textarea>
                   </div>
                 </div>
               </li>
@@ -230,8 +232,19 @@
       </div>
 
     </div>
-    <br><br>
   </div>
+
+  <!-- <div class="container">
+    <div class="row">
+      <div class="col s12">
+        <div class="card-panel blue-grey lighten-5">
+          <h5 class="center"> Pretty Tree </h5>
+          <div class="center" id="tree-simple"> </div>
+        </div>
+      </div>
+    </div>
+  </div> -->
+
 
   <footer class="page-footer red darken-3">
     <div class="container">
@@ -251,6 +264,8 @@
   <script src="materialize/js/materialize.js"></script>
   <script src="materialize/js/init.js"></script>
   <script src="distrib/src-min/ace.js" type="text/javascript" charset="utf-8"></script>
+  <script src="distrib/Treant/vendor/raphael.js"></script>
+  <script src="distrib/Treant/Treant.js"></script>
   <script>
     var editor = ace.edit("editor");
     editor.setTheme("ace/theme/tomorrow");
