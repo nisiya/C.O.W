@@ -10,17 +10,13 @@ var Compiler;
     var Tree = /** @class */ (function () {
         function Tree(value) {
             this.root = new TreeNode(value, null);
-            this.output = "<" + value + ">";
+            this.outputTree = "";
             this.current = this.root;
-            this.level = "";
             this.jsonTree = {
                 chart: {
                     container: "#pretty-tree"
                 },
-                nodeStructure: {
-                    text: { name: value },
-                    children: []
-                }
+                nodeStructure: {}
             };
         }
         Tree.prototype.addBranchNode = function (value) {
@@ -34,25 +30,18 @@ var Compiler;
             //   ]
             // }
             // this.jsonTree.nodeStructure.children.push(tmp);
-            // outputs
-            this.level += "-";
-            value = this.level + "<" + value + ">";
-            this.output += "\n" + value;
         };
         Tree.prototype.addLeafNode = function (value) {
             var node = new TreeNode(value, this.current);
             this.current.childrenNodes.push(node);
-            // outputs
-            value = this.level + "-[" + value + "]";
-            this.output += "\n" + value;
         };
         Tree.prototype.moveUp = function () {
             this.current = this.current.parentNode;
-            this.level = this.level.substr(0, (this.level.length - 1));
         };
         Tree.prototype.printTree = function () {
+            this.walkTree(this.root, "", this.jsonTree.nodeStructure);
             var output = document.getElementById("csTree");
-            output.value += this.output + "\n\n";
+            output.value += this.outputTree + "\n\n";
         };
         /*
         public displayTree(): void{
@@ -194,9 +183,24 @@ var Compiler;
         Tree.prototype.displayTree = function () {
             var my_chart = new Treant(this.jsonTree);
         };
-        Tree.prototype.walkTree = function () {
-            var node = this.root;
+        Tree.prototype.walkTree = function (node, indent, jsonLevel) {
+            var temp = {
+                text: { name: node.value },
+                children: []
+            };
+            console.log(jsonLevel);
+            // jsonLevel.push(temp);
+            this.outputTree += indent + "<" + node.value + ">\n";
             var children = node.childrenNodes;
+            if (children.length == 0) {
+                return;
+            }
+            else {
+                for (var i = 0; i < children.length; i++) {
+                    this.walkTree(children[i], indent + "-", jsonLevel.children);
+                }
+                return;
+            }
         };
         return Tree;
     }());

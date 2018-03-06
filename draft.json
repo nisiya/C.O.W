@@ -1,0 +1,11 @@
+{
+  "chart": {
+      "container": "#pretty-tree"
+  },
+  
+  "nodeStructure": {
+    "text": { "name": "PRG" },
+    "children": [
+    ]
+  }
+}

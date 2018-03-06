@@ -11,24 +11,22 @@ module Compiler {
   export class Tree {
     public root: TreeNode;
     public current: TreeNode;
-    public level: string;
-    public output: string;
     public jsonTree;
+    public outputTree: string;
 
     constructor(value) {
       this.root = new TreeNode(value, null);
-      this.output = "<" + value + ">";
+      this.outputTree = "";
       this.current = this.root;
-      this.level = "";
       this.jsonTree = {
         chart: {
             container: "#pretty-tree"
         },
         
         nodeStructure: {
-            text: { name: value },
-            children: [
-            ]
+            // text: { name: value },
+            // children: [
+            // ]
         }
       };
     }
@@ -45,29 +43,21 @@ module Compiler {
       //   ]
       // }
       // this.jsonTree.nodeStructure.children.push(tmp);
-      // outputs
-      this.level += "-";
-      value = this.level + "<" + value + ">";
-      this.output += "\n" + value;
-
     }
 
     public addLeafNode(value): void{
       let node:TreeNode = new TreeNode(value, this.current);
       this.current.childrenNodes.push(node);
-      // outputs
-      value = this.level + "-[" + value + "]";
-      this.output += "\n" + value;
     }
 
     public moveUp(): void{
       this.current = this.current.parentNode;
-      this.level = this.level.substr(0,(this.level.length-1));
     }
 
     public printTree(): void{
+      this.walkTree(this.root, "", this.jsonTree.nodeStructure);
       let output: HTMLInputElement = <HTMLInputElement> document.getElementById("csTree");
-      output.value += this.output + "\n\n";
+      output.value += this.outputTree + "\n\n";
     }
 
     /*
@@ -211,9 +201,24 @@ module Compiler {
       let my_chart = new Treant(this.jsonTree);
     }
 
-    public walkTree(): void{
-      let node = this.root;
+    public walkTree(node, indent, jsonLevel): void{
+      let temp = {
+        text: { name: node.value },
+        children: [
+        ]
+      }
+      console.log(jsonLevel);
+      // jsonLevel.push(temp);  
+      this.outputTree += indent + "<" + node.value + ">\n";
       let children = node.childrenNodes;
+      if(children.length == 0){
+        return;
+      } else {
+        for(let i=0; i<children.length; i++){
+          this.walkTree(children[i], indent+"-", jsonLevel.children);
+        }
+        return;
+      }
     }
 
   }
