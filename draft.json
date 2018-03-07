@@ -6,6 +6,11 @@
   "nodeStructure": {
     "text": { "name": "PRG" },
     "children": [
+      {
+        "text": { "name": "PRG" },
+        "children": [
+        ]
+      }
     ]
   }
 }

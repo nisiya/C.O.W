@@ -56,7 +56,6 @@ module Compiler {
             [csTree, symbolTable] = parseReturn;
             // print CST
             csTree.printTree();
-            csTree.displayTree();
             log.value += "\n Parse completed successfully";
 
             // update symbol table

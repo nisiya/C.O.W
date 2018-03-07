@@ -89,6 +89,7 @@ var Compiler;
                 while (this.csTree.current.value == "StatementList") {
                     this.csTree.moveUp();
                 }
+                console.log(this.csTree.current);
                 return true;
             }
         };
@@ -168,6 +169,7 @@ var Compiler;
                 this.printStage("parseId()");
                 this.csTree.addLeafNode(currToken.tValue);
                 this.csTree.moveUp(); // to AssignmentStatement
+                this.csTree.moveUp(); // to Expr
                 currToken = this.tokenBank.pop();
                 if (currToken.isEqual("T_Assignment")) {
                     this.csTree.addLeafNode(currToken.tValue);

@@ -35,14 +35,15 @@
 .output{
   height: 350px !important;
   resize: none;
-  font-family: Courier New, Courier, monospace;
+  font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
   font-size: 12px;
+  color: #C5C8C6;
+  background-color: #1D1F21;
   margin-bottom: -4.5px;
 }
 
-#csTree{
-  font-family: 'Saira';
-  font-weight: condensed;
+.card-panel{
+  background-color: #424242 !important;
 }
 
 #verboseBtn{
@@ -64,16 +65,43 @@
 }
 
 body{
-  background-color: #f9f9f9;
+  background-color: #212121;
 }
 
-.link {
-  fill: none;
-  stroke: #ccc;
-  stroke-width: 2px;
+btn{
+  color: #C5C8C6;
 }
 
-#tree-simple{
-  overflow-x: auto;
-  overflow-y: auto;
+.collapsible-header{
+  background-color: #bdbdbd !important;
 }
+
+/* .svg-container {
+  display: inline-block;
+  position: relative;
+  width: 100%;
+  padding-bottom: 50%;
+  vertical-align: top;
+  overflow-x: scroll;
+  overflow-y: scroll;
+  overflow: hidden;
+} */
+
+/* .svg-content-responsive {
+  display: inline-block;
+  position: absolute;
+  top: 10px;
+  left: 0;
+} */
+
+.node-name{
+  font-size: 10px !important;
+}
+
+/* .controlBtn{
+  transform: rotate(-30deg) !important;
+} */
+
+/* .dropdown-content{
+  display: inline-block !important;
+} */

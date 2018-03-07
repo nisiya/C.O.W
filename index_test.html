@@ -33,13 +33,80 @@
         <h5 class="header col s12 light">Compiler of Wendy</h5>
       </div>
       <div class="row">
-        <div class="col s3">  
-          <button class="waves-effect waves-light btn"
-                    onclick="Compiler.Control.startCompile(this);">Compile</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="section">
+      <div class="row center">
+        <div class="col s9">
+          <div class="card-panel blue-grey lighten-5">
+            <h5 class="center"> Console </h5>
+            <pre id="editor">
+  /* Long Test Case - Everything Except Boolean Declaration */
+  {
+    /* Int Declaration */
+    int a
+    int b
+
+    a = 0
+    b = 0
+
+    /* While Loop */
+    while (a != 3) {
+        print(a)
+        while (b != 3) {
+              print(b)
+              b = 1 + b
+              if (b == 2) {
+                /* Print Statement */
+                  print("there is no spoon"/* This will do nothing */)
+              }
+        }
+
+        b = 0
+        a = 1 + a
+    }
+  }$
+            </pre>
+          </div>
         </div>
-        <div class="col s3">
-          <a class='dropdown-button indigo lighten-1 waves-effect waves-light btn' href='#' data-activates='dropdown1' data-beloworigin="true">
-            Test Cases<i class="material-icons right">arrow_drop_down</i>
+        <div class="col s2">
+          <br><br><br>
+          <div class="row">
+            <button class="waves-effect waves-light btn"
+                    id="verboseBtn"
+                    title="Verbose Mode"
+                    onclick="Compiler.Control.verboseMode(this);">Moo Mode: On</button>
+          </div>
+          <div class="row">
+            <button class="waves-effect waves-light btn"
+                    id="flushBtn"
+                    title="Clear Input"
+                    onclick="Compiler.Control.flush(this);">Flush</button>
+          </div>
+          <br><br>
+          <div class="row">
+            <!-- <div class="col offset-m1"> -->
+              <a class="btn-floating btn-large waves-effect waves-light blue center-align"><i class="material-icons">X</i></a>
+            <!-- </div> -->
+          </div>
+          <div class="row">
+              <a class="btn-floating btn-large waves-effect waves-light green left"><i class="material-icons">Y</i></a>
+              <a class="btn-floating btn-large waves-effect waves-light red right"><i class="material-icons">A</i></a>
+          </div>
+          <div class="row center">
+            <a class="btn-floating btn-large waves-effect waves-light yellow center-align"><i class="material-icons">B</i></a>
+          </div>
+        </div>
+      </div>  
+      <div class="row center">
+        <div class="col s3 offset-m3 controlBtn">
+          <a class='dropdown-button grey darken-2 waves-effect waves-light btn' 
+             title="Test Cases"
+             href='#' data-activates='dropdown1' data-beloworigin="true">
+             Select<i class="material-icons right">arrow_drop_down</i>
           </a>
           <ul id='dropdown1' class='dropdown-content grey lighten-5'>
             <li><a class='dropdown-button2 d' href='#' data-activates='validPrg' data-hover="hover" data-alignment="left">
@@ -108,70 +175,12 @@
             <li><a href="#!">three</a></li> -->
           </ul>
         </div>
-        <div class="col s3">
-          <button class="waves-effect waves-light btn"
-                  id="flushBtn"
-                  title="Clear Input"
-                  onclick="Compiler.Control.flush(this);">Flush</button>
-        </div>
-        <div class="col s3">
-          <button class="waves-effect waves-light btn"
-                  id="verboseBtn"
-                  title="Verbose Mode"
-                  onclick="Compiler.Control.verboseMode(this);">Moo Mode: On</button>
+        <div class="col s3">  
+          <button class="waves-effect waves-light grey darken-2 btn controlBtn"
+                  title="Compile"
+                  onclick="Compiler.Control.startCompile(this);">Start</button>
         </div>
       </div>
-    </div>
-  </div>
-
-  <div class="container">
-    <div class="section">
-      <div class="row center">
-        <div class="col s9">
-          <div class="card-panel blue-grey lighten-5">
-            <h5 class="center"> Console </h5>
-            <pre id="editor">
-  /* Long Test Case - Everything Except Boolean Declaration */
-  {
-    /* Int Declaration */
-    int a
-    int b
-
-    a = 0
-    b = 0
-
-    /* While Loop */
-    while (a != 3) {
-        print(a)
-        while (b != 3) {
-              print(b)
-              b = 1 + b
-              if (b == 2) {
-                /* Print Statement */
-                  print("there is no spoon"/* This will do nothing */)
-              }
-        }
-
-        b = 0
-        a = 1 + a
-    }
-  }$
-            </pre>
-          </div>
-        </div>
-        <div class="col s3">
-            <div class="row">
-              <a class="btn-floating btn-large waves-effect waves-light red center-align"><i class="material-icons">X</i></a>
-            </div>
-            <div class="row">
-                <a class="btn-floating btn-large waves-effect waves-light red left"><i class="material-icons">A</i></a>
-                <a class="btn-floating btn-large waves-effect waves-light red right"><i class="material-icons">Y</i></a>
-            </div>
-            <div class="row center">
-              <a class="btn-floating btn-large waves-effect waves-light red center-align"><i class="material-icons">B</i></a>
-            </div>
-        </div>
-      </div>  
     </div>
   </div>
 
@@ -260,7 +269,7 @@
       <div class="col s12">
         <div class="card-panel blue-grey lighten-5">
           <h5 class="center"> Pretty Tree </h5>
-          <div class="center" id="tree-simple"> </div>
+          <div class="white svg-container center" id="pretty-tree"> </div>
         </div>
       </div>
     </div>
@@ -307,7 +316,7 @@
       hover: true, // Activate on hover
       gutter: ($('.dropdown-button').width()*3)/2.5 + 5, // Spacing from edge
       belowOrigin: false, // Displays dropdown below the button
-      alignment: 'left' // Displays dropdown with edge aligned to the left of button
+      alignment: 'center' // Displays dropdown with edge aligned to the left of button
     });
   </script>
   </body>
