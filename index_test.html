@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+  <meta name="author"             content="Alan G. Labouseur and Si Ya Ni" />
+  <title>Compiler</title>
+
+  <!-- CSS  -->
+  <link rel="stylesheet" href="style.css" type="text/css" media="screen" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="materialize/css/materialize.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+  <link href="materialize/css/style.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="distrib/Treant/Treant.css" type="text/css"/>
+
+  <!-- Globals CONSTANTS and _Variables. Must included be first. -->
+  <script type="text/javascript" src="distrib/globals.js"></script>
+  <script type="text/javascript" src="distrib/control.js"></script>
+  <script type="text/javascript" src="distrib/token.js"></script>
+  <script type="text/javascript" src="distrib/lexer.js"></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script type="text/javascript" src="distrib/tree.js"></script>
+  <script type="text/javascript" src="distrib/symbol.js"></script>
+  <script type="text/javascript" src="distrib/parser.js"></script>
+
+</head>
+<body onload="onDocumentLoad()">
+  <div class="section no-pad-bot" id="index-banner">
+    <div class="container center">
+      <h1 class="header red-text">C.O.W</h1>
+      <div class="row">
+        <h5 class="header col s12 light">Compiler of Wendy</h5>
+      </div>
+      <div class="row">
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="section">
+      <div class="row center">
+        <div class="col s9">
+          <div class="card-panel blue-grey lighten-5">
+            <h5 class="center"> Console </h5>
+            <pre id="editor">
+  /* Long Test Case - Everything Except Boolean Declaration */
+  {
+    /* Int Declaration */
+    int a
+    int b
+
+    a = 0
+    b = 0
+
+    /* While Loop */
+    while (a != 3) {
+        print(a)
+        while (b != 3) {
+              print(b)
+              b = 1 + b
+              if (b == 2) {
+                /* Print Statement */
+                  print("there is no spoon"/* This will do nothing */)
+              }
+        }
+
+        b = 0
+        a = 1 + a
+    }
+  }$
+            </pre>
+          </div>
+        </div>
+        <div class="col s2">
+          <br><br><br>
+          <div class="row">
+            <button class="waves-effect waves-light btn"
+                    id="verboseBtn"
+                    title="Verbose Mode"
+                    onclick="Compiler.Control.verboseMode(this);">Moo Mode: On</button>
+          </div>
+          <div class="row">
+            <button class="waves-effect waves-light btn"
+                    id="flushBtn"
+                    title="Clear Input"
+                    onclick="Compiler.Control.flush(this);">Flush</button>
+          </div>
+          <br><br>
+          <div class="row">
+            <!-- <div class="col offset-m1"> -->
+              <a class="btn-floating btn-large waves-effect waves-light blue center-align"><i class="material-icons">X</i></a>
+            <!-- </div> -->
+          </div>
+          <div class="row">
+              <a class="btn-floating btn-large waves-effect waves-light green left"><i class="material-icons">Y</i></a>
+              <a class="btn-floating btn-large waves-effect waves-light red right"><i class="material-icons">A</i></a>
+          </div>
+          <div class="row center">
+            <a class="btn-floating btn-large waves-effect waves-light yellow center-align"><i class="material-icons">B</i></a>
+          </div>
+        </div>
+      </div>  
+      <div class="row center">
+        <div class="col s3 offset-m3 controlBtn">
+          <a class='dropdown-button grey darken-2 waves-effect waves-light btn' 
+             title="Test Cases"
+             href='#' data-activates='dropdown1' data-beloworigin="true">
+             Select<i class="material-icons right">arrow_drop_down</i>
+          </a>
+          <ul id='dropdown1' class='dropdown-content grey lighten-5'>
+            <li><a class='dropdown-button2 d' href='#' data-activates='validPrg' data-hover="hover" data-alignment="left">
+              Valid Programs<i class="tiny material-icons right">chevron_right</i>
+            </a></li>
+            <li><a class='dropdown-button2 d' href='#' data-activates='warningPrg' data-hover="hover" data-alignment="left">
+              Warning Programs<i class="tiny material-icons right">chevron_right</i>
+            </a></li>
+            <li><a class='dropdown-button2 d' href='#' data-activates='lexPrg' data-hover="hover" data-alignment="left">
+              Lex Fail<i class="tiny material-icons right">chevron_right</i>
+            </a></li>
+            <li><a class='dropdown-button2 d' href='#' data-activates='parsePrg' data-hover="hover" data-alignment="left">
+              Parse Fail<i class="tiny material-icons right">chevron_right</i>
+            </a></li>
+            <li><a class='dropdown-button2 d' href='#' data-activates='saFail' data-hover="hover" data-alignment="left">
+              SA Fail<i class="tiny material-icons right">chevron_right</i>
+            </a></li>
+          </ul>
+          <ul id='validPrg' class='dropdown-content grey lighten-5'>
+            <li><a id="simple" href="#!" onclick="Compiler.Control.changeInput(this);">
+              Simple
+            </a></li>
+            <li><a id="fugly" href="#!" onclick="Compiler.Control.changeInput(this);">
+              Fugly Good
+            </a></li>
+          </ul>
+          <ul id='warningPrg' class='dropdown-content grey lighten-5'>
+            <li><a id="warningLex" href="#!" onclick="Compiler.Control.changeInput(this);">
+                Missing EOP
+            </a></li>
+          </ul>
+          <ul id='lexPrg' class='dropdown-content grey lighten-5'>
+            <li><a id="lexSpaces" href="#!" onclick="Compiler.Control.changeInput(this);">
+              Weird Spacing
+            </a></li>
+            <li class="divider"></li>
+            <li><a id="lexSymbol" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
+              Symbol Error
+            </a></li>
+            <li><a id="lexString" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
+                String Error
+            </a></li>
+            <li><a id="lexUppercase" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
+                Uppercase Error
+            </a></li>
+          </ul>
+          <ul id='parsePrg' class='dropdown-content grey lighten-5'>
+            <li><a id="parseValid" href="#!" onclick="Compiler.Control.changeInput(this);">
+              Valid Parse
+            </a></li>
+            <li class="divider"></li>
+            <li><a id="parseIntExpr" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
+              IntExpr Error
+            </a></li>
+            <li><a id="parseBoolop" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
+              Boolop Error
+            </a></li>
+            <li><a id="parseMultiple" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
+                Error in Multiple Programs
+            </a></li>
+          </ul>
+          <ul id='saFail' class='dropdown-content grey lighten-5'>
+            <!-- <li><a href="#!">one</a></li>
+            <li><a href="#!">two</a></li>
+            <li class="divider"></li>
+            <li><a href="#!">three</a></li> -->
+          </ul>
+        </div>
+        <div class="col s3">  
+          <button class="waves-effect waves-light grey darken-2 btn controlBtn"
+                  title="Compile"
+                  onclick="Compiler.Control.startCompile(this);">Start</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="section">
+      <div class="row center">
+        <div class="col s9">
+            <div class="card-panel blue-grey lighten-5">
+              <h5 class="center"> Log </h5>
+              <textarea class="white output" id="log" disabled></textarea>
+            </div>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="section"> 
+      <div class="row center">
+        <div class="col s7">
+          <ul class="collapsible" data-collapsible="accordination">
+            <li>
+              <div class="collapsible-header active" id="csTreeCollapse">
+                CST <i class="material-icons right">unfold_more</i>
+              </div>
+              <div class="collapsible-body">
+                <div class="card-panel blue-grey lighten-5">
+                  <textarea class="white output" id="csTree" disabled></textarea>
+                </div>
+              </div>
+            </li>
+            <li>
+              <div class="collapsible-header">
+                AST <i class="material-icons right">unfold_more</i>
+              </div>
+              <div class="collapsible-body">
+                <div class="card-panel blue-grey lighten-5">
+                  <textarea class="white output" id="asTree" disabled></textarea>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col s5">
+          <ul class="collapsible" data-collapsible="accordination">
+              <li>
+                <div class="collapsible-header active" id="csTreeCollapse">
+                  Symbol Table <i class="material-icons right">unfold_more</i>
+                </div>
+                <div class="collapsible-body">
+                  <div class="card-panel blue-grey lighten-5">
+                    <div style="background-color:#ffffff;">
+                      <table class="striped centered" id="symbolTable">
+                        <thead>
+                          <tr>
+                              <th>Key</th>
+                              <th>Type</th>
+                          </tr>
+                        </thead>
+                        <tbody id="symbolTableBody">
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </li>
+              <li>
+                <div class="collapsible-header">
+                  Symbol Tree <i class="material-icons right">unfold_more</i>
+                </div>
+                <div class="collapsible-body">
+                  <div class="card-panel blue-grey lighten-5">
+                    <h5 class="center"> AST </h5>
+                  </div>
+                </div>
+              </li>
+            </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col s12">
+        <div class="card-panel blue-grey lighten-5">
+          <h5 class="center"> Pretty Tree </h5>
+          <div class="white svg-container center" id="pretty-tree"> </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <footer class="page-footer red darken-3">
+    <div class="container">
+      <div class="row">
+      </div>
+    </div>
+    <div class="footer-copyright">
+      <div class="container">
+      Made by <a class="red-text text-lighten-3" href="https://github.com/nisiya/Ni-Compiler"></a>Wendy Ni</a>
+      </div>
+    </div>
+  </footer>
+
+
+  <!--  Scripts-->
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script src="materialize/js/materialize.js"></script>
+  <script src="materialize/js/init.js"></script>
+  <script src="distrib/src-min/ace.js" type="text/javascript" charset="utf-8"></script>
+  <script src="distrib/Treant/vendor/raphael.js"></script>
+  <script src="distrib/Treant/Treant.js"></script>
+  <script>
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/tomorrow");
+    editor.session.setMode("ace/mode/javascript");
+    editor.session.setUseWorker(false);
+    editor.renderer.setScrollMargin(10, 10);
+    editor.setOptions({
+      autoScrollEditorIntoView: true,
+      enableBasicAutocompletion: false
+      // blockScrolling: Infinity
+    });
+  </script>
+  <script>
+    $('.dropdown-button2').dropdown({
+      inDuration: 300,
+      outDuration: 225,
+      constrain_width: false, // Does not change width of dropdown to that of the activator
+      hover: true, // Activate on hover
+      gutter: ($('.dropdown-button').width()*3)/2.5 + 5, // Spacing from edge
+      belowOrigin: false, // Displays dropdown below the button
+      alignment: 'center' // Displays dropdown with edge aligned to the left of button
+    });
+  </script>
+  </body>
+</html>

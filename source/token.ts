@@ -16,11 +16,27 @@ module Compiler {
     public tLine: number;
     public tColumn: number;
 
-    constructor(tid, tValue, tLine, tColumn) {
+    constructor(tid:string, 
+                tValue:string, 
+                tLine:number, 
+                tColumn:number) {
       this.tid = tid;
       this.tValue = tValue;
       this.tLine = tLine;
       this.tColumn = tColumn;
     }
+
+    public isEqual(tid: string): boolean{
+      return this.tid == tid;
+    }
+
+    public toString(): string{
+      return this.tid + " [ " + this.tValue + " ] on line " + this.tLine + ", column " + this.tColumn;
+    }
+
+    public match(value: string){
+      return this.tValue == value;
+    }
+
   }
 }

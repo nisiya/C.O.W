@@ -18,17 +18,12 @@ const APP_VERSION: string = "0.07";   // uhhhh
 // Global Variables
 // TODO: Make a global object and use that instead of the "_" naming convention in the global namespace.
 
-// UI
-let _Console: Compiler.Console;  // Utilize TypeScript's type annotation system to ensure that _Console is an instance of the Console class.
-
 // Components
 let _Lexer: Compiler.Lexer;
 let _Parser: Compiler.Parser;
 
 // Global vars
 let _VerboseMode: boolean;
-
-
 var onDocumentLoad = function() {
     _VerboseMode = true;
 	// Compiler.Console.consoleInit();

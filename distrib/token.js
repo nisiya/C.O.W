@@ -16,6 +16,15 @@ var Compiler;
             this.tLine = tLine;
             this.tColumn = tColumn;
         }
+        Token.prototype.isEqual = function (tid) {
+            return this.tid == tid;
+        };
+        Token.prototype.toString = function () {
+            return this.tid + " [ " + this.tValue + " ] on line " + this.tLine + ", column " + this.tColumn;
+        };
+        Token.prototype.match = function (value) {
+            return this.tValue == value;
+        };
         return Token;
     }());
     Compiler.Token = Token;
