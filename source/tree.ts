@@ -23,15 +23,6 @@ module Compiler {
       let node:TreeNode = new TreeNode(value, this.current);
       this.current.childrenNodes.push(node);
       this.current = node;
-      console.log("branch" + value);
-      // pretty tree out
-      // let tmp = {
-      //   text: {name: value},
-      //   children:[
-
-      //   ]
-      // }
-      // this.jsonTree.nodeStructure.children.push(tmp);
     }
 
     public addLeafNode(value): void{
@@ -63,11 +54,8 @@ module Compiler {
       let my_chart = new Treant(jsonTree);
     }
 
-    // public displayTree(jsonTree): void{
-    //   let my_chart = new Treant(this.jsonTree);
-    // }
-
     public walkTree(node: TreeNode, indent:String, jsonLevel:Object): void{
+      // for the pretty cst
       if(node != this.root){
         let jsonNode = {
           text: { name: node.value },
@@ -77,13 +65,16 @@ module Compiler {
         jsonLevel.push(jsonNode);
         jsonLevel = jsonNode.children;
       }
+
+      // for the normal cst
       this.outputTree += indent + "<" + node.value + ">\n";
       let children = node.childrenNodes;
+
+      // print tree in preorder
       if(children.length == 0){
         return;
       } else {
         for(let i=0; i<children.length; i++){
-          // console.log(children[i]);
           this.walkTree(children[i], indent+"-", jsonLevel);
         }
         return;

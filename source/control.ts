@@ -59,7 +59,6 @@ module Compiler {
             log.value += "\n Parse completed successfully";
 
             // update symbol table
-            symbolTable.reverse();
             for(let i=0; i<symbolTable.length; i++){
               var row: HTMLTableRowElement = <HTMLTableRowElement> document.createElement("tr");
               var cell: HTMLTableCellElement = <HTMLTableCellElement> document.createElement("td");
@@ -69,6 +68,10 @@ module Compiler {
               row.appendChild(cell);
               cell = document.createElement("td");
               cellText = document.createTextNode(symbol.type);
+              cell.appendChild(cellText);
+              row.appendChild(cell);
+              cell = document.createElement("td");
+              cellText = document.createTextNode(symbol.line);
               cell.appendChild(cellText);
               row.appendChild(cell);
               symbolTableBody.appendChild(row);

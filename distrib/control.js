@@ -53,7 +53,6 @@ var Compiler;
                         csTree.printTree();
                         log.value += "\n Parse completed successfully";
                         // update symbol table
-                        symbolTable.reverse();
                         for (var i = 0; i < symbolTable.length; i++) {
                             var row = document.createElement("tr");
                             var cell = document.createElement("td");
@@ -63,6 +62,10 @@ var Compiler;
                             row.appendChild(cell);
                             cell = document.createElement("td");
                             cellText = document.createTextNode(symbol.type);
+                            cell.appendChild(cellText);
+                            row.appendChild(cell);
+                            cell = document.createElement("td");
+                            cellText = document.createTextNode(symbol.line);
                             cell.appendChild(cellText);
                             row.appendChild(cell);
                             symbolTableBody.appendChild(row);

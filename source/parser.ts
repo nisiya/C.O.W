@@ -15,6 +15,7 @@ module Compiler {
     public csTree: Tree;
     public symbolTable: Symbol[];
     public tokenBank: Token[];
+    public currentToken: Token;
     public error: boolean;
 
     // 1. <Program> -> <Block> $
@@ -30,15 +31,15 @@ module Compiler {
       if(this.parseBlock()){
         // true = finished parsing body of program
         this.csTree.moveUp(); // to Program
-        let currToken = this.tokenBank.pop();
+        this.currentToken = this.tokenBank.pop();
 
         // check for [$]
-        if(currToken.isEqual("T_EOP")){
-          this.csTree.addLeafNode(currToken.tValue);
+        if(this.currentToken.isEqual("T_EOP")){
+          this.csTree.addLeafNode(this.currentToken.tValue);
           return [this.csTree, this.symbolTable];
         } else {
           // Expected [$]
-          this.printError("T_EOP", currToken);
+          this.printError("T_EOP", this.currentToken);
           return null;
         }
       } else{
@@ -51,25 +52,25 @@ module Compiler {
 
     // 2. <Block> -> { <StatementList> }
     public parseBlock(): boolean{
-      let currToken = this.tokenBank.pop();
+      this.currentToken = this.tokenBank.pop();
     
       // check for [{]
-      if(currToken.isEqual("T_OpenBracket")){
+      if(this.currentToken.isEqual("T_OpenBracket")){
         // Block found
         this.printStage("parseBlock()");
         this.csTree.addBranchNode("Block");
-        this.csTree.addLeafNode(currToken.tValue);
+        this.csTree.addLeafNode(this.currentToken.tValue);
 
         if(this.parseStmtList()){
           // true = finished parsing body of block
-          currToken = this.tokenBank.pop();
+          this.currentToken = this.tokenBank.pop();
           //check for [}]
-          if(currToken.isEqual("T_CloseBracket")){
-            this.csTree.addLeafNode(currToken.tValue);
+          if(this.currentToken.isEqual("T_CloseBracket")){
+            this.csTree.addLeafNode(this.currentToken.tValue);
             return true;
           } else{
             // Expected [}]
-            this.printError("T_CloseBracket", currToken);
+            this.printError("T_CloseBracket", this.currentToken);
             return false;
           }
         } else{
@@ -77,7 +78,7 @@ module Compiler {
         }
       } else{
         // Block not found, error depends on previous function
-        this.tokenBank.push(currToken);
+        this.tokenBank.push(this.currentToken);
         return false;
       }
     }
@@ -120,119 +121,119 @@ module Compiler {
 
     // 11. <PrintStatement> -> print (<Expr>)
     public parsePrintStmt(): boolean{
-      let currToken = this.tokenBank.pop();
-      if(currToken.isEqual("T_Print")){
+      this.currentToken = this.tokenBank.pop();
+      if(this.currentToken.isEqual("T_Print")){
         // PrintStatement found
         this.csTree.addBranchNode("Statement"); 
         this.printStage("parsePrintStatement()");
         this.csTree.addBranchNode("PrintStatement"); 
-        this.csTree.addLeafNode(currToken.tValue); 
+        this.csTree.addLeafNode(this.currentToken.tValue); 
 
-        currToken = this.tokenBank.pop();
+        this.currentToken = this.tokenBank.pop();
         // check for [(]
-        if(currToken.isEqual("T_OpenParen")){
-          this.csTree.addLeafNode(currToken.tValue); 
+        if(this.currentToken.isEqual("T_OpenParen")){
+          this.csTree.addLeafNode(this.currentToken.tValue); 
           if(this.parseExpr()){
             this.csTree.moveUp(); // to PrintExpr
-            currToken = this.tokenBank.pop();
+            this.currentToken = this.tokenBank.pop();
             // check for [)]
-            if(currToken.isEqual("T_CloseParen")){
-              this.csTree.addLeafNode(currToken.tValue); 
+            if(this.currentToken.isEqual("T_CloseParen")){
+              this.csTree.addLeafNode(this.currentToken.tValue); 
               return true;
             } else{
               // Expected [])]
-              this.printError("T_CloseParen", currToken);
+              this.printError("T_CloseParen", this.currentToken);
               return false;
             }
           } else{
             // Expected [Expr]
-            this.printError("Expr", currToken);
+            this.printError("Expr", this.currentToken);
             return false;
           }
         } else{
           // Expected [(]
-          this.printError("T_OpenParen", currToken);
+          this.printError("T_OpenParen", this.currentToken);
           return false;
         }
       } else{
         // go back to parseStmtList to check other production
-        this.tokenBank.push(currToken);
+        this.tokenBank.push(this.currentToken);
         return false;
       }
     }
 
     // 12. <AssignmentStatement> -> <Id> = <Expr>
     public parseAssignStmt(): boolean{
-      let currToken = this.tokenBank.pop();
-      if(currToken.isEqual("T_Id")){
+      this.currentToken = this.tokenBank.pop();
+      if(this.currentToken.isEqual("T_Id")){
         // AssignmentStatement found
         this.csTree.addBranchNode("Statement");
         this.csTree.addBranchNode("AssignmentStatement");
         this.printStage("parseAssignmentStatement()");
         this.csTree.addBranchNode("Id");
         this.printStage("parseId()");
-        this.csTree.addLeafNode(currToken.tValue); 
+        this.csTree.addLeafNode(this.currentToken.tValue); 
         this.csTree.moveUp(); // to AssignmentStatement
         this.csTree.moveUp(); // to Expr
-        currToken = this.tokenBank.pop();
-        if(currToken.isEqual("T_Assignment")){
-          this.csTree.addLeafNode(currToken.tValue);
+        this.currentToken = this.tokenBank.pop();
+        if(this.currentToken.isEqual("T_Assignment")){
+          this.csTree.addLeafNode(this.currentToken.tValue);
           if(this.parseExpr()){
             this.csTree.moveUp(); // to AssignmentStatement
             return true;
           } else{
             // Expected [Expr]
-            this.printError("Expr", currToken);
+            this.printError("Expr", this.currentToken);
             return false;
           }
         } else{
           // Expected [=]
-            this.printError("T_Assignment", currToken);
+            this.printError("T_Assignment", this.currentToken);
           return false;
         }
       } else{
         // go back to parseStmtList to check other productions
-        this.tokenBank.push(currToken);
+        this.tokenBank.push(this.currentToken);
         return false;
       }
     }
 
     // 13. <VarDecl> -> type Id
     public parseVarDecl(): boolean{
-      let currToken = this.tokenBank.pop();
+      this.currentToken = this.tokenBank.pop();
       // 29. <type> -> <int> | <string> | <boolean>
-      if(currToken.isEqual("T_VarType")){
+      if(this.currentToken.isEqual("T_VarType")){
         this.csTree.addBranchNode("Statement"); 
         this.csTree.addBranchNode("VarDecl"); 
         this.printStage("parseVarDecl()"); 
         this.csTree.addBranchNode("type"); 
-        this.csTree.addLeafNode(currToken.tValue);
+        this.csTree.addLeafNode(this.currentToken.tValue);
         this.csTree.moveUp(); // to VarDecl
         if(this.parseId()){
           this.csTree.moveUp(); // to VarDecl
           let currentNode = this.csTree.current;
-          let symbol: Symbol = new Symbol(currentNode.childrenNodes[1].childrenNodes[0].value, currentNode.childrenNodes[0].childrenNodes[0].value);
+          let symbol: Symbol = new Symbol(this.currentToken.tValue, currentNode.childrenNodes[0].childrenNodes[0].value, this.currentToken.tLine);
           this.symbolTable.push(symbol);
           return true;
         } else{
-          this.printError("T_Id", currToken);
+          this.printError("T_Id", this.currentToken);
           return false;
         }
       } else{
         // return to parseStmtList to evaluate other production
-        this.tokenBank.push(currToken);
+        this.tokenBank.push(this.currentToken);
         return false;
       }
     }
 
     // 14. <WhileStatement> -> while <BooleanExpr> <Block>
     public parseWhileStmt(): boolean{
-      let currToken = this.tokenBank.pop();
-      if(currToken.isEqual("T_While")){
+      this.currentToken = this.tokenBank.pop();
+      if(this.currentToken.isEqual("T_While")){
         this.csTree.addBranchNode("Statement"); 
         this.csTree.addBranchNode("WhileStatement");
         this.printStage("parseWhileStatement()");
-        this.csTree.addLeafNode(currToken.tValue);
+        this.csTree.addLeafNode(this.currentToken.tValue);
         if(this.parseBoolExpr()){
           this.csTree.moveUp(); // to WhileStatement
           if(this.parseBlock()){
@@ -240,29 +241,29 @@ module Compiler {
             return true;
           } else{
             // Expected block
-            this.printError("Block", currToken);
+            this.printError("Block", this.currentToken);
             return false;
           }
         } else{
           // Expected boolexpr
-          this.printError("BoolExpr", currToken);
+          this.printError("BoolExpr", this.currentToken);
           return false;
         }
       } else{
         // return to parseStmtList to evaluate other productions
-        this.tokenBank.push(currToken);
+        this.tokenBank.push(this.currentToken);
         return false;
       }
     }
 
     // 15. <IfStatement> -> if <BooleanExpr> <Block>
     public parseIfStmt(): boolean{
-      let currToken = this.tokenBank.pop();
-      if(currToken.isEqual("T_If")){
+      this.currentToken = this.tokenBank.pop();
+      if(this.currentToken.isEqual("T_If")){
         this.csTree.addBranchNode("Statement");
         this.csTree.addBranchNode("IfStatement");
         this.printStage("parseIfStatement()");
-        this.csTree.addLeafNode(currToken.tValue);
+        this.csTree.addLeafNode(this.currentToken.tValue);
         if(this.parseBoolExpr()){
           this.csTree.moveUp(); // to IfStatement
           if(this.parseBlock()){
@@ -270,17 +271,17 @@ module Compiler {
             return true; // current = IfStatement
           } else{
             // Expected block
-            this.printError("Block", currToken);  
+            this.printError("Block", this.currentToken);  
             return false;
           }
         } else{
           // Expected boolexpr
-          this.printError("BoolExpr", currToken);
+          this.printError("BoolExpr", this.currentToken);
           return false;
         }
       } else{
         // return to parseStmtList to evaluate other productions
-        this.tokenBank.push(currToken);
+        this.tokenBank.push(this.currentToken);
         return false;
       }
     }
@@ -307,60 +308,60 @@ module Compiler {
     // 20. <IntExpr> -> <digit> <intop> <Expr>
     // 21.           -> <digit>
     public parseIntExpr(): boolean{
-      let currToken = this.tokenBank.pop();
+      this.currentToken = this.tokenBank.pop();
       // 32. <digit> -> <0> | <1> | ...
-      if(currToken.isEqual("T_Digit")){
+      if(this.currentToken.isEqual("T_Digit")){
         // IntExpr found
         this.csTree.addBranchNode("IntExpr");
         this.printStage("parseIntExpr()"); 
         this.csTree.addBranchNode("digit");
-        this.csTree.addLeafNode(currToken.tValue);
+        this.csTree.addLeafNode(this.currentToken.tValue);
         this.csTree.moveUp(); // to IntExpr
-        currToken = this.tokenBank.pop();
+        this.currentToken = this.tokenBank.pop();
         // 35. <intop> -> <+>
-        if(currToken.isEqual("T_Addition")){
-          this.csTree.addLeafNode(currToken.tValue);
+        if(this.currentToken.isEqual("T_Addition")){
+          this.csTree.addLeafNode(this.currentToken.tValue);
           if(this.parseExpr()){
             return true;
           } else{
             // Expected Expr
-            this.printError("Expr", currToken);
+            this.printError("Expr", this.currentToken);
             return false;
           }
         } else {
           // just digit, still valid
-          this.tokenBank.push(currToken);
+          this.tokenBank.push(this.currentToken);
           return true;
         } 
       } else{
         // return to parseExpr to evaluate other production
-        this.tokenBank.push(currToken);
+        this.tokenBank.push(this.currentToken);
         return false;
       }
     }
 
     // 22. <StringExpr> -> " <CharList> "
     public parseStrExpr(): boolean{
-      let currToken = this.tokenBank.pop();
-      if(currToken.isEqual("T_OpenQuote")){
+      this.currentToken = this.tokenBank.pop();
+      if(this.currentToken.isEqual("T_OpenQuote")){
         // StringExpr found
         this.csTree.addBranchNode("StringExpr");
         this.printStage("parseStringExpr()");
-        this.csTree.addLeafNode(currToken.tValue);
+        this.csTree.addLeafNode(this.currentToken.tValue);
         if(this.parseCharList()){
-          let currToken = this.tokenBank.pop();
-          if(currToken.isEqual("T_CloseQuote")){
-            this.csTree.addLeafNode(currToken.tValue);
+          this.currentToken = this.tokenBank.pop();
+          if(this.currentToken.isEqual("T_CloseQuote")){
+            this.csTree.addLeafNode(this.currentToken.tValue);
             return true;
           } else{
-            this.printError("T_CloseQuote", currToken);
-            this.tokenBank.push(currToken);
+            this.printError("T_CloseQuote", this.currentToken);
+            this.tokenBank.push(this.currentToken);
             return false;
           }
         } // will always return true, empty char returns true
       } else{
         // return to parseExpr to evaluate other productions
-        this.tokenBank.push(currToken);
+        this.tokenBank.push(this.currentToken);
         return false;
       }
     }
@@ -368,54 +369,54 @@ module Compiler {
     // 23. <BooleanExpr> -> (<Expr> <boolop> <Expr>)
     // 24.               -> <boolval>
     public parseBoolExpr(): boolean{
-      let currToken = this.tokenBank.pop();
-      if(currToken.isEqual("T_OpenParen")){
+      this.currentToken = this.tokenBank.pop();
+      if(this.currentToken.isEqual("T_OpenParen")){
         this.csTree.addBranchNode("BooleanExpr");
         this.printStage("parseBooleanExpr()");
-        this.csTree.addLeafNode(currToken.tValue);
+        this.csTree.addLeafNode(this.currentToken.tValue);
         if(this.parseExpr()){
           this.csTree.moveUp(); // to BoolExpr
-          currToken = this.tokenBank.pop();
+          this.currentToken = this.tokenBank.pop();
           // 33. <boolop> -> <==> | <!=>
-          if(currToken.isEqual("T_NotEqual") || currToken.isEqual("T_Equal")){
+          if(this.currentToken.isEqual("T_NotEqual") || this.currentToken.isEqual("T_Equal")){
             this.csTree.addBranchNode("boolop");
-            this.csTree.addLeafNode(currToken.tValue);
+            this.csTree.addLeafNode(this.currentToken.tValue);
             this.csTree.moveUp(); // to BoolExpr
             if(this.parseExpr()){
               this.csTree.moveUp(); // to BoolExpr
-              currToken = this.tokenBank.pop();
-              if(currToken.isEqual("T_CloseParen")){
-                this.csTree.addLeafNode(currToken.tValue);
+              this.currentToken = this.tokenBank.pop();
+              if(this.currentToken.isEqual("T_CloseParen")){
+                this.csTree.addLeafNode(this.currentToken.tValue);
                 return true;
               } else{
                 // Expected [)]
-                this.printError("T_CloseParen", currToken);
-                this.tokenBank.push(currToken);
+                this.printError("T_CloseParen", this.currentToken);
+                this.tokenBank.push(this.currentToken);
                 return false;
               }
             }
             //Expected expr
-            this.printError("Expr", currToken);
+            this.printError("Expr", this.currentToken);
             return false;
           } else{
-            this.printError("BoolOp", currToken);
-            this.tokenBank.push(currToken);
+            this.printError("BoolOp", this.currentToken);
+            this.tokenBank.push(this.currentToken);
             return false;
           }
         } 
         // Expected expr
-        this.printError("Expr", currToken);
+        this.printError("Expr", this.currentToken);
         return false;
-      } else if(currToken.isEqual("T_BoolVal")){
+      } else if(this.currentToken.isEqual("T_BoolVal")){
         // 34. <boolval> -> <false> | <true>
         this.csTree.addBranchNode("BooleanExpr");
         this.csTree.addBranchNode("boolval");
-        this.csTree.addLeafNode(currToken.tValue);
+        this.csTree.addLeafNode(this.currentToken.tValue);
         this.csTree.moveUp(); // to BoolExpr
         return true; 
       } else{
         // previous function will handle errors
-        this.tokenBank.push(currToken);
+        this.tokenBank.push(this.currentToken);
         return false;
       }
     } 
@@ -441,47 +442,47 @@ module Compiler {
 
     // 30. <char> -> a | b | ...
     public parseChar(): boolean{
-      let currToken = this.tokenBank.pop();
-      if(currToken.isEqual("T_Char")){
+      this.currentToken = this.tokenBank.pop();
+      if(this.currentToken.isEqual("T_Char")){
         this.csTree.addBranchNode("char");
         this.printStage("parseChar()");
-        this.csTree.addLeafNode(currToken.tValue);
+        this.csTree.addLeafNode(this.currentToken.tValue);
         this.csTree.moveUp(); // to CharList
         return true;
       } else{
         // can be empty string
-        this.tokenBank.push(currToken);
+        this.tokenBank.push(this.currentToken);
         return false;
       }
     }
 
     // 31. <space> -> the space character
     public parseSpace(): boolean{
-      let currToken = this.tokenBank.pop();
-      if(currToken.isEqual("T_Space")){
+      this.currentToken = this.tokenBank.pop();
+      if(this.currentToken.isEqual("T_Space")){
         this.csTree.addBranchNode("space");
         this.printStage("parseSpace()");
-        this.csTree.addLeafNode(currToken.tValue);
+        this.csTree.addLeafNode(this.currentToken.tValue);
         this.csTree.moveUp(); // to CharList
         return true;
       } else{
         // can be empty string
-        this.tokenBank.push(currToken);
+        this.tokenBank.push(this.currentToken);
         return false;
       }
     }
 
     // 25. <Id> -> <char>
     public parseId(): boolean{
-      let currToken = this.tokenBank.pop();
-      if(currToken.isEqual("T_Id")){
+      this.currentToken = this.tokenBank.pop();
+      if(this.currentToken.isEqual("T_Id")){
         this.csTree.addBranchNode("Id");
         this.printStage("parseId()");
-        this.csTree.addLeafNode(currToken.tValue); 
+        this.csTree.addLeafNode(this.currentToken.tValue); 
         return true;
       } else{
         // previous function will report error
-        this.tokenBank.push(currToken);
+        this.tokenBank.push(this.currentToken);
         return false;
       }
     }

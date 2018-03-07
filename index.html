@@ -202,18 +202,17 @@
                 </div>
                 <div class="collapsible-body">
                   <div class="card-panel">
-                    <div style="background-color:#ffffff;">
-                      <table class="striped centered grey lighten-5 bordered" id="symbolTable">
-                        <thead>
-                          <tr>
-                              <th>Key</th>
-                              <th>Type</th>
-                          </tr>
-                        </thead>
-                        <tbody id="symbolTableBody">
-                        </tbody>
-                      </table>
-                    </div>
+                    <table class="striped centered grey lighten-5 bordered" id="symbolTable">
+                      <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>Type</th>
+                            <th>Line</th>
+                        </tr>
+                      </thead>
+                      <tbody id="symbolTableBody">
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </li>
@@ -238,8 +237,10 @@
     <div class="row">
       <div class="col s12">
         <div class="card-panel">
-          <h5 class="center"> Pretty Tree </h5>
-          <div class="grey lighten-1 center" id="pretty-tree"> </div>
+          <h5 class="center"> Pretty CST Tree </h5>
+          <!-- <div class="treeContainer"> -->
+            <div class="grey lighten-1 center" id="pretty-tree"> </div>
+          <!-- </div> -->
         </div>
       </div>
     </div>
@@ -257,7 +258,6 @@
 
   <!--  Scripts-->
   <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
-  <script src="distrib/jquery.doubleScroll.js"></script>
   <script src="materialize/js/materialize.js"></script>
   <script src="materialize/js/init.js"></script>
   <script src="distrib/src-min/ace.js" type="text/javascript" charset="utf-8"></script>
