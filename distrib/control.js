@@ -65,7 +65,7 @@ var Compiler;
                             cell.appendChild(cellText);
                             row.appendChild(cell);
                             cell = document.createElement("td");
-                            cellText = document.createTextNode(symbol.line);
+                            cellText = document.createTextNode("" + symbol.line);
                             cell.appendChild(cellText);
                             row.appendChild(cell);
                             symbolTableBody.appendChild(row);
