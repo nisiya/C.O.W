@@ -23,6 +23,21 @@
 }$
 ```
 
+3. Nested While and if
+```
+{
+  while(b == true){
+    print("hello there")
+    while(b == true){
+      print("hello there")
+      if(b != false){
+        b = 2
+      }
+    }
+  }
+}$
+```
+
 ## Multiple Programs
 1. Alan's test case
 ```
