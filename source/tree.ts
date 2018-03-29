@@ -28,12 +28,10 @@ module Compiler {
     public addLeafNode(value): void{
       let node:TreeNode = new TreeNode(value, this.current);
       this.current.childrenNodes.push(node);
-      console.log("leaf" + value);
     }
 
     public moveUp(): void{
       this.current = this.current.parentNode;
-      console.log("current" + this.current.value);
     }
 
     public printTree(): void{
@@ -51,7 +49,7 @@ module Compiler {
       this.walkTree(this.root, "", jsonTree.nodeStructure.children);
       let output: HTMLInputElement = <HTMLInputElement> document.getElementById("csTree");
       output.value += this.outputTree + "\n\n";
-      let my_chart = new Treant(jsonTree);
+      let prettyTree = new Treant(jsonTree);
     }
 
     public walkTree(node: TreeNode, indent:String, jsonLevel:Object): void{

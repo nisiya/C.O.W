@@ -89,7 +89,6 @@ var Compiler;
                 while (this.csTree.current.value == "StatementList") {
                     this.csTree.moveUp();
                 }
-                console.log(this.csTree.current);
                 return true;
             }
         };
@@ -135,6 +134,7 @@ var Compiler;
                         }
                         else {
                             // Expected [])]
+                            this.tokenBank.push(this.currentToken);
                             this.printError("T_CloseParen", this.currentToken);
                             return false;
                         }

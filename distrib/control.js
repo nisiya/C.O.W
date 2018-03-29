@@ -39,7 +39,6 @@ var Compiler;
                 var lexerReturn = lexer.start(input);
                 var tokenBank = void 0;
                 tokenBank = lexerReturn[0], input = lexerReturn[1];
-                console.log(tokenBank);
                 if (tokenBank.length != 0) {
                     // Lex passed
                     log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";
@@ -85,6 +84,7 @@ var Compiler;
                     csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to LEXER error(s) \n\n";
                 }
                 prgNum++;
+                console.log(input);
             }
         };
         // detailed log will be generated
@@ -104,6 +104,16 @@ var Compiler;
         };
         // clear console
         Control.flush = function (btn) {
+            var log = document.getElementById("log");
+            var csTreeOut = document.getElementById("csTree");
+            var symbolTableBody = document.getElementById("symbolTableBody");
+            // reset outputs
+            log.value = "";
+            csTreeOut.value = "";
+            while (symbolTableBody.hasChildNodes()) {
+                symbolTableBody.removeChild(symbolTableBody.firstChild);
+            }
+            var prettyTree = new Treant(null);
             editor.setValue("");
             var audio = new Audio('distrib/audio/meow.mp3');
             audio.play();

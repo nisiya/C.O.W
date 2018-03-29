@@ -14,7 +14,7 @@ module Compiler {
     public static startCompile(btn): void {
       let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
       let csTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("csTree");
-      var symbolTableBody: HTMLTableSectionElement = <HTMLTableSectionElement> document.getElementById("symbolTableBody");
+      let symbolTableBody: HTMLTableSectionElement = <HTMLTableSectionElement> document.getElementById("symbolTableBody");
       let lexer: Compiler.Lexer = new Lexer();
       let parser: Compiler.Parser = new Parser();
 
@@ -43,7 +43,6 @@ module Compiler {
         let lexerReturn = lexer.start(input);
         let tokenBank: Token[];
         [tokenBank, input] = lexerReturn;
-        console.log(tokenBank);
         if(tokenBank.length != 0){
           // Lex passed
           log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";            
@@ -89,6 +88,7 @@ module Compiler {
           csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to LEXER error(s) \n\n";
         }
         prgNum++;
+        console.log(input);
       }
     }
 
@@ -109,6 +109,16 @@ module Compiler {
 
     // clear console
     public static flush(btn): void {
+      let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
+      let csTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("csTree");
+      let symbolTableBody: HTMLTableSectionElement = <HTMLTableSectionElement> document.getElementById("symbolTableBody");
+      // reset outputs
+      log.value = "";
+      csTreeOut.value = "";
+      while(symbolTableBody.hasChildNodes()){
+        symbolTableBody.removeChild(symbolTableBody.firstChild);
+      }
+      let prettyTree = new Treant(null);
       editor.setValue("");
       var audio = new Audio('distrib/audio/meow.mp3');
       audio.play();

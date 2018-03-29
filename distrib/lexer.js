@@ -180,7 +180,6 @@ var Compiler;
                 this.displayTokens();
                 var index = userPrg.search(eop) == -1 ? userPrg.length : userPrg.search(eop);
                 userPrg = userPrg.slice(index + 1, userPrg.length);
-                console.log("lex error\n" + userPrg);
                 return [new Array(), userPrg];
             }
             else {
@@ -188,7 +187,6 @@ var Compiler;
                 // success or has warning
                 this.displayTokens();
                 userPrg = userPrg.slice(secondPointer + 1, userPrg.length);
-                console.log("lex pass\n" + userPrg);
                 return [this.tokenBank, userPrg];
             }
         };

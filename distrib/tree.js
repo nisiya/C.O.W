@@ -21,11 +21,9 @@ var Compiler;
         Tree.prototype.addLeafNode = function (value) {
             var node = new TreeNode(value, this.current);
             this.current.childrenNodes.push(node);
-            console.log("leaf" + value);
         };
         Tree.prototype.moveUp = function () {
             this.current = this.current.parentNode;
-            console.log("current" + this.current.value);
         };
         Tree.prototype.printTree = function () {
             var jsonTree = {
@@ -40,7 +38,7 @@ var Compiler;
             this.walkTree(this.root, "", jsonTree.nodeStructure.children);
             var output = document.getElementById("csTree");
             output.value += this.outputTree + "\n\n";
-            var my_chart = new Treant(jsonTree);
+            var prettyTree = new Treant(jsonTree);
         };
         Tree.prototype.walkTree = function (node, indent, jsonLevel) {
             // for the pretty cst

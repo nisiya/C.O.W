@@ -175,14 +175,12 @@ module Compiler {
         this.displayTokens();
         let index = userPrg.search(eop) == -1 ? userPrg.length : userPrg.search(eop);
         userPrg = userPrg.slice(index+1, userPrg.length);
-        console.log("lex error\n" + userPrg);
         return [new Array<Token>(), userPrg];
       } else{
         // end of lex because eop or no more user input
         // success or has warning
         this.displayTokens();
         userPrg = userPrg.slice(secondPointer+1, userPrg.length);
-        console.log("lex pass\n" + userPrg);
         return [this.tokenBank, userPrg];
       }
     }
