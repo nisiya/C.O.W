@@ -108,8 +108,8 @@ module Compiler {
     * 10.            -> <Block>
     */
     public parseStatement(): boolean{
-      if(this.parsePrintStmt() || this.parseAssignStmt() || this.parseVarDecl() 
-      || this.parseWhileStmt() || this.parseIfStmt() || this.parseBlock()){
+      if(this.parseBlock() || this.parsePrintStmt() || this.parseAssignStmt() || this.parseVarDecl() 
+      || this.parseWhileStmt() || this.parseIfStmt()){
         this.csTree.moveUp(); // to Statement
         return true;
       } else{
