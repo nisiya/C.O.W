@@ -108,8 +108,8 @@ module Compiler {
     * 10.            -> <Block>
     */
     public parseStatement(): boolean{
-      if(this.parseBlock() || this.parsePrintStmt() || this.parseAssignStmt() || this.parseVarDecl() 
-      || this.parseWhileStmt() || this.parseIfStmt()){
+      if(this.parseBlock() || this.parsePrintStmt() || this.parseAssignStmt()
+        || this.parseVarDecl() || this.parseWhileStmt() || this.parseIfStmt()){
         this.csTree.moveUp(); // to Statement
         return true;
       } else{
@@ -399,8 +399,8 @@ module Compiler {
             this.printError("Expr", this.currentToken);
             return false;
           } else{
-            this.printError("BoolOp", this.currentToken);
             this.tokenBank.push(this.currentToken);
+            this.printError("BoolOp", this.currentToken);
             return false;
           }
         } 

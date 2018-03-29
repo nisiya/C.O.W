@@ -16,6 +16,7 @@ var Compiler;
             var symbolTableBody = document.getElementById("symbolTableBody");
             var lexer = new Compiler.Lexer();
             var parser = new Compiler.Parser();
+            var sAnalyzer = new Compiler.SAnalyzer();
             // reset outputs
             csTreeOut.value = "";
             while (symbolTableBody.hasChildNodes()) {
@@ -69,6 +70,9 @@ var Compiler;
                             row.appendChild(cell);
                             symbolTableBody.appendChild(row);
                         }
+                        // start semantic analyzer
+                        var asTree = sAnalyzer.start(csTree);
+                        asTree.printTree();
                     }
                     else {
                         // Parse failed

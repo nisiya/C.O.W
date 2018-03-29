@@ -101,8 +101,8 @@ var Compiler;
         * 10.            -> <Block>
         */
         Parser.prototype.parseStatement = function () {
-            if (this.parseBlock() || this.parsePrintStmt() || this.parseAssignStmt() || this.parseVarDecl()
-                || this.parseWhileStmt() || this.parseIfStmt()) {
+            if (this.parseBlock() || this.parsePrintStmt() || this.parseAssignStmt()
+                || this.parseVarDecl() || this.parseWhileStmt() || this.parseIfStmt()) {
                 this.csTree.moveUp(); // to Statement
                 return true;
             }
@@ -406,8 +406,8 @@ var Compiler;
                         return false;
                     }
                     else {
-                        this.printError("BoolOp", this.currentToken);
                         this.tokenBank.push(this.currentToken);
+                        this.printError("BoolOp", this.currentToken);
                         return false;
                     }
                 }

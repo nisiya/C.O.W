@@ -18,6 +18,7 @@ var APP_VERSION = "0.07"; // uhhhh
 // Components
 var _Lexer;
 var _Parser;
+var _SAnalyzer;
 // Global vars
 var _VerboseMode;
 var onDocumentLoad = function () {

@@ -17,6 +17,7 @@ module Compiler {
       let symbolTableBody: HTMLTableSectionElement = <HTMLTableSectionElement> document.getElementById("symbolTableBody");
       let lexer: Compiler.Lexer = new Lexer();
       let parser: Compiler.Parser = new Parser();
+      let sAnalyzer: Compiler.SAnalyzer = new SAnalyzer();
 
       // reset outputs
       csTreeOut.value = "";
@@ -75,6 +76,10 @@ module Compiler {
               row.appendChild(cell);
               symbolTableBody.appendChild(row);
             }
+
+            // start semantic analyzer
+            let asTree = sAnalyzer.start(csTree);
+            asTree.printTree();
           } else{
             // Parse failed
             csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n\n";

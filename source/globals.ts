@@ -21,6 +21,7 @@ const APP_VERSION: string = "0.07";   // uhhhh
 // Components
 let _Lexer: Compiler.Lexer;
 let _Parser: Compiler.Parser;
+let _SAnalyzer: Compiler.SAnalyzer;
 
 // Global vars
 let _VerboseMode: boolean;
