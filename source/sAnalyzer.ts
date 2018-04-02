@@ -17,54 +17,65 @@ module Compiler {
     public error: boolean;
 
     public start(csTree:Tree): Tree{
+      console.log("sstart");
       let buffer:TreeNode[] = new Array<TreeNode>();
       this.asTree = new Tree("Block");
-      this.analyzeStmt(csTree.root.childrenNodes[0]); // Start from initial StatementList
+      console.log(csTree.root.value);
+      this.analyzeStmt(csTree.root.childrenNodes[0].childrenNodes[1]); // Start from initial StatementList
       return this.asTree;
     }
 
     public analyzeStmt(node: TreeNode): void{
-      let stmt:TreeNode = node.childrenNodes[0];
-      switch(stmt.value){
-        case("Block"):
-          this.asTree.addBranchNode("Block");
-          break;
-        case("PrintStatement"):
-          this.analyzePrint(node.childrenNodes);
-          break;
-        case("AssignmentStatement"):
-          this.analyzeAssignment(node.childrenNodes);
-          break;
-        case("VarDecl"):
-          this.asTree.addBranchNode(node.value);
-          this.analyzeVarDecl(node.childrenNodes);
-          this.asTree.moveUp(); // currentNode = block
-          break;
-        case("WhileStatement"):
-          break;
-        case("IfStatement"):
-          break;
-        default:
-          break;
+      console.log(node.value + " value");
+      if (node.childrenNodes[0] == null){
+        return;
+      } else{
+        let stmt:TreeNode = node.childrenNodes[0];
+        console.log(stmt.childrenNodes[0].value);
+        switch(stmt.value){
+          case("Block"):
+            this.asTree.addBranchNode("Block");
+            break;
+          case("PrintStatement"):
+            this.analyzePrint(node.childrenNodes);
+            break;
+          case("AssignmentStatement"):
+            this.analyzeAssignment(node.childrenNodes);
+            break;
+          case("VarDecl"):
+            this.asTree.addBranchNode(node.value);
+            console.log("hello");
+            console.log(this.asTree);
+            this.analyzeVarDecl(node.childrenNodes);
+            this.asTree.moveUp(); // currentNode = block
+            break;
+          case("WhileStatement"):
+            break;
+          case("IfStatement"):
+            break;
+          default:
+            break;
+        }
+        this.analyzeStmt(node.childrenNodes[1]); // the child StatementList
       }
-      this.analyzeStmt(node.childrenNodes[1]); // the child StatementList
     }
 
     public analyzePrint(childrenNodes: TreeNode[]): void{
       this.asTree.addBranchNode(childrenNodes[0].value); // print
+      console.log(this.asTree);
       this.analyzeExpr(childrenNodes[2].childrenNodes);
     }
 
     public analyzeAssignment(childrenNodes:  TreeNode[]): void{
       this.asTree.addBranchNode(childrenNodes[1]); // =
       this.asTree.addLeafNode(childrenNodes[0]); // id
-      this.analyzeExpr(childrenNodes[2].childrenNodes) // Expr's children
+      this.analyzeExpr(childrenNodes[2].childrenNodes); // Expr's children
     }
 
     public analyzeVarDecl(childrenNodes: TreeNode[]): void{
       let type: TreeNode = childrenNodes[0];
       this.asTree.addLeafNode(type.childrenNodes[0].value);
-      this.asTree.addLeafNode(this.analyzeId(childrenNodes[1])) // id
+      this.asTree.addLeafNode(this.analyzeId(childrenNodes[1])); // id
     }
 
     public analyzeExpr(childrenNodes: TreeNode[]): void{

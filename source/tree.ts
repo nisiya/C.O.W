@@ -34,7 +34,8 @@ module Compiler {
       this.current = this.current.parentNode;
     }
 
-    public printTree(): void{
+    public printTree(outputId:string): void{
+      console.log("printing " + outputId);
       var jsonTree = {
         chart: {
             container: "#pretty-tree"
@@ -47,7 +48,7 @@ module Compiler {
         }
       };
       this.walkTree(this.root, "", jsonTree.nodeStructure.children);
-      let output: HTMLInputElement = <HTMLInputElement> document.getElementById("csTree");
+      let output: HTMLInputElement = <HTMLInputElement> document.getElementById(outputId);
       output.value += this.outputTree + "\n\n";
       let prettyTree = new Treant(jsonTree);
     }

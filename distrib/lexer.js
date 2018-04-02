@@ -220,19 +220,19 @@ var Compiler;
         Lexer.prototype.createSymbolToken = function (symbol) {
             var tid;
             switch (symbol.charCodeAt(0)) {
-                case 40:// (
+                case 40: // (
                     tid = "T_OpenParen";
                     break;
-                case 41:// )
+                case 41: // )
                     tid = "T_CloseParen";
                     break;
-                case 123:// {
+                case 123: // {
                     tid = "T_OpenBracket";
                     break;
-                case 125:// }
+                case 125: // }
                     tid = "T_CloseBracket";
                     break;
-                case 43:// +
+                case 43: // +
                     tid = "T_Addition";
                     break;
                 default:

@@ -55,7 +55,7 @@ module Compiler {
             // Parse passed
             [csTree, symbolTable] = parseReturn;
             // print CST
-            csTree.printTree();
+            csTree.printTree("csTree");
             log.value += "\n Parse completed successfully";
 
             // update symbol table
@@ -79,7 +79,7 @@ module Compiler {
 
             // start semantic analyzer
             let asTree = sAnalyzer.start(csTree);
-            asTree.printTree();
+            asTree.printTree("asTree");
           } else{
             // Parse failed
             csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n\n";

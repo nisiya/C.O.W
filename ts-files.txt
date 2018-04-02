@@ -1,0 +1,9 @@
+C:\Users\JolinJ\Ni-Compiler\parserOld.ts
+C:\Users\JolinJ\Ni-Compiler\source\control.ts
+C:\Users\JolinJ\Ni-Compiler\source\globals.ts
+C:\Users\JolinJ\Ni-Compiler\source\lexer.ts
+C:\Users\JolinJ\Ni-Compiler\source\parser.ts
+C:\Users\JolinJ\Ni-Compiler\source\sAnalyzer.ts
+C:\Users\JolinJ\Ni-Compiler\source\symbol.ts
+C:\Users\JolinJ\Ni-Compiler\source\token.ts
+C:\Users\JolinJ\Ni-Compiler\source\tree.ts

@@ -50,7 +50,7 @@ var Compiler;
                         // Parse passed
                         csTree = parseReturn[0], symbolTable = parseReturn[1];
                         // print CST
-                        csTree.printTree();
+                        csTree.printTree("csTree");
                         log.value += "\n Parse completed successfully";
                         // update symbol table
                         for (var i = 0; i < symbolTable.length; i++) {
@@ -72,7 +72,7 @@ var Compiler;
                         }
                         // start semantic analyzer
                         var asTree = sAnalyzer.start(csTree);
-                        asTree.printTree();
+                        asTree.printTree("asTree");
                     }
                     else {
                         // Parse failed

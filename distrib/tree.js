@@ -25,7 +25,8 @@ var Compiler;
         Tree.prototype.moveUp = function () {
             this.current = this.current.parentNode;
         };
-        Tree.prototype.printTree = function () {
+        Tree.prototype.printTree = function (outputId) {
+            console.log("printing " + outputId);
             var jsonTree = {
                 chart: {
                     container: "#pretty-tree"
@@ -36,7 +37,7 @@ var Compiler;
                 }
             };
             this.walkTree(this.root, "", jsonTree.nodeStructure.children);
-            var output = document.getElementById("csTree");
+            var output = document.getElementById(outputId);
             output.value += this.outputTree + "\n\n";
             var prettyTree = new Treant(jsonTree);
         };

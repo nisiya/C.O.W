@@ -13,39 +13,51 @@ var Compiler;
         function SAnalyzer() {
         }
         SAnalyzer.prototype.start = function (csTree) {
+            console.log("sstart");
             var buffer = new Array();
             this.asTree = new Compiler.Tree("Block");
-            this.analyzeStmt(csTree.root.childrenNodes[0]); // Start from initial StatementList
+            console.log(csTree.root.value);
+            this.analyzeStmt(csTree.root.childrenNodes[0].childrenNodes[1]); // Start from initial StatementList
             return this.asTree;
         };
         SAnalyzer.prototype.analyzeStmt = function (node) {
-            var stmt = node.childrenNodes[0];
-            switch (stmt.value) {
-                case ("Block"):
-                    this.asTree.addBranchNode("Block");
-                    break;
-                case ("PrintStatement"):
-                    this.analyzePrint(node.childrenNodes);
-                    break;
-                case ("AssignmentStatement"):
-                    this.analyzeAssignment(node.childrenNodes);
-                    break;
-                case ("VarDecl"):
-                    this.asTree.addBranchNode(node.value);
-                    this.analyzeVarDecl(node.childrenNodes);
-                    this.asTree.moveUp(); // currentNode = block
-                    break;
-                case ("WhileStatement"):
-                    break;
-                case ("IfStatement"):
-                    break;
-                default:
-                    break;
+            console.log(node.value + " value");
+            if (node.childrenNodes[0] == null) {
+                return;
             }
-            this.analyzeStmt(node.childrenNodes[1]); // the child StatementList
+            else {
+                var stmt = node.childrenNodes[0];
+                console.log(stmt.childrenNodes[0].value);
+                switch (stmt.value) {
+                    case ("Block"):
+                        this.asTree.addBranchNode("Block");
+                        break;
+                    case ("PrintStatement"):
+                        this.analyzePrint(node.childrenNodes);
+                        break;
+                    case ("AssignmentStatement"):
+                        this.analyzeAssignment(node.childrenNodes);
+                        break;
+                    case ("VarDecl"):
+                        this.asTree.addBranchNode(node.value);
+                        console.log("hello");
+                        console.log(this.asTree);
+                        this.analyzeVarDecl(node.childrenNodes);
+                        this.asTree.moveUp(); // currentNode = block
+                        break;
+                    case ("WhileStatement"):
+                        break;
+                    case ("IfStatement"):
+                        break;
+                    default:
+                        break;
+                }
+                this.analyzeStmt(node.childrenNodes[1]); // the child StatementList
+            }
         };
         SAnalyzer.prototype.analyzePrint = function (childrenNodes) {
             this.asTree.addBranchNode(childrenNodes[0].value); // print
+            console.log(this.asTree);
             this.analyzeExpr(childrenNodes[2].childrenNodes);
         };
         SAnalyzer.prototype.analyzeAssignment = function (childrenNodes) {
