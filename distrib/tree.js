@@ -29,7 +29,7 @@ var Compiler;
             console.log("printing " + outputId);
             var jsonTree = {
                 chart: {
-                    container: "#pretty-tree"
+                    container: "#visual-cst"
                 },
                 nodeStructure: {
                     text: { name: this.root.value },
@@ -39,7 +39,7 @@ var Compiler;
             this.walkTree(this.root, "", jsonTree.nodeStructure.children);
             var output = document.getElementById(outputId);
             output.value += this.outputTree + "\n\n";
-            var prettyTree = new Treant(jsonTree);
+            var visualCST = new Treant(jsonTree);
         };
         Tree.prototype.walkTree = function (node, indent, jsonLevel) {
             // for the pretty cst

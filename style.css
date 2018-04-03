@@ -80,6 +80,18 @@ btn{
   font-size: 10px !important;
 }
 
-#pretty-tree{
+.visual-tree{
   height: 500px;
+}
+
+.tabs .tab a.active{
+  color: #7986cb !important;
+}
+
+.tabs .tab a{
+  color: rgba(92, 107, 192, 0.7) !important;
+}
+
+.tabs .indicator{
+  background-color: #9fa8da !important;
 }
