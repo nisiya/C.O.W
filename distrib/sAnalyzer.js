@@ -19,6 +19,7 @@ var Compiler;
             // Start from initial StatementList
             // tree-program-block-statementlist
             this.analyzeStmtList(csTree.root.childrenNodes[0].childrenNodes[1]);
+            console.log(this.asTree);
             return this.asTree;
         };
         SAnalyzer.prototype.analyzeStmtList = function (stmtList) {
@@ -78,8 +79,8 @@ var Compiler;
                     this.analyzeInt(exprType.childrenNodes); // currentNode: parent of Expr
                     break;
                 case "StringExpr":
-                    var stringVal = this.analyzeString(exprType.childrenNodes[1], ""); // CharList
-                    this.asTree.addLeafNode(stringVal); // currentNode: parent of Expr
+                    console.log(exprType.childrenNodes[1].value + " string");
+                    this.asTree.addLeafNode(this.analyzeString(exprType.childrenNodes[1], "")); // currentNode: parent of Expr
                     break;
                 case "BooleanExpr":
                     break;
@@ -95,9 +96,11 @@ var Compiler;
         };
         SAnalyzer.prototype.analyzeString = function (node, stringVal) {
             if (node.childrenNodes.length == 0) {
+                console.log(stringVal + "why");
                 return stringVal;
             }
-            stringVal += node.childrenNodes[0].childrenNodes[0].value; // CharList's char's child's value
+            console.log(stringVal + "value");
+            stringVal = stringVal + node.childrenNodes[0].childrenNodes[0].value; // CharList's char's child's value
             this.analyzeString(node.childrenNodes[1], stringVal); // CharList's CharList
         };
         SAnalyzer.prototype.analyzeInt = function (IntChildren) {
