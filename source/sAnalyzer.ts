@@ -21,86 +21,90 @@ module Compiler {
       let buffer:TreeNode[] = new Array<TreeNode>();
       this.asTree = new Tree("Block");
       console.log(csTree.root.value);
-      this.analyzeStmt(csTree.root.childrenNodes[0].childrenNodes[1]); // Start from initial StatementList
+      // Start from initial StatementList
+      // tree-program-block-statementlist
+      this.analyzeStmtList(csTree.root.childrenNodes[0].childrenNodes[1]); 
       return this.asTree;
     }
 
-    public analyzeStmt(node: TreeNode): void{
-      console.log(node.value + " value");
-      if (node.childrenNodes[0] == null){
+    public analyzeStmtList(stmtList: TreeNode): void{
+      if (stmtList.childrenNodes[0] == null){
+        // epsilon
         return;
       } else{
-        let stmt:TreeNode = node.childrenNodes[0];
-        console.log(stmt.childrenNodes[0].value);
-        switch(stmt.value){
-          case("Block"):
-            this.asTree.addBranchNode("Block");
-            break;
-          case("PrintStatement"):
-            this.analyzePrint(node.childrenNodes);
-            break;
-          case("AssignmentStatement"):
-            this.analyzeAssignment(node.childrenNodes);
-            break;
-          case("VarDecl"):
-            this.asTree.addBranchNode(node.value);
-            console.log("hello");
-            console.log(this.asTree);
-            this.analyzeVarDecl(node.childrenNodes);
-            this.asTree.moveUp(); // currentNode = block
-            break;
-          case("WhileStatement"):
-            break;
-          case("IfStatement"):
-            break;
-          default:
-            break;
-        }
-        this.analyzeStmt(node.childrenNodes[1]); // the child StatementList
+        this.analyzeStmt(stmtList.childrenNodes[0]); // the statement
+        this.analyzeStmtList(stmtList.childrenNodes[1]); // the child stmt list
       }
     }
 
-    public analyzePrint(childrenNodes: TreeNode[]): void{
-      this.asTree.addBranchNode(childrenNodes[0].value); // print
-      console.log(this.asTree);
-      this.analyzeExpr(childrenNodes[2].childrenNodes);
+    public analyzeStmt(stmt: TreeNode): void{
+      let stmtType:TreeNode = stmt.childrenNodes[0];
+      console.log(stmtType.value + "hello");
+      switch(stmtType.value){
+        case "Block":
+          this.asTree.addBranchNode("Block");
+          break;
+        case "PrintStatement":
+          this.analyzePrint(stmtType.childrenNodes);
+          break;
+        case "AssignmentStatement":
+          this.analyzeAssignment(stmtType.childrenNodes);
+          break;
+        case "VarDecl":
+          this.asTree.addBranchNode(stmtType.value);
+          this.analyzeVarDecl(stmtType.childrenNodes);
+          this.asTree.moveUp(); // currentNode = block
+          break;
+        case "WhileStatement":
+          break;
+        case "IfStatement":
+          break;
+        default:
+          // nothing
+      }
     }
 
-    public analyzeAssignment(childrenNodes:  TreeNode[]): void{
-      this.asTree.addBranchNode(childrenNodes[1]); // =
-      this.asTree.addLeafNode(childrenNodes[0]); // id
-      this.analyzeExpr(childrenNodes[2].childrenNodes); // Expr's children
+    public analyzePrint(printChildren: TreeNode[]): void{
+      this.asTree.addBranchNode(printChildren[0].value); // print
+      // console.log(this.asTree);
+      this.analyzeExpr(printChildren[2].childrenNodes[0]);
     }
 
-    public analyzeVarDecl(childrenNodes: TreeNode[]): void{
-      let type: TreeNode = childrenNodes[0];
+    public analyzeAssignment(AssignChildren:  TreeNode[]): void{
+      this.asTree.addBranchNode(AssignChildren[1]); // =
+      this.asTree.addLeafNode(AssignChildren[0]); // id
+      console.log(AssignChildren);
+      this.analyzeExpr(AssignChildren[2].childrenNodes[0]); // Expr's child
+    }
+
+    public analyzeVarDecl(VarDeclChildren: TreeNode[]): void{
+      let type: TreeNode = VarDeclChildren[0];
       this.asTree.addLeafNode(type.childrenNodes[0].value);
-      this.asTree.addLeafNode(this.analyzeId(childrenNodes[1])); // id
+      this.asTree.addLeafNode(this.analyzeId(VarDeclChildren[1])); // id
     }
 
-    public analyzeExpr(childrenNodes: TreeNode[]): void{
-      let exprType:TreeNode = childrenNodes[0]; //Expr only has one child
+    public analyzeExpr(exprType: TreeNode): void{
       switch(exprType.value){
-        case("IntExpr"):
+        case "IntExpr":
           this.analyzeInt(exprType.childrenNodes); // currentNode: parent of Expr
           break;
-        case("StringExpr"):
+        case "StringExpr":
           let stringVal:string = this.analyzeString(exprType.childrenNodes[1], ""); // CharList
           this.asTree.addLeafNode(stringVal); // currentNode: parent of Expr
           break;
-        case("BooleanExpr"):
+        case "BooleanExpr":
           break;
-        case("Id"):
-          let id:string = this.analyzeId(exprType.childrenNodes[0]);
+        case "Id":
+          let id:string = this.analyzeId(exprType); //char
           this.asTree.addLeafNode(id); // currentNode: parent of Expr
           break;
         default:
-          break;
+          // nothing
       }
     }
 
-    public analyzeId(node): string{
-      return node.childrenNodes[0].value;
+    public analyzeId(id: TreeNode): string{
+      return id.childrenNodes[0].value;
     }
 
     public analyzeString(node, stringVal): string{
@@ -111,14 +115,14 @@ module Compiler {
       this.analyzeString(node.childrenNodes[1], stringVal); // CharList's CharList
     }
     
-    public analyzeInt(childrenNodes:TreeNode[]): void{
-      if(childrenNodes.length == 1){
-        this.asTree.addLeafNode(childrenNodes[0].value); // digit
+    public analyzeInt(IntChildren:TreeNode[]): void{
+      if(IntChildren.length == 1){
+        this.asTree.addLeafNode(IntChildren[0].value); // digit
         return;
       }
-      this.asTree.addBranchNode(childrenNodes[1].value); // intop
-      this.asTree.addLeafNode(childrenNodes[0].value); // digit
-      this.analyzeExpr(childrenNodes[2].childrenNodes); // expr's children
+      this.asTree.addBranchNode(IntChildren[1].value); // intop
+      this.asTree.addLeafNode(IntChildren[0].value); // digit
+      this.analyzeExpr(IntChildren[2].childrenNodes[2]); // expr's children
       this.asTree.moveUp(); // // currentNode: parent of intop
     }
   

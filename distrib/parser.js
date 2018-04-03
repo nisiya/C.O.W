@@ -169,12 +169,12 @@ var Compiler;
                 this.printStage("parseId()");
                 this.csTree.addLeafNode(this.currentToken.tValue);
                 this.csTree.moveUp(); // to AssignmentStatement
-                this.csTree.moveUp(); // to Expr
                 this.currentToken = this.tokenBank.pop();
                 if (this.currentToken.isEqual("T_Assignment")) {
                     this.csTree.addLeafNode(this.currentToken.tValue);
                     if (this.parseExpr()) {
                         this.csTree.moveUp(); // to AssignmentStatement
+                        // this.csTree.moveUp(); // to stmt list
                         return true;
                     }
                     else {
@@ -324,6 +324,7 @@ var Compiler;
                 if (this.currentToken.isEqual("T_Addition")) {
                     this.csTree.addLeafNode(this.currentToken.tValue);
                     if (this.parseExpr()) {
+                        this.csTree.moveUp(); // to IntExpr
                         return true;
                     }
                     else {

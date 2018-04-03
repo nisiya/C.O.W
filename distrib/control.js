@@ -71,8 +71,8 @@ var Compiler;
                             symbolTableBody.appendChild(row);
                         }
                         // start semantic analyzer
-                        var asTree = sAnalyzer.start(csTree);
-                        asTree.printTree("asTree");
+                        // let asTree = sAnalyzer.start(csTree);
+                        // asTree.printTree("asTree");
                     }
                     else {
                         // Parse failed
