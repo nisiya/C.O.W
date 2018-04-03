@@ -20,7 +20,6 @@ module Compiler {
       console.log("sstart");
       let buffer:TreeNode[] = new Array<TreeNode>();
       this.asTree = new Tree("Block");
-      console.log(csTree.root.value);
       // Start from initial StatementList
       // tree-program-block-statementlist
       this.analyzeStmtList(csTree.root.childrenNodes[0].childrenNodes[1]); 
@@ -66,14 +65,13 @@ module Compiler {
 
     public analyzePrint(printChildren: TreeNode[]): void{
       this.asTree.addBranchNode(printChildren[0].value); // print
-      // console.log(this.asTree);
       this.analyzeExpr(printChildren[2].childrenNodes[0]);
     }
 
     public analyzeAssignment(AssignChildren:  TreeNode[]): void{
-      this.asTree.addBranchNode(AssignChildren[1]); // =
-      this.asTree.addLeafNode(AssignChildren[0]); // id
       console.log(AssignChildren);
+      this.asTree.addBranchNode(AssignChildren[1].value); // =
+      this.asTree.addLeafNode(this.analyzeId(AssignChildren[0])); // id
       this.analyzeExpr(AssignChildren[2].childrenNodes[0]); // Expr's child
     }
 
@@ -84,6 +82,7 @@ module Compiler {
     }
 
     public analyzeExpr(exprType: TreeNode): void{
+      console.log(exprType);
       switch(exprType.value){
         case "IntExpr":
           this.analyzeInt(exprType.childrenNodes); // currentNode: parent of Expr
@@ -117,13 +116,15 @@ module Compiler {
     
     public analyzeInt(IntChildren:TreeNode[]): void{
       if(IntChildren.length == 1){
-        this.asTree.addLeafNode(IntChildren[0].value); // digit
+        this.asTree.addLeafNode(IntChildren[0].childrenNodes[0].value); // the digit
+        this.asTree.moveUp();
         return;
       }
       this.asTree.addBranchNode(IntChildren[1].value); // intop
-      this.asTree.addLeafNode(IntChildren[0].value); // digit
+      this.asTree.addLeafNode(IntChildren[0].childrenNodes[0].value); // the digit
       this.analyzeExpr(IntChildren[2].childrenNodes[2]); // expr's children
       this.asTree.moveUp(); // // currentNode: parent of intop
+      console.log(this.asTree.current.value + " um");
     }
   
   }

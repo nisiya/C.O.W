@@ -16,7 +16,6 @@ var Compiler;
             console.log("sstart");
             var buffer = new Array();
             this.asTree = new Compiler.Tree("Block");
-            console.log(csTree.root.value);
             // Start from initial StatementList
             // tree-program-block-statementlist
             this.analyzeStmtList(csTree.root.childrenNodes[0].childrenNodes[1]);
@@ -59,13 +58,12 @@ var Compiler;
         };
         SAnalyzer.prototype.analyzePrint = function (printChildren) {
             this.asTree.addBranchNode(printChildren[0].value); // print
-            // console.log(this.asTree);
             this.analyzeExpr(printChildren[2].childrenNodes[0]);
         };
         SAnalyzer.prototype.analyzeAssignment = function (AssignChildren) {
-            this.asTree.addBranchNode(AssignChildren[1]); // =
-            this.asTree.addLeafNode(AssignChildren[0]); // id
             console.log(AssignChildren);
+            this.asTree.addBranchNode(AssignChildren[1].value); // =
+            this.asTree.addLeafNode(this.analyzeId(AssignChildren[0])); // id
             this.analyzeExpr(AssignChildren[2].childrenNodes[0]); // Expr's child
         };
         SAnalyzer.prototype.analyzeVarDecl = function (VarDeclChildren) {
@@ -74,6 +72,7 @@ var Compiler;
             this.asTree.addLeafNode(this.analyzeId(VarDeclChildren[1])); // id
         };
         SAnalyzer.prototype.analyzeExpr = function (exprType) {
+            console.log(exprType);
             switch (exprType.value) {
                 case "IntExpr":
                     this.analyzeInt(exprType.childrenNodes); // currentNode: parent of Expr
@@ -103,13 +102,15 @@ var Compiler;
         };
         SAnalyzer.prototype.analyzeInt = function (IntChildren) {
             if (IntChildren.length == 1) {
-                this.asTree.addLeafNode(IntChildren[0].value); // digit
+                this.asTree.addLeafNode(IntChildren[0].childrenNodes[0].value); // the digit
+                this.asTree.moveUp();
                 return;
             }
             this.asTree.addBranchNode(IntChildren[1].value); // intop
-            this.asTree.addLeafNode(IntChildren[0].value); // digit
+            this.asTree.addLeafNode(IntChildren[0].childrenNodes[0].value); // the digit
             this.analyzeExpr(IntChildren[2].childrenNodes[2]); // expr's children
             this.asTree.moveUp(); // // currentNode: parent of intop
+            console.log(this.asTree.current.value + " um");
         };
         return SAnalyzer;
     }());

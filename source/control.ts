@@ -78,8 +78,8 @@ module Compiler {
             }
 
             // start semantic analyzer
-            // let asTree = sAnalyzer.start(csTree);
-            // asTree.printTree("asTree");
+            let asTree = sAnalyzer.start(csTree);
+            asTree.printTree("asTree");
           } else{
             // Parse failed
             csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n\n";
