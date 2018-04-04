@@ -51,7 +51,6 @@ module Compiler {
       let stmtType:TreeNode = stmt.childrenNodes[0];
       switch(stmtType.value){
         case "Block":
-          this.asTree.addBranchNode("Block");
           this.analyzeBlock(stmtType);
           break;
         case "PrintStatement":
