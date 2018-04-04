@@ -34,11 +34,17 @@ module Compiler {
       this.current = this.current.parentNode;
     }
 
-    public printTree(outputId:string): void{
-      console.log("printing " + outputId);
+    public removeNode(): void{
+      let parent:TreeNode = this.current.parentNode;
+      parent.childrenNodes.pop();
+    }
+
+    public printTree(treeType:string): void{
+      let treeId:string = "#visual-" + treeType;
+      console.log("printing " + treeType);
       var jsonTree = {
         chart: {
-            container: "#visual-cst"
+            container: treeId
         },
         
         nodeStructure: {
@@ -48,9 +54,9 @@ module Compiler {
         }
       };
       this.walkTree(this.root, "", jsonTree.nodeStructure.children);
-      let output: HTMLInputElement = <HTMLInputElement> document.getElementById(outputId);
+      let output: HTMLInputElement = <HTMLInputElement> document.getElementById(treeType);
       output.value += this.outputTree + "\n\n";
-      let visualCST = new Treant(jsonTree);
+      let visualTree = new Treant(jsonTree);
     }
 
     public walkTree(node: TreeNode, indent:String, jsonLevel:Object): void{

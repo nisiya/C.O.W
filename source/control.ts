@@ -13,17 +13,15 @@ module Compiler {
 
     public static startCompile(btn): void {
       let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
-      let csTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("csTree");
+      let csTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("cst");
+      let asTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("ast");
       let symbolTableBody: HTMLTableSectionElement = <HTMLTableSectionElement> document.getElementById("symbolTableBody");
       let lexer: Compiler.Lexer = new Lexer();
       let parser: Compiler.Parser = new Parser();
       let sAnalyzer: Compiler.SAnalyzer = new SAnalyzer();
 
       // reset outputs
-      csTreeOut.value = "";
-      while(symbolTableBody.hasChildNodes()){
-        symbolTableBody.removeChild(symbolTableBody.firstChild);
-      }
+      this.clearOutputs();
       log.value = " Compiler Activated... \n ============= ";
       
       let input:string = editor.getValue();
@@ -55,7 +53,7 @@ module Compiler {
             // Parse passed
             [csTree, symbolTable] = parseReturn;
             // print CST
-            csTree.printTree("csTree");
+            csTree.printTree("cst");
             log.value += "\n Parse completed successfully";
 
             // update symbol table
@@ -79,7 +77,8 @@ module Compiler {
 
             // start semantic analyzer
             let asTree = sAnalyzer.start(csTree);
-            asTree.printTree("asTree");
+            console.log(asTree.current.value);
+            asTree.printTree("ast");
           } else{
             // Parse failed
             csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n\n";
@@ -112,21 +111,43 @@ module Compiler {
       }
     }
 
-    // clear console
+    // clear input and outputs
     public static flush(btn): void {
+      this.clearOutputs();
+      editor.setValue("");
+      var audio = new Audio('distrib/audio/meow.mp3');
+      audio.play();
+    }
+
+    // clear outputs only
+    public static clearOutputs(): void{
       let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
-      let csTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("csTree");
+      let csTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("cst");
+      let asTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("ast");
       let symbolTableBody: HTMLTableSectionElement = <HTMLTableSectionElement> document.getElementById("symbolTableBody");
       // reset outputs
       log.value = "";
       csTreeOut.value = "";
+      asTreeOut.value = "";
       while(symbolTableBody.hasChildNodes()){
         symbolTableBody.removeChild(symbolTableBody.firstChild);
       }
-      let prettyTree = new Treant(null);
-      editor.setValue("");
-      var audio = new Audio('distrib/audio/meow.mp3');
-      audio.play();
+      var emptyCST = {
+        chart: {
+            container: "#visual-cst"
+        },
+        nodeStructure: {
+        }
+      };
+      var emptyAST = {
+        chart: {
+            container: "#visual-ast"
+        },
+        nodeStructure: {
+        }
+      };
+      let visualCST = new Treant(emptyCST);
+      let visualAST = new Treant(emptyAST);
     }
 
     // change test case in console

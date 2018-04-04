@@ -28,7 +28,7 @@ module Compiler {
       this.symbolTable = new Array<Symbol>();
       this.printStage("parseProgram()");
 
-      if(this.parseBlock()){
+      if(this.parseBlock(false)){
         // true = finished parsing body of program
         this.csTree.moveUp(); // to Program
         this.currentToken = this.tokenBank.pop();
@@ -51,12 +51,16 @@ module Compiler {
     }
 
     // 2. <Block> -> { <StatementList> }
-    public parseBlock(): boolean{
+    public parseBlock(isAfterStmt:boolean): boolean{
       this.currentToken = this.tokenBank.pop();
     
       // check for [{]
       if(this.currentToken.isEqual("T_OpenBracket")){
         // Block found
+        if(isAfterStmt){
+          this.printStage("parseStatement");
+          this.csTree.addBranchNode("Statement"); 
+        }
         this.printStage("parseBlock()");
         this.csTree.addBranchNode("Block");
         this.csTree.addLeafNode(this.currentToken.tValue);
@@ -108,7 +112,7 @@ module Compiler {
     * 10.            -> <Block>
     */
     public parseStatement(): boolean{
-      if(this.parseBlock() || this.parsePrintStmt() || this.parseAssignStmt()
+      if(this.parseBlock(true) || this.parsePrintStmt() || this.parseAssignStmt()
         || this.parseVarDecl() || this.parseWhileStmt() || this.parseIfStmt()){
         this.csTree.moveUp(); // to Statement
         return true;
@@ -123,6 +127,7 @@ module Compiler {
       this.currentToken = this.tokenBank.pop();
       if(this.currentToken.isEqual("T_Print")){
         // PrintStatement found
+        this.printStage("parseStatement");
         this.csTree.addBranchNode("Statement"); 
         this.printStage("parsePrintStatement()");
         this.csTree.addBranchNode("PrintStatement"); 
@@ -167,6 +172,7 @@ module Compiler {
       this.currentToken = this.tokenBank.pop();
       if(this.currentToken.isEqual("T_Id")){
         // AssignmentStatement found
+        this.printStage("parseStatement");
         this.csTree.addBranchNode("Statement");
         this.csTree.addBranchNode("AssignmentStatement");
         this.printStage("parseAssignmentStatement()");
@@ -203,6 +209,7 @@ module Compiler {
       this.currentToken = this.tokenBank.pop();
       // 29. <type> -> <int> | <string> | <boolean>
       if(this.currentToken.isEqual("T_VarType")){
+        this.printStage("parseStatement");
         this.csTree.addBranchNode("Statement"); 
         this.csTree.addBranchNode("VarDecl"); 
         this.printStage("parseVarDecl()"); 
@@ -230,13 +237,14 @@ module Compiler {
     public parseWhileStmt(): boolean{
       this.currentToken = this.tokenBank.pop();
       if(this.currentToken.isEqual("T_While")){
+        this.printStage("parseStatement");
         this.csTree.addBranchNode("Statement"); 
         this.csTree.addBranchNode("WhileStatement");
         this.printStage("parseWhileStatement()");
         this.csTree.addLeafNode(this.currentToken.tValue);
         if(this.parseBoolExpr()){
           this.csTree.moveUp(); // to WhileStatement
-          if(this.parseBlock()){
+          if(this.parseBlock(false)){
             this.csTree.moveUp(); // to WhileStatement
             return true;
           } else{
@@ -260,13 +268,14 @@ module Compiler {
     public parseIfStmt(): boolean{
       this.currentToken = this.tokenBank.pop();
       if(this.currentToken.isEqual("T_If")){
+        this.printStage("parseStatement");
         this.csTree.addBranchNode("Statement");
         this.csTree.addBranchNode("IfStatement");
         this.printStage("parseIfStatement()");
         this.csTree.addLeafNode(this.currentToken.tValue);
         if(this.parseBoolExpr()){
           this.csTree.moveUp(); // to IfStatement
-          if(this.parseBlock()){
+          if(this.parseBlock(false)){
             this.csTree.moveUp(); // to IfStatement
             return true; // current = IfStatement
           } else{

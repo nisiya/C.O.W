@@ -1,13 +1,16 @@
--<Block>
---<if>
----<==>
-----<a>
-----<1>
----<Block>
-----<=>
------<a>
------<1>
+/* Long Test Case - Everything Except Boolean Declaration */
+{
+  /* Int Declaration */
+  int a
+  int b
+{
+  a = 0
+  b = 0
+}
 
-
-
-holding:
+while (a != 3) {
+  print(a)
+  b = 0
+  a = 1 + a
+}
+}$

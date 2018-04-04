@@ -25,11 +25,16 @@ var Compiler;
         Tree.prototype.moveUp = function () {
             this.current = this.current.parentNode;
         };
-        Tree.prototype.printTree = function (outputId) {
-            console.log("printing " + outputId);
+        Tree.prototype.removeNode = function () {
+            var parent = this.current.parentNode;
+            parent.childrenNodes.pop();
+        };
+        Tree.prototype.printTree = function (treeType) {
+            var treeId = "#visual-" + treeType;
+            console.log("printing " + treeType);
             var jsonTree = {
                 chart: {
-                    container: "#visual-cst"
+                    container: treeId
                 },
                 nodeStructure: {
                     text: { name: this.root.value },
@@ -37,9 +42,9 @@ var Compiler;
                 }
             };
             this.walkTree(this.root, "", jsonTree.nodeStructure.children);
-            var output = document.getElementById(outputId);
+            var output = document.getElementById(treeType);
             output.value += this.outputTree + "\n\n";
-            var visualCST = new Treant(jsonTree);
+            var visualTree = new Treant(jsonTree);
         };
         Tree.prototype.walkTree = function (node, indent, jsonLevel) {
             // for the pretty cst

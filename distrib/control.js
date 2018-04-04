@@ -12,16 +12,14 @@ var Compiler;
         }
         Control.startCompile = function (btn) {
             var log = document.getElementById("log");
-            var csTreeOut = document.getElementById("csTree");
+            var csTreeOut = document.getElementById("cst");
+            var asTreeOut = document.getElementById("ast");
             var symbolTableBody = document.getElementById("symbolTableBody");
             var lexer = new Compiler.Lexer();
             var parser = new Compiler.Parser();
             var sAnalyzer = new Compiler.SAnalyzer();
             // reset outputs
-            csTreeOut.value = "";
-            while (symbolTableBody.hasChildNodes()) {
-                symbolTableBody.removeChild(symbolTableBody.firstChild);
-            }
+            this.clearOutputs();
             log.value = " Compiler Activated... \n ============= ";
             var input = editor.getValue();
             var prgNum = 1;
@@ -50,7 +48,7 @@ var Compiler;
                         // Parse passed
                         csTree = parseReturn[0], symbolTable = parseReturn[1];
                         // print CST
-                        csTree.printTree("csTree");
+                        csTree.printTree("cst");
                         log.value += "\n Parse completed successfully";
                         // update symbol table
                         for (var i = 0; i < symbolTable.length; i++) {
@@ -72,7 +70,8 @@ var Compiler;
                         }
                         // start semantic analyzer
                         var asTree = sAnalyzer.start(csTree);
-                        asTree.printTree("asTree");
+                        console.log(asTree.current.value);
+                        asTree.printTree("ast");
                     }
                     else {
                         // Parse failed
@@ -106,21 +105,40 @@ var Compiler;
                 verboseBtn.style.color = "#000000";
             }
         };
-        // clear console
+        // clear input and outputs
         Control.flush = function (btn) {
+            this.clearOutputs();
+            editor.setValue("");
+            var audio = new Audio('distrib/audio/meow.mp3');
+            audio.play();
+        };
+        // clear outputs only
+        Control.clearOutputs = function () {
             var log = document.getElementById("log");
-            var csTreeOut = document.getElementById("csTree");
+            var csTreeOut = document.getElementById("cst");
+            var asTreeOut = document.getElementById("ast");
             var symbolTableBody = document.getElementById("symbolTableBody");
             // reset outputs
             log.value = "";
             csTreeOut.value = "";
+            asTreeOut.value = "";
             while (symbolTableBody.hasChildNodes()) {
                 symbolTableBody.removeChild(symbolTableBody.firstChild);
             }
-            var prettyTree = new Treant(null);
-            editor.setValue("");
-            var audio = new Audio('distrib/audio/meow.mp3');
-            audio.play();
+            var emptyCST = {
+                chart: {
+                    container: "#visual-cst"
+                },
+                nodeStructure: {}
+            };
+            var emptyAST = {
+                chart: {
+                    container: "#visual-ast"
+                },
+                nodeStructure: {}
+            };
+            var visualCST = new Treant(emptyCST);
+            var visualAST = new Treant(emptyAST);
         };
         // change test case in console
         Control.changeInput = function (btn) {
