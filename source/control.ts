@@ -44,27 +44,22 @@ module Compiler {
         if(tokenBank.length != 0){
           // Lex passed
           log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";            
-          let csTree: Tree;
-          let symbols: Array<Symbol>;
 
-          let parseReturn = parser.start(tokenBank);
-          if(parseReturn){
+          let csTree = parser.start(tokenBank);
+          if(csTree != null){
             // Parse passed
-            [csTree, symbols] = parseReturn;
             // print CST
             csTree.printTree("cst");
-            console.log(symbols);
             log.value += "\n ============= \n Parse completed successfully \n =============";
 
             log.value += "\n Semantic Analyzer start for Program " + prgNum 
-                      + "... \n ============= \n   SEMANTIC ANALYZER --> Analyzing Program " + prgNum + "..."
-                      + "\n =============";
+                      + "... \n ============= \n   SEMANTIC ANALYZER --> Analyzing Program " + prgNum + "...";
             let asTree: Tree;
             let symbolTable: Array<Symbol>;
             let warningSA: number;
 
             // start semantic analyzer
-            let sAnalyzeReturn = sAnalyzer.start(csTree, symbols);
+            let sAnalyzeReturn = sAnalyzer.start(csTree);
 
             if(sAnalyzeReturn){
               // AST generation passed
@@ -125,7 +120,12 @@ module Compiler {
         row.appendChild(cell);
         // Line
         cell = document.createElement("td");
-        cellText = document.createTextNode(""+symbol.line);
+        cellText = document.createTextNode(""+symbol.location[0]);
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+        // Column
+        cell = document.createElement("td");
+        cellText = document.createTextNode(""+symbol.location[1]);
         cell.appendChild(cellText);
         row.appendChild(cell);
         symbolTableBody.appendChild(row);
@@ -169,7 +169,7 @@ module Compiler {
         symbolTableBody.removeChild(symbolTableBody.firstChild);
       }
 // save pretty tree for later
- /*     var emptyCST = {
+      var emptyCST = {
         chart: {
             container: "#visual-cst"
         },
@@ -185,7 +185,6 @@ module Compiler {
       };
       let visualCST = new Treant(emptyCST);
       let visualAST = new Treant(emptyAST);
-*/
     }
 
     // change test case in console

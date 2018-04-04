@@ -13,30 +13,25 @@ module Compiler {
     public current: TreeNode;
     public outputTree: string;
 
-    constructor(value, line) {
-      this.root = new TreeNode(value, line, null);
+    constructor(value:string, location:[number, number]) {
+      this.root = new TreeNode(value, location, null);
       this.outputTree = "";
       this.current = this.root;
     }
     
-    public addBranchNode(value, line): void{
-      let node:TreeNode = new TreeNode(value, line, this.current);
+    public addBranchNode(value:string, location:[number, number]): void{
+      let node:TreeNode = new TreeNode(value, location, this.current);
       this.current.childrenNodes.push(node);
       this.current = node;
     }
 
-    public addLeafNode(value, line): void{
-      let node:TreeNode = new TreeNode(value, line, this.current);
+    public addLeafNode(value:string, location:[number, number]): void{
+      let node:TreeNode = new TreeNode(value, location, this.current);
       this.current.childrenNodes.push(node);
     }
 
     public moveUp(): void{
       this.current = this.current.parentNode;
-    }
-
-    public removeNode(): void{
-      let parent:TreeNode = this.current.parentNode;
-      parent.childrenNodes.pop();
     }
 
     public printTree(treeType:string): void{
@@ -56,7 +51,7 @@ module Compiler {
       this.walkTree(this.root, "", jsonTree.nodeStructure.children);
       let output: HTMLInputElement = <HTMLInputElement> document.getElementById(treeType);
       output.value += this.outputTree + "\n\n";
-      // let visualTree = new Treant(jsonTree);
+      let visualTree = new Treant(jsonTree);
     }
 
     public walkTree(node: TreeNode, indent:String, jsonLevel:Object): void{
@@ -89,15 +84,15 @@ module Compiler {
 
   export class TreeNode {
     public value: string;
-    public line: number;
+    public location: [number, number]; // line and column
     public parentNode: TreeNode;
     public childrenNodes: Array<TreeNode>;
 
     constructor(value:string, 
-                line:number,
+                location:[number, number],
                 parentNode:TreeNode){
       this.value = value;
-      this.line = line;
+      this.location = location;
       this. parentNode = parentNode;
       this.childrenNodes = new Array<TreeNode>();
     }

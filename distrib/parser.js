@@ -18,8 +18,8 @@ var Compiler;
             this.tokenBank = tokenBank.reverse();
             this.error = false;
             this.printStage("parse()");
-            this.csTree = new Compiler.Tree("Program", 0);
-            this.symbolTable = new Array();
+            this.csTree = new Compiler.Tree("Program", [0, 0]);
+            // this.symbolTable = new Array<Symbol>();
             this.printStage("parseProgram()");
             if (this.parseBlock(false)) {
                 // true = finished parsing body of program
@@ -27,8 +27,8 @@ var Compiler;
                 this.currentToken = this.tokenBank.pop();
                 // check for [$]
                 if (this.currentToken.isEqual("T_EOP")) {
-                    this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
-                    return [this.csTree, this.symbolTable];
+                    this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
+                    return this.csTree;
                 }
                 else {
                     // Expected [$]
@@ -51,17 +51,17 @@ var Compiler;
                 // Block found
                 if (isAfterStmt) {
                     this.printStage("parseStatement");
-                    this.csTree.addBranchNode("Statement", this.currentToken.tLine);
+                    this.csTree.addBranchNode("Statement", [this.currentToken.tLine, this.currentToken.tColumn]);
                 }
                 this.printStage("parseBlock()");
-                this.csTree.addBranchNode("Block", this.currentToken.tLine);
-                this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                this.csTree.addBranchNode("Block", [this.currentToken.tLine, this.currentToken.tColumn]);
+                this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                 if (this.parseStmtList()) {
                     // true = finished parsing body of block
                     this.currentToken = this.tokenBank.pop();
                     //check for [}]
                     if (this.currentToken.isEqual("T_CloseBracket")) {
-                        this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                        this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                         return true;
                     }
                     else {
@@ -83,7 +83,7 @@ var Compiler;
         // 3. <StatementList> -> <Statement> <StatementList>
         // 4.                 -> end
         Parser.prototype.parseStmtList = function () {
-            this.csTree.addBranchNode("StatementList", this.currentToken.tLine);
+            this.csTree.addBranchNode("StatementList", [this.currentToken.tLine, this.currentToken.tColumn]);
             this.printStage("parseStatementList()");
             if (this.parseStatement()) {
                 this.csTree.moveUp(); // to StatementList
@@ -121,20 +121,20 @@ var Compiler;
             if (this.currentToken.isEqual("T_Print")) {
                 // PrintStatement found
                 this.printStage("parseStatement");
-                this.csTree.addBranchNode("Statement", this.currentToken.tLine);
+                this.csTree.addBranchNode("Statement", [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.printStage("parsePrintStatement()");
-                this.csTree.addBranchNode("PrintStatement", this.currentToken.tLine);
-                this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                this.csTree.addBranchNode("PrintStatement", [this.currentToken.tLine, this.currentToken.tColumn]);
+                this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.currentToken = this.tokenBank.pop();
                 // check for [(]
                 if (this.currentToken.isEqual("T_OpenParen")) {
-                    this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                    this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                     if (this.parseExpr()) {
                         this.csTree.moveUp(); // to PrintExpr
                         this.currentToken = this.tokenBank.pop();
                         // check for [)]
                         if (this.currentToken.isEqual("T_CloseParen")) {
-                            this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                            this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                             return true;
                         }
                         else {
@@ -168,16 +168,16 @@ var Compiler;
             if (this.currentToken.isEqual("T_Id")) {
                 // AssignmentStatement found
                 this.printStage("parseStatement");
-                this.csTree.addBranchNode("Statement", this.currentToken.tLine);
-                this.csTree.addBranchNode("AssignmentStatement", this.currentToken.tLine);
+                this.csTree.addBranchNode("Statement", [this.currentToken.tLine, this.currentToken.tColumn]);
+                this.csTree.addBranchNode("AssignmentStatement", [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.printStage("parseAssignmentStatement()");
-                this.csTree.addBranchNode("Id", this.currentToken.tLine);
+                this.csTree.addBranchNode("Id", [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.printStage("parseId()");
-                this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.csTree.moveUp(); // to AssignmentStatement
                 this.currentToken = this.tokenBank.pop();
                 if (this.currentToken.isEqual("T_Assignment")) {
-                    this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                    this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                     if (this.parseExpr()) {
                         this.csTree.moveUp(); // to AssignmentStatement
                         // this.csTree.moveUp(); // to stmt list
@@ -207,17 +207,17 @@ var Compiler;
             // 29. <type> -> <int> | <string> | <boolean>
             if (this.currentToken.isEqual("T_VarType")) {
                 this.printStage("parseStatement");
-                this.csTree.addBranchNode("Statement", this.currentToken.tLine);
-                this.csTree.addBranchNode("VarDecl", this.currentToken.tLine);
+                this.csTree.addBranchNode("Statement", [this.currentToken.tLine, this.currentToken.tColumn]);
+                this.csTree.addBranchNode("VarDecl", [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.printStage("parseVarDecl()");
-                this.csTree.addBranchNode("type", this.currentToken.tLine);
-                this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                this.csTree.addBranchNode("type", [this.currentToken.tLine, this.currentToken.tColumn]);
+                this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.csTree.moveUp(); // to VarDecl
                 if (this.parseId()) {
                     this.csTree.moveUp(); // to VarDecl
                     var currentNode = this.csTree.current;
-                    var symbol = new Compiler.Symbol(this.currentToken.tValue, currentNode.childrenNodes[0].childrenNodes[0].value, this.currentToken.tLine);
-                    this.symbolTable.push(symbol);
+                    // let symbol: Symbol = new Symbol(this.currentToken.tValue, currentNode.childrenNodes[0].childrenNodes[0].value, this.currentToken.tLine);
+                    // this.symbolTable.push(symbol);
                     return true;
                 }
                 else {
@@ -236,10 +236,10 @@ var Compiler;
             this.currentToken = this.tokenBank.pop();
             if (this.currentToken.isEqual("T_While")) {
                 this.printStage("parseStatement");
-                this.csTree.addBranchNode("Statement", this.currentToken.tLine);
-                this.csTree.addBranchNode("WhileStatement", this.currentToken.tLine);
+                this.csTree.addBranchNode("Statement", [this.currentToken.tLine, this.currentToken.tColumn]);
+                this.csTree.addBranchNode("WhileStatement", [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.printStage("parseWhileStatement()");
-                this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                 if (this.parseBoolExpr()) {
                     this.csTree.moveUp(); // to WhileStatement
                     if (this.parseBlock(false)) {
@@ -269,10 +269,10 @@ var Compiler;
             this.currentToken = this.tokenBank.pop();
             if (this.currentToken.isEqual("T_If")) {
                 this.printStage("parseStatement");
-                this.csTree.addBranchNode("Statement", this.currentToken.tLine);
-                this.csTree.addBranchNode("IfStatement", this.currentToken.tLine);
+                this.csTree.addBranchNode("Statement", [this.currentToken.tLine, this.currentToken.tColumn]);
+                this.csTree.addBranchNode("IfStatement", [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.printStage("parseIfStatement()");
-                this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                 if (this.parseBoolExpr()) {
                     this.csTree.moveUp(); // to IfStatement
                     if (this.parseBlock(false)) {
@@ -304,7 +304,7 @@ var Compiler;
          * 19.        -> <Id>
          */
         Parser.prototype.parseExpr = function () {
-            this.csTree.addBranchNode("Expr", this.currentToken.tLine);
+            this.csTree.addBranchNode("Expr", [this.currentToken.tLine, this.currentToken.tColumn]);
             if (this.parseIntExpr() || this.parseStrExpr()
                 || this.parseBoolExpr() || this.parseId()) {
                 this.printStage("parseExpr()");
@@ -323,15 +323,15 @@ var Compiler;
             // 32. <digit> -> <0> | <1> | ...
             if (this.currentToken.isEqual("T_Digit")) {
                 // IntExpr found
-                this.csTree.addBranchNode("IntExpr", this.currentToken.tLine);
+                this.csTree.addBranchNode("IntExpr", [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.printStage("parseIntExpr()");
-                this.csTree.addBranchNode("digit", this.currentToken.tLine);
-                this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                this.csTree.addBranchNode("digit", [this.currentToken.tLine, this.currentToken.tColumn]);
+                this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.csTree.moveUp(); // to IntExpr
                 this.currentToken = this.tokenBank.pop();
                 // 35. <intop> -> <+>
                 if (this.currentToken.isEqual("T_Addition")) {
-                    this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                    this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                     if (this.parseExpr()) {
                         this.csTree.moveUp(); // to IntExpr
                         return true;
@@ -359,13 +359,13 @@ var Compiler;
             this.currentToken = this.tokenBank.pop();
             if (this.currentToken.isEqual("T_OpenQuote")) {
                 // StringExpr found
-                this.csTree.addBranchNode("StringExpr", this.currentToken.tLine);
+                this.csTree.addBranchNode("StringExpr", [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.printStage("parseStringExpr()");
-                this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                 if (this.parseCharList()) {
                     this.currentToken = this.tokenBank.pop();
                     if (this.currentToken.isEqual("T_CloseQuote")) {
-                        this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                        this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                         return true;
                     }
                     else {
@@ -386,23 +386,23 @@ var Compiler;
         Parser.prototype.parseBoolExpr = function () {
             this.currentToken = this.tokenBank.pop();
             if (this.currentToken.isEqual("T_OpenParen")) {
-                this.csTree.addBranchNode("BooleanExpr", this.currentToken.tLine);
+                this.csTree.addBranchNode("BooleanExpr", [this.currentToken.tLine, this.currentToken.tColumn]);
                 ;
                 this.printStage("parseBooleanExpr()");
-                this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                 if (this.parseExpr()) {
                     this.csTree.moveUp(); // to BoolExpr
                     this.currentToken = this.tokenBank.pop();
                     // 33. <boolop> -> <==> | <!=>
                     if (this.currentToken.isEqual("T_NotEqual") || this.currentToken.isEqual("T_Equal")) {
-                        this.csTree.addBranchNode("boolop", this.currentToken.tLine);
-                        this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                        this.csTree.addBranchNode("boolop", [this.currentToken.tLine, this.currentToken.tColumn]);
+                        this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                         this.csTree.moveUp(); // to BoolExpr
                         if (this.parseExpr()) {
                             this.csTree.moveUp(); // to BoolExpr
                             this.currentToken = this.tokenBank.pop();
                             if (this.currentToken.isEqual("T_CloseParen")) {
-                                this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                                this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                                 return true;
                             }
                             else {
@@ -428,9 +428,9 @@ var Compiler;
             }
             else if (this.currentToken.isEqual("T_BoolVal")) {
                 // 34. <boolval> -> <false> | <true>
-                this.csTree.addBranchNode("BooleanExpr", this.currentToken.tLine);
-                this.csTree.addBranchNode("boolval", this.currentToken.tLine);
-                this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                this.csTree.addBranchNode("BooleanExpr", [this.currentToken.tLine, this.currentToken.tColumn]);
+                this.csTree.addBranchNode("boolval", [this.currentToken.tLine, this.currentToken.tColumn]);
+                this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.csTree.moveUp(); // to BoolExpr
                 return true;
             }
@@ -446,7 +446,7 @@ var Compiler;
          * 28.            -> end
          */
         Parser.prototype.parseCharList = function () {
-            this.csTree.addBranchNode("CharList", this.currentToken.tLine);
+            this.csTree.addBranchNode("CharList", [this.currentToken.tLine, this.currentToken.tColumn]);
             this.printStage("parseCharList()");
             var space = /[ ]/;
             if (this.parseSpace() || this.parseChar()) {
@@ -463,9 +463,9 @@ var Compiler;
         Parser.prototype.parseChar = function () {
             this.currentToken = this.tokenBank.pop();
             if (this.currentToken.isEqual("T_Char")) {
-                this.csTree.addBranchNode("char", this.currentToken.tLine);
+                this.csTree.addBranchNode("char", [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.printStage("parseChar()");
-                this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.csTree.moveUp(); // to CharList
                 return true;
             }
@@ -479,9 +479,9 @@ var Compiler;
         Parser.prototype.parseSpace = function () {
             this.currentToken = this.tokenBank.pop();
             if (this.currentToken.isEqual("T_Space")) {
-                this.csTree.addBranchNode("space", this.currentToken.tLine);
+                this.csTree.addBranchNode("space", [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.printStage("parseSpace()");
-                this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.csTree.moveUp(); // to CharList
                 return true;
             }
@@ -495,9 +495,9 @@ var Compiler;
         Parser.prototype.parseId = function () {
             this.currentToken = this.tokenBank.pop();
             if (this.currentToken.isEqual("T_Id")) {
-                this.csTree.addBranchNode("Id", this.currentToken.tLine);
+                this.csTree.addBranchNode("Id", [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.printStage("parseId()");
-                this.csTree.addLeafNode(this.currentToken.tValue, this.currentToken.tLine);
+                this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                 return true;
             }
             else {
