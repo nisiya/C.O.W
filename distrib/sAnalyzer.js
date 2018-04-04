@@ -149,10 +149,8 @@ var Compiler;
                         }
                         // then check type
                         this.printStage("Checking type of [" + symbol.key + "]");
-                        var valueType = void 0;
-                        valueType = this.findType(currentNode.childrenNodes[1].value);
-                        // if type matches symbol's type
-                        if (valueType == symbol.type) {
+                        // type should be boolean
+                        if (symbol.type == "boolean") {
                             return true;
                         }
                         else {
