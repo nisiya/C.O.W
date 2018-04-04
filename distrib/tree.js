@@ -8,18 +8,18 @@ Tree Node - Has a Value, Parent Node, and array of Children Nodes
 var Compiler;
 (function (Compiler) {
     var Tree = /** @class */ (function () {
-        function Tree(value) {
-            this.root = new TreeNode(value, null);
+        function Tree(value, line) {
+            this.root = new TreeNode(value, line, null);
             this.outputTree = "";
             this.current = this.root;
         }
-        Tree.prototype.addBranchNode = function (value) {
-            var node = new TreeNode(value, this.current);
+        Tree.prototype.addBranchNode = function (value, line) {
+            var node = new TreeNode(value, line, this.current);
             this.current.childrenNodes.push(node);
             this.current = node;
         };
-        Tree.prototype.addLeafNode = function (value) {
-            var node = new TreeNode(value, this.current);
+        Tree.prototype.addLeafNode = function (value, line) {
+            var node = new TreeNode(value, line, this.current);
             this.current.childrenNodes.push(node);
         };
         Tree.prototype.moveUp = function () {
@@ -44,7 +44,7 @@ var Compiler;
             this.walkTree(this.root, "", jsonTree.nodeStructure.children);
             var output = document.getElementById(treeType);
             output.value += this.outputTree + "\n\n";
-            var visualTree = new Treant(jsonTree);
+            // let visualTree = new Treant(jsonTree);
         };
         Tree.prototype.walkTree = function (node, indent, jsonLevel) {
             // for the pretty cst
@@ -74,8 +74,9 @@ var Compiler;
     }());
     Compiler.Tree = Tree;
     var TreeNode = /** @class */ (function () {
-        function TreeNode(value, parentNode) {
+        function TreeNode(value, line, parentNode) {
             this.value = value;
+            this.line = line;
             this.parentNode = parentNode;
             this.childrenNodes = new Array();
         }

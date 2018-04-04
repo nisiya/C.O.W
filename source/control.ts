@@ -54,25 +54,26 @@ module Compiler {
             // print CST
             csTree.printTree("cst");
             console.log(symbols);
-            log.value += "\n Parse completed successfully";
+            log.value += "\n ============= \n Parse completed successfully \n =============";
 
-            log.value += "\n Semantic Analyzer start for Program " + prgNum + "... \n ============= \n   SEMANTIC ANALYZER --> Analyzing Program " + prgNum + "...";
+            log.value += "\n Semantic Analyzer start for Program " + prgNum 
+                      + "... \n ============= \n   SEMANTIC ANALYZER --> Analyzing Program " + prgNum + "..."
+                      + "\n =============";
             let asTree: Tree;
             let symbolTable: Array<Symbol>;
+            let warningSA: number;
 
             // start semantic analyzer
             let sAnalyzeReturn = sAnalyzer.start(csTree, symbols);
 
             if(sAnalyzeReturn){
               // AST generation passed
-              [asTree, symbolTable] = sAnalyzeReturn;
+              [asTree, symbolTable, warningSA] = sAnalyzeReturn;
               asTree.printTree("ast");
               if(symbolTable){
                 // scope and type checking also passed
-                this.updateSymbolTable(symbolTable);
-                log.value += "\n Semantic Anaylsis completed successfully";
-              } else{
-                log.value += "\n Semantic Anaylsis error";
+                this.updateSymbolTable(symbolTable, prgNum);
+                log.value += "\n Semantic Anaylsis completed successfully with " + warningSA + " warnings";
               }
             } else{
               // AST generation failed
@@ -91,11 +92,11 @@ module Compiler {
           csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to LEXER error(s) \n\n";
         }
         prgNum++;
-        console.log(input);
+        log.scrollTop = log.scrollHeight;
       }
     }
 
-    public static updateSymbolTable(symbolTable: Symbol[]): void{
+    public static updateSymbolTable(symbolTable: Symbol[], prgNum): void{
       let symbolTableBody: HTMLTableSectionElement = <HTMLTableSectionElement> document.getElementById("symbolTableBody");
 
       // update symbol table
@@ -103,8 +104,13 @@ module Compiler {
         var row: HTMLTableRowElement = <HTMLTableRowElement> document.createElement("tr");
         var cell: HTMLTableCellElement = <HTMLTableCellElement> document.createElement("td");
         let symbol: Symbol = symbolTable[i];
+        // Program Number
+        var cellText = document.createTextNode(prgNum);
+        cell.appendChild(cellText);
+        row.appendChild(cell);
         // Name
-        var cellText = document.createTextNode(symbol.key);
+        cell = document.createElement("td");
+        cellText = document.createTextNode(symbol.key);
         cell.appendChild(cellText);
         row.appendChild(cell);
         // Type
@@ -162,7 +168,8 @@ module Compiler {
       while(symbolTableBody.hasChildNodes()){
         symbolTableBody.removeChild(symbolTableBody.firstChild);
       }
-      var emptyCST = {
+
+ /*     var emptyCST = {
         chart: {
             container: "#visual-cst"
         },
@@ -178,6 +185,7 @@ module Compiler {
       };
       let visualCST = new Treant(emptyCST);
       let visualAST = new Treant(emptyAST);
+*/
     }
 
     // change test case in console

@@ -13,20 +13,20 @@ module Compiler {
     public current: TreeNode;
     public outputTree: string;
 
-    constructor(value) {
-      this.root = new TreeNode(value, null);
+    constructor(value, line) {
+      this.root = new TreeNode(value, line, null);
       this.outputTree = "";
       this.current = this.root;
     }
     
-    public addBranchNode(value): void{
-      let node:TreeNode = new TreeNode(value, this.current);
+    public addBranchNode(value, line): void{
+      let node:TreeNode = new TreeNode(value, line, this.current);
       this.current.childrenNodes.push(node);
       this.current = node;
     }
 
-    public addLeafNode(value): void{
-      let node:TreeNode = new TreeNode(value, this.current);
+    public addLeafNode(value, line): void{
+      let node:TreeNode = new TreeNode(value, line, this.current);
       this.current.childrenNodes.push(node);
     }
 
@@ -56,7 +56,7 @@ module Compiler {
       this.walkTree(this.root, "", jsonTree.nodeStructure.children);
       let output: HTMLInputElement = <HTMLInputElement> document.getElementById(treeType);
       output.value += this.outputTree + "\n\n";
-      let visualTree = new Treant(jsonTree);
+      // let visualTree = new Treant(jsonTree);
     }
 
     public walkTree(node: TreeNode, indent:String, jsonLevel:Object): void{
@@ -89,12 +89,15 @@ module Compiler {
 
   export class TreeNode {
     public value: string;
+    public line: number;
     public parentNode: TreeNode;
     public childrenNodes: Array<TreeNode>;
 
     constructor(value:string, 
+                line:number,
                 parentNode:TreeNode){
       this.value = value;
+      this.line = line;
       this. parentNode = parentNode;
       this.childrenNodes = new Array<TreeNode>();
     }

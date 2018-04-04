@@ -49,23 +49,23 @@ var Compiler;
                         // print CST
                         csTree.printTree("cst");
                         console.log(symbols);
-                        log.value += "\n Parse completed successfully";
-                        log.value += "\n Semantic Analyzer start for Program " + prgNum + "... \n ============= \n   SEMANTIC ANALYZER --> Analyzing Program " + prgNum + "...";
+                        log.value += "\n ============= \n Parse completed successfully \n =============";
+                        log.value += "\n Semantic Analyzer start for Program " + prgNum
+                            + "... \n ============= \n   SEMANTIC ANALYZER --> Analyzing Program " + prgNum + "..."
+                            + "\n =============";
                         var asTree = void 0;
                         var symbolTable = void 0;
+                        var warningSA = void 0;
                         // start semantic analyzer
                         var sAnalyzeReturn = sAnalyzer.start(csTree, symbols);
                         if (sAnalyzeReturn) {
                             // AST generation passed
-                            asTree = sAnalyzeReturn[0], symbolTable = sAnalyzeReturn[1];
+                            asTree = sAnalyzeReturn[0], symbolTable = sAnalyzeReturn[1], warningSA = sAnalyzeReturn[2];
                             asTree.printTree("ast");
                             if (symbolTable) {
                                 // scope and type checking also passed
-                                this.updateSymbolTable(symbolTable);
-                                log.value += "\n Semantic Anaylsis completed successfully";
-                            }
-                            else {
-                                log.value += "\n Semantic Anaylsis error";
+                                this.updateSymbolTable(symbolTable, prgNum);
+                                log.value += "\n Semantic Anaylsis completed successfully with " + warningSA + " warnings";
                             }
                         }
                         else {
@@ -87,18 +87,23 @@ var Compiler;
                     csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to LEXER error(s) \n\n";
                 }
                 prgNum++;
-                console.log(input);
+                log.scrollTop = log.scrollHeight;
             }
         };
-        Control.updateSymbolTable = function (symbolTable) {
+        Control.updateSymbolTable = function (symbolTable, prgNum) {
             var symbolTableBody = document.getElementById("symbolTableBody");
             // update symbol table
             for (var i = 0; i < symbolTable.length; i++) {
                 var row = document.createElement("tr");
                 var cell = document.createElement("td");
                 var symbol = symbolTable[i];
+                // Program Number
+                var cellText = document.createTextNode(prgNum);
+                cell.appendChild(cellText);
+                row.appendChild(cell);
                 // Name
-                var cellText = document.createTextNode(symbol.key);
+                cell = document.createElement("td");
+                cellText = document.createTextNode(symbol.key);
                 cell.appendChild(cellText);
                 row.appendChild(cell);
                 // Type
@@ -154,20 +159,23 @@ var Compiler;
             while (symbolTableBody.hasChildNodes()) {
                 symbolTableBody.removeChild(symbolTableBody.firstChild);
             }
-            var emptyCST = {
-                chart: {
-                    container: "#visual-cst"
-                },
-                nodeStructure: {}
-            };
-            var emptyAST = {
-                chart: {
-                    container: "#visual-ast"
-                },
-                nodeStructure: {}
-            };
-            var visualCST = new Treant(emptyCST);
-            var visualAST = new Treant(emptyAST);
+            /*     var emptyCST = {
+                   chart: {
+                       container: "#visual-cst"
+                   },
+                   nodeStructure: {
+                   }
+                 };
+                 var emptyAST = {
+                   chart: {
+                       container: "#visual-ast"
+                   },
+                   nodeStructure: {
+                   }
+                 };
+                 let visualCST = new Treant(emptyCST);
+                 let visualAST = new Treant(emptyAST);
+           */
         };
         // change test case in console
         Control.changeInput = function (btn) {

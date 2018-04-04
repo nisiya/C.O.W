@@ -14,19 +14,17 @@ module Compiler {
     public symbols: Symbol[];
     public symbolTable: Symbol[];
     public scopeTree: ScopeTree;
-    public error: boolean;
+    public warnings: number;
 
-    public start(csTree:Tree, symbols:Symbol[]): [Tree, Symbol[]]{
-      console.log("sstart");
+    public start(csTree:Tree, symbols:Symbol[]): [Tree, Symbol[], number]{
+      console.log("SA Start");
+      this.warnings = 0;
       if(this.buildAST(csTree)){
         this.symbols = symbols.reverse();
         if(this.scopeTypeCheck()){
-          console.log(this.scopeTree);
-          // this.symbolTable.push(symbols.pop());
-          console.log(this.symbolTable);
-          return [this.asTree, this.symbolTable];
+          return [this.asTree, this.symbolTable, this.warnings];
         } else{
-          return [this.asTree, null];
+          return [this.asTree, null, this.warnings];
         }
       } else{
         return null;
@@ -34,7 +32,8 @@ module Compiler {
     }
 
     public buildAST(csTree): boolean{
-      this.asTree = new Tree("Block");
+      this.printStage("Constructing AST");
+      this.asTree = new Tree("Block", 0);
       // Start from initial StatementList
       // tree-program-block-statementlist
       this.analyzeStmtList(csTree.root.childrenNodes[0].childrenNodes[1]); 
@@ -42,43 +41,38 @@ module Compiler {
     }
 
     public scopeTypeCheck(): boolean{
+      this.printStage("Starting scope and type checking");
       this.symbolTable = new Array<Symbol>();
       let currentNode: TreeNode = this.asTree.root;
       this.scopeTree = new ScopeTree();
-      // while(currentNode != null){
       return this.checkNode(currentNode);
-      // }
     }
 
     public checkNode(currentNode): boolean{
       let currentSymbol: Symbol;
-      console.log(currentNode.value + " check it");
       switch(currentNode.value){
         case "Block":
           this.scopeTree.addScopeNode();
           for(var i = 0; i < currentNode.childrenNodes.length; i++){
-            console.log(currentNode.childrenNodes[i].value + " help me now");
             if(this.checkNode(currentNode.childrenNodes[i])){
-              // continue
+              // continue checking rest of the code
             } else{
-              console.log("no");
-              return false; // error found
+              return false; // error found, will be reported later
             }
           }
           this.scopeTree.moveUp();
           return true;
         case "VarDecl":
           currentSymbol = this.symbols.pop();
-          console.log(currentSymbol);
           if(currentNode.childrenNodes[0].value == currentSymbol.type
             && currentNode.childrenNodes[1].value == currentSymbol.key){
-            console.log("hello");
             let updatedSymbol = this.scopeTree.currentScope.addSymbol(currentSymbol);
             if(updatedSymbol != null){
+              this.printStage("Adding new symbol [" + updatedSymbol.key + "]");
               this.symbolTable.push(updatedSymbol);
             } else{
-              // error!
-              console.log("redeclare error");
+              // redeclaration error
+              this.printError("Redeclared identifier in the same scope", currentSymbol.line);
               return false;
             }
           } else{
@@ -93,16 +87,16 @@ module Compiler {
           return this.checkChildren(currentNode);
         case "print":
           let id: RegExp = /^[a-z]$/;
-          if(id.test(currentNode.childrenNodes[0])){
+          if(id.test(currentNode.childrenNodes[0].value)){
             let symbol: Symbol = this.checkScope(currentNode.childrenNodes[0].value);
             if(symbol != null){
               if(!symbol.initialized){
                 // warning
-                console.log("uninitialized");
+                this.printWarning("Use of uninitialized variable", currentNode.childrenNodes[0].line);
               }
             } else{
               // error!
-              console.log("undeclare error");
+              this.printError("Use of undeclared/out-of-scope identifier", currentNode.childrenNodes[0].line);
               return false;
             }
           }
@@ -125,6 +119,13 @@ module Compiler {
     public checkChildren(currentNode): boolean{
       let symbol: Symbol = this.checkScope(currentNode.childrenNodes[0].value);
       if(symbol != null){
+        if(currentNode.value == "==" || currentNode.value == "!="){
+          if(!symbol.initialized){
+            // warning
+            this.printWarning("Use of uninitialized variable", currentNode.childrenNodes[0].line);
+          }
+        }
+        this.printStage("Checking type of [" + symbol.key + "]");
         let valueType:string;
         if(currentNode.childrenNodes[1].value == "+"){
           valueType = this.checkAddition(currentNode.childrenNodes[1]);
@@ -132,7 +133,6 @@ module Compiler {
           valueType = this.findType(currentNode.childrenNodes[1].value);
         }
         if(valueType == symbol.type){
-          console.log(valueType + " sleepsleep");
           if(currentNode.value == "="){
             symbol.initializeSymbol();
             this.scopeTree.currentScope.updateSymbol(symbol);
@@ -140,20 +140,21 @@ module Compiler {
           return true;
         } else{
           if(valueType == "error"){
-            console.log("not in scope");
+            this.printError("Use of undeclared/out-of-scope identifier", symbol.line);
           } else{
             // error!
-            console.log("type mismatched error");
+            this.printError("Type mismatched error", symbol.line);
           }
         }
       } else{
         // error!
-        console.log("undeclare error");
+        this.printError("Use of undeclared/out-of-scope identifier", currentNode.line);
       }
       return false;
     }
 
     public checkScope(symbolKey: string): Symbol{
+      this.printStage("Checking scope of [" + symbolKey + "]");
       let bookmarkScope = this.scopeTree.currentScope;
       let symbol:Symbol;
       while(this.scopeTree.currentScope != null){
@@ -187,6 +188,10 @@ module Compiler {
         if(id.test(plusNode.childrenNodes[1].value)){
           let symbol = this.checkScope(plusNode.childrenNodes[1].value);
           if(symbol != null){
+            if(!symbol.initialized){
+              // warning
+              this.printWarning("Use of uninitialized variable", plusNode.childrenNodes[1].line);
+            }
             return symbol.type;
           } else{
             return "error";
@@ -203,7 +208,7 @@ module Compiler {
 
     // blockChildrens: [ { , StatementList, } ]
     public analyzeBlock(blockNode: TreeNode): void{
-      this.asTree.addBranchNode("Block");
+      this.asTree.addBranchNode("Block", blockNode.line);
       this.analyzeStmtList(blockNode.childrenNodes[1]);
     }
 
@@ -239,12 +244,11 @@ module Compiler {
           this.asTree.moveUp(); // to Block
           break;
         case "VarDecl":
-          this.asTree.addBranchNode(stmtType.value);
+          this.asTree.addBranchNode(stmtType.value, stmtType.line);
           this.analyzeVarDecl(stmtType.childrenNodes);
           this.asTree.moveUp(); // to Block
           break;
         case "WhileStatement":
-          // console.log(stmtType.childrenNodes);
           this.analyzeWhile(stmtType.childrenNodes);
           this.asTree.moveUp(); // to Block
           break;
@@ -260,15 +264,15 @@ module Compiler {
 
     // PrintChildren: [print, ( , Expr, ) ]
     public analyzePrint(printChildren: TreeNode[]): void{
-      this.asTree.addBranchNode(printChildren[0].value); // print
+      this.asTree.addBranchNode(printChildren[0].value, printChildren[0].line); // print
       this.analyzeExpr(printChildren[2]);
 
       // asTree.current = print
     }
 
     public analyzeAssignment(AssignChildren:  TreeNode[]): void{
-      this.asTree.addBranchNode(AssignChildren[1].value); // =
-      this.asTree.addLeafNode(this.analyzeId(AssignChildren[0])); // id
+      this.asTree.addBranchNode(AssignChildren[1].value, AssignChildren[1].line); // =
+      this.asTree.addLeafNode(this.analyzeId(AssignChildren[0]), AssignChildren[0].line); // id
       this.analyzeExpr(AssignChildren[2]); // Expr's child
       
       // asTree.current = AssignmentOp
@@ -277,15 +281,15 @@ module Compiler {
     // VarDeclChildren: [type, Id]
     public analyzeVarDecl(VarDeclChildren: TreeNode[]): void{
       let type: TreeNode = VarDeclChildren[0];
-      this.asTree.addLeafNode(this.analyzeType(VarDeclChildren[0])); // type
-      this.asTree.addLeafNode(this.analyzeId(VarDeclChildren[1])); // id
+      this.asTree.addLeafNode(this.analyzeType(VarDeclChildren[0]), VarDeclChildren[0].line); // type
+      this.asTree.addLeafNode(this.analyzeId(VarDeclChildren[1]), VarDeclChildren[1].line); // id
 
       // asTree.current = VarDecl
     }
 
     // WhileChildren: [while, BooleanExpr, Block]
     public analyzeWhile(whileChildren: TreeNode[]): void{
-      this.asTree.addBranchNode(whileChildren[0].value);
+      this.asTree.addBranchNode(whileChildren[0].value, whileChildren[0].line);
       this.analyzeBoolExpr(whileChildren[1].childrenNodes);
       this.analyzeBlock(whileChildren[2]);
 
@@ -294,7 +298,7 @@ module Compiler {
 
     // IfChildren: [if, BooleanExpr, Block]
     public analyzeIf(ifChildren: TreeNode[]): void{
-      this.asTree.addBranchNode(ifChildren[0].value);
+      this.asTree.addBranchNode(ifChildren[0].value, ifChildren[0].line);
       this.analyzeBoolExpr(ifChildren[1].childrenNodes);
       this.analyzeBlock(ifChildren[2]);
 
@@ -310,14 +314,13 @@ module Compiler {
           break;
         case "StringExpr": // really analyze the CharList
           let stringVal:string = this.analyzeCharList(exprType.childrenNodes[1], "");
-          console.log("pls string " + stringVal);
-          this.asTree.addLeafNode(stringVal); // currentNode: parent of Expr
+          this.asTree.addLeafNode(stringVal, exprType.childrenNodes[1].line); // currentNode: parent of Expr
           break;
         case "BooleanExpr":
           this.analyzeBoolExpr(exprType.childrenNodes);
           break;
         case "Id":
-          this.asTree.addLeafNode(this.analyzeId(exprType)); // currentNode: parent of Expr
+          this.asTree.addLeafNode(this.analyzeId(exprType), exprType.line); // currentNode: parent of Expr
           break;
         default:
           // nothing
@@ -336,7 +339,6 @@ module Compiler {
     // CharListChildren: [0] or [char | space , CharList]
     public analyzeCharList(node: TreeNode, stringVal: string): string{
       if(node.childrenNodes.length == 0){
-        console.log("string " + stringVal);
         return stringVal;
       } else{
         stringVal = stringVal + node.childrenNodes[0].childrenNodes[0].value; // CharList's char's child's value
@@ -347,11 +349,11 @@ module Compiler {
     // IntExprChildren: [digit] or [digit, intop, Expr]
     public analyzeIntExpr(IntChildren: TreeNode[]): void{
       if(IntChildren.length == 1){
-        this.asTree.addLeafNode(IntChildren[0].childrenNodes[0].value); // the digit
+        this.asTree.addLeafNode(IntChildren[0].childrenNodes[0].value, IntChildren[0].childrenNodes[0].line); // the digit
         // asTree.current = parent of digit
       } else{
-        this.asTree.addBranchNode(IntChildren[1].value); // intop
-        this.asTree.addLeafNode(IntChildren[0].childrenNodes[0].value); // the first digit
+        this.asTree.addBranchNode(IntChildren[1].value, IntChildren[1].line); // intop
+        this.asTree.addLeafNode(IntChildren[0].childrenNodes[0].value, IntChildren[0].childrenNodes[0].line); // the first digit
         this.analyzeExpr(IntChildren[2]); // expr's children
         this.asTree.moveUp();
         // asTree.current = parent of IntExpr
@@ -360,18 +362,42 @@ module Compiler {
 
     // BooleanExprChildren: [boolval] or [ ( , Expr, boolop, Expr, ) ]
     public analyzeBoolExpr(BoolChildren: TreeNode[]): void{
-      console.log(BoolChildren);
       if(BoolChildren.length == 1){
-        this.asTree.addLeafNode(BoolChildren[0].childrenNodes[0].value); // the boolval
+        this.asTree.addLeafNode(BoolChildren[0].childrenNodes[0].value, BoolChildren[0].childrenNodes[0].line); // the boolval
         // asTree.current = while
       } else{
-        this.asTree.addBranchNode(BoolChildren[2].childrenNodes[0].value); // the boolop
+        this.asTree.addBranchNode(BoolChildren[2].childrenNodes[0].value, BoolChildren[2].childrenNodes[0].line); // the boolop
         this.analyzeExpr(BoolChildren[1]); // asTree.current = boolop
         this.analyzeExpr(BoolChildren[3]); 
         this.asTree.moveUp(); // to while
         // asTree.current = while
       }
     }
-  
+
+    // prints error to log
+    public printError(errorType, line): void{
+      let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
+      log.value += "\n   SEMANTIC ANALYZER --> ERROR! " + errorType + " on line " + line;
+      log.value += "\n   SEMANTIC ANALYZER --> Semantic analysis failed with 1 error... Symbol table is not generated for it";
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // prints warning to log
+    public printWarning(warningType, line): void{
+      this.warnings++;
+      let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
+      log.value += "\n   SEMANTIC ANALYZER --> WARNING! " + warningType + " on line " + line;
+      // log.value += "\n   SEMANTIC ANALYZER --> Semantic analysis completed with 1 warning";                
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // print current state
+    public printStage(stage: string){
+      if(_VerboseMode){
+        let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
+        log.value += "\n   SEMANTIC ANALYZER --> " + stage;
+        log.scrollTop = log.scrollHeight;
+      }
+    }
   }
 }
