@@ -21,8 +21,10 @@ module Compiler {
       if(this.buildAST(csTree)){
         this.symbols = symbols.reverse();
         if(this.scopeTypeCheck()){
+          console.log(this.scopeTree);
           // this.symbolTable.push(symbols.pop());
-          return [this.asTree, symbols];
+          console.log(this.symbolTable);
+          return [this.asTree, this.symbolTable];
         } else{
           return [this.asTree, null];
         }
@@ -49,28 +51,33 @@ module Compiler {
     }
 
     public checkNode(currentNode): boolean{
-      let error: boolean = false;
       let currentSymbol: Symbol;
+      console.log(currentNode.value + " check it");
       switch(currentNode.value){
         case "Block":
           this.scopeTree.addScopeNode();
-          for(var i = 0; i < currentNode.length; i++){
+          for(var i = 0; i < currentNode.childrenNodes.length; i++){
+            console.log(currentNode.childrenNodes[i].value + " help me now");
             if(this.checkNode(currentNode.childrenNodes[i])){
               // continue
             } else{
+              console.log("no");
               return false; // error found
             }
           }
+          this.scopeTree.moveUp();
           return true;
         case "VarDecl":
           currentSymbol = this.symbols.pop();
           console.log(currentSymbol);
           if(currentNode.childrenNodes[0].value == currentSymbol.type
             && currentNode.childrenNodes[1].value == currentSymbol.key){
+            console.log("hello");
             let updatedSymbol = this.scopeTree.currentScope.addSymbol(currentSymbol);
             if(updatedSymbol != null){
               this.symbolTable.push(updatedSymbol);
             } else{
+              // error!
               console.log("redeclare error");
               return false;
             }
@@ -79,17 +86,65 @@ module Compiler {
           }
           return true;
         case "=":
-          currentSymbol = this.symbols.pop();
-          console.log(currentSymbol);
-          let updatedSymbol = this.scopeTree.currentScope.usedSymbol(currentSymbol);
-          if(updatedSymbol == null){
+          currentSymbol = this.checkScope(currentNode.childrenNodes[0].value);
+          if(currentSymbol != null){
+            let valueType = this.findType(currentNode.childrenNodes[1].value);
+            if(valueType == currentSymbol.type){
+              return true;
+            } else{
+              // error!
+              console.log("type mismatched error");
+            }
+          } else{
             // error!
-            console.log("redeclare error");
-            return false;
+            console.log("undeclare error");
           }
-          break;
+          return false;
+        case "!=":
+          currentSymbol = this.checkScope(currentNode.childrenNodes[0].value);
+          if(currentSymbol != null){
+            let valueType = this.findType(currentNode.childrenNodes[1].value);
+            if(valueType == currentSymbol.type){
+              return true;
+            } else{
+              // error!
+              console.log("type mismatched error");
+            }
+          } else{
+            // error!
+            console.log("undeclare error");
+          }
+          return false;
         default:
+          return true;
+      }
+    }
+
+    public checkScope(symbolKey: string): Symbol{
+      let bookmarkScope = this.scopeTree.currentScope;
+      let symbol:Symbol;
+      while(this.scopeTree.currentScope != null){
+        symbol = this.scopeTree.currentScope.getSymbol(symbolKey);
+        if(symbol != null){
+          symbol.used = true;
+          this.scopeTree.currentScope.usedSymbol(symbol);
+          this.scopeTree.currentScope = bookmarkScope;
           break;
+        }
+        this.scopeTree.moveUp();
+      }
+      return symbol;
+    }
+
+    public findType(value: string): string{
+      let digit:RegExp = /^\d/;
+      let boolval: RegExp = /^true|false$/;
+      if(digit.test(value)){
+        return "int";
+      } else if(boolval.test(value)){
+        return "boolean";
+      } else{
+        return "string";
       }
     }
 

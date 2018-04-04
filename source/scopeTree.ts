@@ -35,12 +35,8 @@ module Compiler {
     }
 
     public moveUp(): void{
-      if(this.currentScope == this.root){
-        return;
-      } else{
-        this.currentScope = this.currentScope.parentScope;
-        // this.currentLevel = this.currentScope.level; //hmmmm
-      }
+      this.currentScope = this.currentScope.parentScope;
+      // this.currentLevel = this.currentScope.level; //hmmmm
     }
 
   }
@@ -68,16 +64,15 @@ module Compiler {
       }
     }
 
-    public usedSymbol(symbol: Symbol): Symbol{
-      if(this.symbolMap.get(symbol.key) == null){
-        return null; // undeclared 
-      } else{
-        if(!symbol.used){
-          symbol.used = true;
-          this.symbolMap.set(symbol.key, symbol); // overwrites
-        }
-        return symbol; // declared and used
+    public usedSymbol(symbol: Symbol): void{
+      if(!symbol.used){
+        symbol.used = true;
+        this.symbolMap.set(symbol.key, symbol); // overwrites
       }
+    }
+
+    public getSymbol(symbolKey: string): Symbol{
+      return this.symbolMap.get(symbolKey);
     }
   }
 

@@ -16,8 +16,10 @@ var Compiler;
             if (this.buildAST(csTree)) {
                 this.symbols = symbols.reverse();
                 if (this.scopeTypeCheck()) {
+                    console.log(this.scopeTree);
                     // this.symbolTable.push(symbols.pop());
-                    return [this.asTree, symbols];
+                    console.log(this.symbolTable);
+                    return [this.asTree, this.symbolTable];
                 }
                 else {
                     return [this.asTree, null];
@@ -43,30 +45,35 @@ var Compiler;
             // }
         };
         SAnalyzer.prototype.checkNode = function (currentNode) {
-            var error = false;
             var currentSymbol;
+            console.log(currentNode.value + " check it");
             switch (currentNode.value) {
                 case "Block":
                     this.scopeTree.addScopeNode();
-                    for (var i = 0; i < currentNode.length; i++) {
+                    for (var i = 0; i < currentNode.childrenNodes.length; i++) {
+                        console.log(currentNode.childrenNodes[i].value + " help me now");
                         if (this.checkNode(currentNode.childrenNodes[i])) {
                             // continue
                         }
                         else {
+                            console.log("no");
                             return false; // error found
                         }
                     }
+                    this.scopeTree.moveUp();
                     return true;
                 case "VarDecl":
                     currentSymbol = this.symbols.pop();
                     console.log(currentSymbol);
                     if (currentNode.childrenNodes[0].value == currentSymbol.type
                         && currentNode.childrenNodes[1].value == currentSymbol.key) {
-                        var updatedSymbol_1 = this.scopeTree.currentScope.addSymbol(currentSymbol);
-                        if (updatedSymbol_1 != null) {
-                            this.symbolTable.push(updatedSymbol_1);
+                        console.log("hello");
+                        var updatedSymbol = this.scopeTree.currentScope.addSymbol(currentSymbol);
+                        if (updatedSymbol != null) {
+                            this.symbolTable.push(updatedSymbol);
                         }
                         else {
+                            // error!
                             console.log("redeclare error");
                             return false;
                         }
@@ -76,17 +83,69 @@ var Compiler;
                     }
                     return true;
                 case "=":
-                    currentSymbol = this.symbols.pop();
-                    console.log(currentSymbol);
-                    var updatedSymbol = this.scopeTree.currentScope.usedSymbol(currentSymbol);
-                    if (updatedSymbol == null) {
-                        // error!
-                        console.log("redeclare error");
-                        return false;
+                    currentSymbol = this.checkScope(currentNode.childrenNodes[0].value);
+                    if (currentSymbol != null) {
+                        var valueType = this.findType(currentNode.childrenNodes[1].value);
+                        if (valueType == currentSymbol.type) {
+                            return true;
+                        }
+                        else {
+                            // error!
+                            console.log("type mismatched error");
+                        }
                     }
-                    break;
+                    else {
+                        // error!
+                        console.log("undeclare error");
+                    }
+                    return false;
+                case "!=":
+                    currentSymbol = this.checkScope(currentNode.childrenNodes[0].value);
+                    if (symbol != null) {
+                        var valueType = this.findType(currentNode.childrenNodes[1].value);
+                        if (valueType == symbol.type) {
+                            return true;
+                        }
+                        else {
+                            // error!
+                            console.log("type mismatched error");
+                        }
+                    }
+                    else {
+                        // error!
+                        console.log("undeclare error");
+                    }
+                    return false;
                 default:
+                    return true;
+            }
+        };
+        SAnalyzer.prototype.checkScope = function (symbolKey) {
+            var bookmarkScope = this.scopeTree.currentScope;
+            var symbol;
+            while (this.scopeTree.currentScope != null) {
+                symbol = this.scopeTree.currentScope.getSymbol(symbolKey);
+                if (symbol != null) {
+                    symbol.used = true;
+                    this.scopeTree.currentScope.usedSymbol(symbol);
+                    this.scopeTree.currentScope = bookmarkScope;
                     break;
+                }
+                this.scopeTree.moveUp();
+            }
+            return symbol;
+        };
+        SAnalyzer.prototype.findType = function (value) {
+            var digit = /^\d/;
+            var boolval = /^true|false$/;
+            if (digit.test(value)) {
+                return "int";
+            }
+            else if (boolval.test(value)) {
+                return "boolean";
+            }
+            else {
+                return "string";
             }
         };
         // blockChildrens: [ { , StatementList, } ]

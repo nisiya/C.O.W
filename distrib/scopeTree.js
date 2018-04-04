@@ -29,13 +29,8 @@ var Compiler;
             }
         };
         ScopeTree.prototype.moveUp = function () {
-            if (this.currentScope == this.root) {
-                return;
-            }
-            else {
-                this.currentScope = this.currentScope.parentScope;
-                // this.currentLevel = this.currentScope.level; //hmmmm
-            }
+            this.currentScope = this.currentScope.parentScope;
+            // this.currentLevel = this.currentScope.level; //hmmmm
         };
         return ScopeTree;
     }());
@@ -58,16 +53,13 @@ var Compiler;
             }
         };
         ScopeNode.prototype.usedSymbol = function (symbol) {
-            if (this.symbolMap.get(symbol.key) == null) {
-                return null; // undeclared 
+            if (!symbol.used) {
+                symbol.used = true;
+                this.symbolMap.set(symbol.key, symbol); // overwrites
             }
-            else {
-                if (!symbol.used) {
-                    symbol.used = true;
-                    this.symbolMap.set(symbol.key, symbol); // overwrites
-                }
-                return symbol; // declared and used
-            }
+        };
+        ScopeNode.prototype.getSymbol = function (symbolKey) {
+            return this.symbolMap.get(symbolKey);
         };
         return ScopeNode;
     }());
