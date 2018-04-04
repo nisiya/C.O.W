@@ -137,7 +137,7 @@ module Compiler {
           this.asTree.addLeafNode(stringVal); // currentNode: parent of Expr
           break;
         case "BooleanExpr":
-          this.analyzeIntExpr(exprType.childrenNodes);
+          this.analyzeBoolExpr(exprType.childrenNodes);
           break;
         case "Id":
           this.asTree.addLeafNode(this.analyzeId(exprType)); // currentNode: parent of Expr
@@ -183,6 +183,7 @@ module Compiler {
 
     // BooleanExprChildren: [boolval] or [ ( , Expr, boolop, Expr, ) ]
     public analyzeBoolExpr(BoolChildren: TreeNode[]): void{
+      console.log(BoolChildren);
       if(BoolChildren.length == 1){
         this.asTree.addLeafNode(BoolChildren[0].childrenNodes[0].value); // the boolval
         // asTree.current = while
