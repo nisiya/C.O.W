@@ -1,17 +1,14 @@
 /* ------------
-Tree.ts
+ScopeTree.ts
 
-Tree - Concrete Syntax Tree created by Parser
-       and Abstract Syntax Tree created by Semantic Analyzer
-Tree Node - Has a Value, Parent Node, and array of Children Nodes
+ScopeTree - ScopeTree created by Semantic Analyzer
+ScopeNode - Has a scope level number, map of symbols in current scope, Parent Scope, and array of Children Scopes
 ------------ */
 var Compiler;
 (function (Compiler) {
     var ScopeTree = /** @class */ (function () {
-        // public outputTree: string;
         function ScopeTree() {
             this.root = null;
-            // this.outputTree = "";
             this.currentScope = null;
             this.currentLevel = -1;
         }
@@ -28,9 +25,9 @@ var Compiler;
                 this.currentScope = newScope;
             }
         };
+        // to the parent scope
         ScopeTree.prototype.moveUp = function () {
             this.currentScope = this.currentScope.parentScope;
-            // this.currentLevel = this.currentScope.level; //hmmmm
         };
         return ScopeTree;
     }());
@@ -43,18 +40,22 @@ var Compiler;
             this.childrenScopes = new Array();
         }
         ScopeNode.prototype.addSymbol = function (symbol) {
+            // check if symbol key already exist
             if (this.symbolMap.get(symbol.key) != null) {
-                return null; // redeclaration 
+                return null; // redeclaration error
             }
             else {
+                // add symbol
                 symbol.scope = this.level; // set scope level
                 this.symbolMap.set(symbol.key, symbol);
                 return symbol;
             }
         };
+        // to set symbol to be initialized
         ScopeNode.prototype.updateSymbol = function (symbol) {
             this.symbolMap.set(symbol.key, symbol); // overwrites
         };
+        // to find the symbol if exists
         ScopeNode.prototype.getSymbol = function (symbolKey) {
             return this.symbolMap.get(symbolKey);
         };

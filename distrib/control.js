@@ -90,9 +90,9 @@ var Compiler;
                 log.scrollTop = log.scrollHeight;
             }
         };
+        // update symbol table output
         Control.updateSymbolTable = function (symbolTable, prgNum) {
             var symbolTableBody = document.getElementById("symbolTableBody");
-            // update symbol table
             for (var i = 0; i < symbolTable.length; i++) {
                 var row = document.createElement("tr");
                 var cell = document.createElement("td");
@@ -139,7 +139,7 @@ var Compiler;
                 verboseBtn.style.color = "#000000";
             }
         };
-        // clear input and outputs
+        // clear all input and outputs
         Control.flush = function (btn) {
             this.clearOutputs();
             editor.setValue("");
@@ -159,6 +159,7 @@ var Compiler;
             while (symbolTableBody.hasChildNodes()) {
                 symbolTableBody.removeChild(symbolTableBody.firstChild);
             }
+            // save pretty tree for later
             /*     var emptyCST = {
                    chart: {
                        container: "#visual-cst"
@@ -212,6 +213,18 @@ var Compiler;
                     break;
                 case "parseMultiple":
                     editor.setValue("{}$	\n{{{{{{}}}}}}$	\n{{{{{{}}}	/*	comments	are	ignored	*/	}}}}$	\n{	/*	comments	are	still	ignored	*/	int	@}$");
+                    break;
+                case "saNested":
+                    editor.setValue("{ int a \n int b \n a = 0 \n b = 0 \n if(false != (true == (a == 2))) \n { print(a)}}$");
+                    break;
+                case "saScope":
+                    editor.setValue("{int a a=0 {int b} b=0}$");
+                    break;
+                case "saType":
+                    editor.setValue("{int a a=\"hello\"}$");
+                    break;
+                case "saRedeclare":
+                    editor.setValue("{int a string a}$");
                     break;
                 default:
                     editor.setValue("clearing");

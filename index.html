@@ -50,13 +50,13 @@
               Warning Programs<i class="tiny material-icons right">chevron_right</i>
             </a></li>
             <li><a class='dropdown-button2 d' href='#' data-activates='lexPrg' data-hover="hover" data-alignment="left">
-              Lex Fail<i class="tiny material-icons right">chevron_right</i>
+              Lex<i class="tiny material-icons right">chevron_right</i>
             </a></li>
             <li><a class='dropdown-button2 d' href='#' data-activates='parsePrg' data-hover="hover" data-alignment="left">
-              Parse Fail<i class="tiny material-icons right">chevron_right</i>
+              Parse<i class="tiny material-icons right">chevron_right</i>
             </a></li>
-            <li><a class='dropdown-button2 d' href='#' data-activates='saFail' data-hover="hover" data-alignment="left">
-              SA Fail<i class="tiny material-icons right">chevron_right</i>
+            <li><a class='dropdown-button2 d' href='#' data-activates='saPrg' data-hover="hover" data-alignment="left">
+              SA<i class="tiny material-icons right">chevron_right</i>
             </a></li>
           </ul>
           <ul id='validPrg' class='dropdown-content grey lighten-5'>
@@ -102,11 +102,20 @@
                 Error in Multiple Programs
             </a></li>
           </ul>
-          <ul id='saFail' class='dropdown-content grey lighten-5'>
-            <!-- <li><a href="#!">one</a></li>
-            <li><a href="#!">two</a></li>
-            <li class="divider"></li>
-            <li><a href="#!">three</a></li> -->
+          <ul id='saPrg' class='dropdown-content grey lighten-5'>
+            <li><a id="saNested" href="#!" onclick="Compiler.Control.changeInput(this);">
+                Nested BoolExpr
+              </a></li>
+              <li class="divider"></li>
+              <li><a id="saScope" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
+                Scope Error
+              </a></li>
+              <li><a id="saType" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
+                Type Error
+              </a></li>
+              <li><a id="saRedeclare" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
+                Redeclaration Error
+              </a></li>
           </ul>
         </div>
         <div class="col s3">

@@ -96,10 +96,10 @@ module Compiler {
       }
     }
 
+    // update symbol table output
     public static updateSymbolTable(symbolTable: Symbol[], prgNum): void{
       let symbolTableBody: HTMLTableSectionElement = <HTMLTableSectionElement> document.getElementById("symbolTableBody");
 
-      // update symbol table
       for(let i=0; i<symbolTable.length; i++){
         var row: HTMLTableRowElement = <HTMLTableRowElement> document.createElement("tr");
         var cell: HTMLTableCellElement = <HTMLTableCellElement> document.createElement("td");
@@ -147,7 +147,7 @@ module Compiler {
       }
     }
 
-    // clear input and outputs
+    // clear all input and outputs
     public static flush(btn): void {
       this.clearOutputs();
       editor.setValue("");
@@ -168,7 +168,7 @@ module Compiler {
       while(symbolTableBody.hasChildNodes()){
         symbolTableBody.removeChild(symbolTableBody.firstChild);
       }
-
+// save pretty tree for later
  /*     var emptyCST = {
         chart: {
             container: "#visual-cst"
@@ -223,6 +223,18 @@ module Compiler {
           break;
         case "parseMultiple":
           editor.setValue("{}$	\n{{{{{{}}}}}}$	\n{{{{{{}}}	/*	comments	are	ignored	*/	}}}}$	\n{	/*	comments	are	still	ignored	*/	int	@}$");
+          break;
+        case "saNested":
+          editor.setValue("{ int a \n int b \n a = 0 \n b = 0 \n if(false != (true == (a == 2))) \n { print(a)}}$");
+          break;
+        case "saScope":
+          editor.setValue("{int a a=0 {int b} b=0}$");
+          break;
+        case "saType":
+          editor.setValue("{int a a=\"hello\"}$");
+          break;
+        case "saRedeclare":
+          editor.setValue("{int a string a}$");
           break;
         default:
           editor.setValue("clearing");

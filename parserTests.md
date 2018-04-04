@@ -1,4 +1,4 @@
-# Test Casts
+# Test Cases
 
 ## Valid Programs
 1. VarDecl, Assignment, IntExpr, intop, Print, Id, digit, type
@@ -49,7 +49,7 @@
 
 2. Chain of Blocks
 ```
-{stringa}${a="block"}${printa}${while(b!=8){a="blockblock"}}${iffalse{print("blockblockblock")}}$
+{stringa}${a="block"}${print(a)}${while(b!=8){a="blockblock"}}${iffalse{print("blockblockblock")}}$
 ```
 
 ## Error Programs

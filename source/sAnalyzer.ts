@@ -19,9 +19,14 @@ module Compiler {
     public start(csTree:Tree, symbols:Symbol[]): [Tree, Symbol[], number]{
       console.log("SA Start");
       this.warnings = 0;
+      // buildAST first
       if(this.buildAST(csTree)){
+        // reverse it to the order it appears in the code
         this.symbols = symbols.reverse();
+
+        // AST built, start scope and type checking
         if(this.scopeTypeCheck()){
+          // this.checkForUnused();
           return [this.asTree, this.symbolTable, this.warnings];
         } else{
           return [this.asTree, null, this.warnings];
@@ -45,12 +50,16 @@ module Compiler {
       this.symbolTable = new Array<Symbol>();
       let currentNode: TreeNode = this.asTree.root;
       this.scopeTree = new ScopeTree();
+
+      // start from first node
       return this.checkNode(currentNode);
     }
 
+    // Start of functions used for scope and type checking
     public checkNode(currentNode): boolean{
       let currentSymbol: Symbol;
       switch(currentNode.value){
+        // block means new scope
         case "Block":
           this.scopeTree.addScopeNode();
           for(var i = 0; i < currentNode.childrenNodes.length; i++){
@@ -60,8 +69,11 @@ module Compiler {
               return false; // error found, will be reported later
             }
           }
+          // return to previous block after all childrenNodes validated
           this.scopeTree.moveUp();
           return true;
+
+        // only time to add symbol to final symbol table
         case "VarDecl":
           currentSymbol = this.symbols.pop();
           if(currentNode.childrenNodes[0].value == currentSymbol.type
@@ -76,16 +88,21 @@ module Compiler {
               return false;
             }
           } else{
-            // won't go here, just if else to make sure
+            // won't get here. condition checked just to make sure
           }
-          return true;
+          return true; // no errors
+
+        // almost same subtree layout for ones below
         case "=":
           return this.checkChildren(currentNode);
         case "!=":
           return this.checkChildren(currentNode);
         case "==":
           return this.checkChildren(currentNode);
+
+        // print only has one child
         case "print":
+          // if id, do scope check
           let id: RegExp = /^[a-z]$/;
           if(id.test(currentNode.childrenNodes[0].value)){
             let symbol: Symbol = this.checkScope(currentNode.childrenNodes[0].value);
@@ -100,59 +117,116 @@ module Compiler {
               return false;
             }
           }
-          return true; // no need to check for string
+          return true; // else no need to check for string
+
+        // while and if have same subtree layout
         case "while":
           if(this.checkNode(currentNode.childrenNodes[0])){ // the boolexpr
             return this.checkNode(currentNode.childrenNodes[1]); // the block
           }
-          return false;    
+          return false; // not successful, error printed in previous checks
         case "if":
           if(this.checkNode(currentNode.childrenNodes[0])){ // the boolexpr
             return this.checkNode(currentNode.childrenNodes[1]); // the block
           }
-          return false;  
+          return false;  // not successful, error printed in previous checks
         default:
+          // won't get here, but always need a default statement
           return true;
       }
     }
 
+    // check the two children for =, !=, and ==
     public checkChildren(currentNode): boolean{
-      let symbol: Symbol = this.checkScope(currentNode.childrenNodes[0].value);
-      if(symbol != null){
-        if(currentNode.value == "==" || currentNode.value == "!="){
-          if(!symbol.initialized){
-            // warning
-            this.printWarning("Use of uninitialized variable", currentNode.childrenNodes[0].line);
-          }
-        }
-        this.printStage("Checking type of [" + symbol.key + "]");
-        let valueType:string;
-        if(currentNode.childrenNodes[1].value == "+"){
-          valueType = this.checkAddition(currentNode.childrenNodes[1]);
-        } else{
-          valueType = this.findType(currentNode.childrenNodes[1].value);
-        }
-        if(valueType == symbol.type){
-          if(currentNode.value == "="){
-            symbol.initializeSymbol();
-            this.scopeTree.currentScope.updateSymbol(symbol);
-          }
+      let boolval: RegExp = /^true|false$/;
+
+      // first child can also be boolval for boolops
+      if(boolval.test(currentNode.childrenNodes[0].value)){
+        // if second
+        let boolop: RegExp = /^!=|==$/;
+        if(boolval.test(currentNode.childrenNodes[1].value)){
           return true;
+        } else if(boolop.test(currentNode.childrenNodes[1].value)){
+          return this.checkNode(currentNode.childrenNodes[1]);
         } else{
-          if(valueType == "error"){
-            this.printError("Use of undeclared/out-of-scope identifier", symbol.line);
+          let symbol: Symbol = this.checkScope(currentNode.childrenNodes[1].value);
+          if(symbol != null){
+            if(!symbol.initialized){
+              // warning
+              this.printWarning("Use of uninitialized variable", currentNode.childrenNodes[1].line);
+            }
+    
+            // then check type
+            this.printStage("Checking type of [" + symbol.key + "]");
+            let valueType:string;
+            valueType = this.findType(currentNode.childrenNodes[1].value);
+    
+            // if type matches symbol's type
+            if(valueType == symbol.type){
+              return true;
+            } else{
+              // type mismatched error
+              this.printError("Type mismatched error", currentNode.childrenNodes[1].line);
+            }
           } else{
-            // error!
-            this.printError("Type mismatched error", symbol.line);
+            // no symbol found
+            // undeclared/out-of-scope error
+            this.printError("Use of undeclared/out-of-scope identifier", currentNode.childrenNodes[1].line);
           }
         }
       } else{
-        // error!
-        this.printError("Use of undeclared/out-of-scope identifier", currentNode.line);
+        // first check scope
+        let symbol: Symbol = this.checkScope(currentNode.childrenNodes[0].value);
+        if(symbol != null){
+
+          // for == and !=, check for uninitialized warning
+          if(currentNode.value == "==" || currentNode.value == "!="){
+            if(!symbol.initialized){
+              // warning
+              this.printWarning("Use of uninitialized variable", currentNode.childrenNodes[0].line);
+            }
+          }
+
+          // then check type
+          this.printStage("Checking type of [" + symbol.key + "]");
+          let valueType:string;
+
+          // special case for != and ==, second child is "+"
+          if(currentNode.childrenNodes[1].value == "+"){
+            valueType = this.checkAddition(currentNode.childrenNodes[1]);
+          } else{
+            // case for all
+            valueType = this.findType(currentNode.childrenNodes[1].value);
+          }
+
+          // if type matches symbol's type
+          if(valueType == symbol.type){
+            
+            // special case for =, set symbol to be initialized
+            if(currentNode.value == "="){
+              symbol.initializeSymbol();
+              this.scopeTree.currentScope.updateSymbol(symbol);
+            }
+            return true;
+
+          } else{
+            if(valueType == "error"){ // occurred when checking "+"
+              this.printError("Use of undeclared/out-of-scope identifier", currentNode.childrenNodes[1].line);
+            } else{
+              // type mismatched error
+              this.printError("Type mismatched error", currentNode.childrenNodes[1].line);
+            }
+          }
+        } else{
+          // no symbol found
+          // undeclared/out-of-scope error
+          this.printError("Use of undeclared/out-of-scope identifier", currentNode.childrenNodes[0].line);
+        }
       }
       return false;
     }
 
+    // check for symbol in current and all previous scopes
     public checkScope(symbolKey: string): Symbol{
       this.printStage("Checking scope of [" + symbolKey + "]");
       let bookmarkScope = this.scopeTree.currentScope;
@@ -160,6 +234,7 @@ module Compiler {
       while(this.scopeTree.currentScope != null){
         symbol = this.scopeTree.currentScope.getSymbol(symbolKey);
         if(symbol != null){
+          // found symbol, so stop searching
           this.scopeTree.currentScope = bookmarkScope;
           break;
         }
@@ -168,9 +243,12 @@ module Compiler {
       return symbol;
     }
 
+    // type not in AST so we have to tell what it is
+    // type -> int | boolean | string
     public findType(value: string): string{
       let digit:RegExp = /^\d/;
       let boolval: RegExp = /^true|false$/;
+
       if(digit.test(value)){
         return "int";
       } else if(boolval.test(value)){
@@ -180,31 +258,33 @@ module Compiler {
       }
     }
 
+    // special case of nested additions
     public checkAddition(plusNode: TreeNode): string{
-      let digit:RegExp = /^\d/;
       let id:RegExp = /^[a-z]$/;
       let plus:RegExp = /^\+$/;
-      if(digit.test(plusNode.childrenNodes[0].value)){
-        if(id.test(plusNode.childrenNodes[1].value)){
-          let symbol = this.checkScope(plusNode.childrenNodes[1].value);
-          if(symbol != null){
-            if(!symbol.initialized){
-              // warning
-              this.printWarning("Use of uninitialized variable", plusNode.childrenNodes[1].line);
-            }
-            return symbol.type;
-          } else{
-            return "error";
+
+      // first child always digit
+      // if second child is id, check its scope, type will be checked later
+      if(id.test(plusNode.childrenNodes[1].value)){
+        let symbol = this.checkScope(plusNode.childrenNodes[1].value);
+        if(symbol != null){
+          if(!symbol.initialized){
+            // uninitialized variable warning
+            this.printWarning("Use of uninitialized variable", plusNode.childrenNodes[1].line);
           }
-        } else if(plus.test(plusNode.childrenNodes[1].value)){
-          return this.checkAddition(plusNode.childrenNodes[1]);
+          return symbol.type;
         } else{
-          return "notInt";
+          return "error";
         }
+      } else if(plus.test(plusNode.childrenNodes[1].value)){
+        // if second child is still "+", check its children
+        return this.checkAddition(plusNode.childrenNodes[1]);
       } else{
         return "notInt";
       }
     }
+
+    // Start of functions used to build AST
 
     // blockChildrens: [ { , StatementList, } ]
     public analyzeBlock(blockNode: TreeNode): void{
@@ -374,6 +454,7 @@ module Compiler {
       }
     }
 
+    // Start of functions for outputs
     // prints error to log
     public printError(errorType, line): void{
       let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
