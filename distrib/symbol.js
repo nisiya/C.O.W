@@ -9,7 +9,9 @@ var Compiler;
         function Symbol(key, type, line) {
             this.key = key;
             this.type = type;
+            this.scope = -1;
             this.line = line;
+            this.used = false;
         }
         return Symbol;
     }());

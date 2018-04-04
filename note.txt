@@ -1,16 +1,39 @@
+  /* Long Test Case - Everything Except Boolean Declaration */
+  {
+    /* Int Declaration */
+    int a
+    int b
+  {
+    a = 0
+    b = 0
+  }
+
+  while (a != 3) {
+    print(a)
+    b = 0
+    a = 1 + a
+  }
+  b=1+a
+  }$
+
+
 /* Long Test Case - Everything Except Boolean Declaration */
 {
-  /* Int Declaration */
-  int a
-  int b
-{
-  a = 0
-  b = 0
-}
-
 while (a != 3) {
   print(a)
   b = 0
   a = 1 + a
 }
+b=1+a
 }$
+
+
+{
+    int a
+    int b
+    a = 0
+    b = 0
+    if(false != (true == (a == 2))){
+        print(a)
+    }
+}

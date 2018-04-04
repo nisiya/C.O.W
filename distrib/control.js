@@ -14,7 +14,6 @@ var Compiler;
             var log = document.getElementById("log");
             var csTreeOut = document.getElementById("cst");
             var asTreeOut = document.getElementById("ast");
-            var symbolTableBody = document.getElementById("symbolTableBody");
             var lexer = new Compiler.Lexer();
             var parser = new Compiler.Parser();
             var sAnalyzer = new Compiler.SAnalyzer();
@@ -42,36 +41,37 @@ var Compiler;
                     // Lex passed
                     log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";
                     var csTree = void 0;
-                    var symbolTable = void 0;
+                    var symbols = void 0;
                     var parseReturn = parser.start(tokenBank);
                     if (parseReturn) {
                         // Parse passed
-                        csTree = parseReturn[0], symbolTable = parseReturn[1];
+                        csTree = parseReturn[0], symbols = parseReturn[1];
                         // print CST
                         csTree.printTree("cst");
+                        console.log(symbols);
                         log.value += "\n Parse completed successfully";
-                        // update symbol table
-                        for (var i = 0; i < symbolTable.length; i++) {
-                            var row = document.createElement("tr");
-                            var cell = document.createElement("td");
-                            var symbol = symbolTable[i];
-                            var cellText = document.createTextNode(symbol.key);
-                            cell.appendChild(cellText);
-                            row.appendChild(cell);
-                            cell = document.createElement("td");
-                            cellText = document.createTextNode(symbol.type);
-                            cell.appendChild(cellText);
-                            row.appendChild(cell);
-                            cell = document.createElement("td");
-                            cellText = document.createTextNode("" + symbol.line);
-                            cell.appendChild(cellText);
-                            row.appendChild(cell);
-                            symbolTableBody.appendChild(row);
-                        }
+                        log.value += "\n Semantic Analyzer start for Program " + prgNum + "... \n ============= \n   SEMANTIC ANALYZER --> Analyzing Program " + prgNum + "...";
+                        var asTree = void 0;
+                        var symbolTable = void 0;
                         // start semantic analyzer
-                        var asTree = sAnalyzer.start(csTree);
-                        console.log(asTree.current.value);
-                        asTree.printTree("ast");
+                        var sAnalyzeReturn = sAnalyzer.start(csTree, symbols);
+                        if (sAnalyzeReturn) {
+                            // AST generation passed
+                            asTree = sAnalyzeReturn[0], symbolTable = sAnalyzeReturn[1];
+                            asTree.printTree("ast");
+                            if (symbolTable) {
+                                // scope and type checking also passed
+                                this.updateSymbolTable(symbolTable);
+                                log.value += "\n Semantic Anaylsis completed successfully";
+                            }
+                            else {
+                                log.value += "\n Semantic Anaylsis error";
+                            }
+                        }
+                        else {
+                            // AST generation failed
+                            asTreeOut.value += "\nAST for Program " + prgNum + ": Skipped due to SEMANTIC ANALYSIS error(s) \n\n";
+                        }
                     }
                     else {
                         // Parse failed
@@ -88,6 +88,35 @@ var Compiler;
                 }
                 prgNum++;
                 console.log(input);
+            }
+        };
+        Control.updateSymbolTable = function (symbolTable) {
+            var symbolTableBody = document.getElementById("symbolTableBody");
+            // update symbol table
+            for (var i = 0; i < symbolTable.length; i++) {
+                var row = document.createElement("tr");
+                var cell = document.createElement("td");
+                var symbol = symbolTable[i];
+                // Name
+                var cellText = document.createTextNode(symbol.key);
+                cell.appendChild(cellText);
+                row.appendChild(cell);
+                // Type
+                cell = document.createElement("td");
+                cellText = document.createTextNode(symbol.type);
+                cell.appendChild(cellText);
+                row.appendChild(cell);
+                // Scope
+                cell = document.createElement("td");
+                cellText = document.createTextNode("" + symbol.scope);
+                cell.appendChild(cellText);
+                row.appendChild(cell);
+                // Line
+                cell = document.createElement("td");
+                cellText = document.createTextNode("" + symbol.line);
+                cell.appendChild(cellText);
+                row.appendChild(cell);
+                symbolTableBody.appendChild(row);
             }
         };
         // detailed log will be generated

@@ -99,4 +99,5 @@ module Compiler {
       this.childrenNodes = new Array<TreeNode>();
     }
   }
+
 }

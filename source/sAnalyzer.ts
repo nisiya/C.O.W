@@ -1,27 +1,96 @@
 ///<reference path="globals.ts" />
 ///<reference path="tree.ts" />
+///<reference path="scopeTree.ts" />
 ///<reference path="symbol.ts" />
-///<reference path="token.ts" />
 /* ------------
 SAnalyzer.ts
-Requires global.ts, tree.ts, symbol.ts, and token.ts
+Requires global.ts, tree.ts, symbol.ts
 ------------ */
 
 module Compiler {
     
   export class SAnalyzer {
     public asTree: Tree;
+    public symbols: Symbol[];
     public symbolTable: Symbol[];
+    public scopeTree: ScopeTree;
     public error: boolean;
 
-    public start(csTree:Tree): Tree{
+    public start(csTree:Tree, symbols:Symbol[]): [Tree, Symbol[]]{
       console.log("sstart");
-      let buffer:TreeNode[] = new Array<TreeNode>();
+      if(this.buildAST(csTree)){
+        this.symbols = symbols.reverse();
+        if(this.scopeTypeCheck()){
+          // this.symbolTable.push(symbols.pop());
+          return [this.asTree, symbols];
+        } else{
+          return [this.asTree, null];
+        }
+      } else{
+        return null;
+      }
+    }
+
+    public buildAST(csTree): boolean{
       this.asTree = new Tree("Block");
       // Start from initial StatementList
       // tree-program-block-statementlist
       this.analyzeStmtList(csTree.root.childrenNodes[0].childrenNodes[1]); 
-      return this.asTree;
+      return true;
+    }
+
+    public scopeTypeCheck(): boolean{
+      this.symbolTable = new Array<Symbol>();
+      let currentNode: TreeNode = this.asTree.root;
+      this.scopeTree = new ScopeTree();
+      // while(currentNode != null){
+      return this.checkNode(currentNode);
+      // }
+    }
+
+    public checkNode(currentNode): boolean{
+      let error: boolean = false;
+      let currentSymbol: Symbol;
+      switch(currentNode.value){
+        case "Block":
+          this.scopeTree.addScopeNode();
+          for(var i = 0; i < currentNode.length; i++){
+            if(this.checkNode(currentNode.childrenNodes[i])){
+              // continue
+            } else{
+              return false; // error found
+            }
+          }
+          return true;
+        case "VarDecl":
+          currentSymbol = this.symbols.pop();
+          console.log(currentSymbol);
+          if(currentNode.childrenNodes[0].value == currentSymbol.type
+            && currentNode.childrenNodes[1].value == currentSymbol.key){
+            let updatedSymbol = this.scopeTree.currentScope.addSymbol(currentSymbol);
+            if(updatedSymbol != null){
+              this.symbolTable.push(updatedSymbol);
+            } else{
+              console.log("redeclare error");
+              return false;
+            }
+          } else{
+            // won't go here, just if else to make sure
+          }
+          return true;
+        case "=":
+          currentSymbol = this.symbols.pop();
+          console.log(currentSymbol);
+          let updatedSymbol = this.scopeTree.currentScope.usedSymbol(currentSymbol);
+          if(updatedSymbol == null){
+            // error!
+            console.log("redeclare error");
+            return false;
+          }
+          break;
+        default:
+          break;
+      }
     }
 
     // blockChildrens: [ { , StatementList, } ]

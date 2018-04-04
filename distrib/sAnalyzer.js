@@ -1,24 +1,93 @@
 ///<reference path="globals.ts" />
 ///<reference path="tree.ts" />
+///<reference path="scopeTree.ts" />
 ///<reference path="symbol.ts" />
-///<reference path="token.ts" />
 /* ------------
 SAnalyzer.ts
-Requires global.ts, tree.ts, symbol.ts, and token.ts
+Requires global.ts, tree.ts, symbol.ts
 ------------ */
 var Compiler;
 (function (Compiler) {
     var SAnalyzer = /** @class */ (function () {
         function SAnalyzer() {
         }
-        SAnalyzer.prototype.start = function (csTree) {
+        SAnalyzer.prototype.start = function (csTree, symbols) {
             console.log("sstart");
-            var buffer = new Array();
+            if (this.buildAST(csTree)) {
+                this.symbols = symbols.reverse();
+                if (this.scopeTypeCheck()) {
+                    // this.symbolTable.push(symbols.pop());
+                    return [this.asTree, symbols];
+                }
+                else {
+                    return [this.asTree, null];
+                }
+            }
+            else {
+                return null;
+            }
+        };
+        SAnalyzer.prototype.buildAST = function (csTree) {
             this.asTree = new Compiler.Tree("Block");
             // Start from initial StatementList
             // tree-program-block-statementlist
             this.analyzeStmtList(csTree.root.childrenNodes[0].childrenNodes[1]);
-            return this.asTree;
+            return true;
+        };
+        SAnalyzer.prototype.scopeTypeCheck = function () {
+            this.symbolTable = new Array();
+            var currentNode = this.asTree.root;
+            this.scopeTree = new Compiler.ScopeTree();
+            // while(currentNode != null){
+            return this.checkNode(currentNode);
+            // }
+        };
+        SAnalyzer.prototype.checkNode = function (currentNode) {
+            var error = false;
+            var currentSymbol;
+            switch (currentNode.value) {
+                case "Block":
+                    this.scopeTree.addScopeNode();
+                    for (var i = 0; i < currentNode.length; i++) {
+                        if (this.checkNode(currentNode.childrenNodes[i])) {
+                            // continue
+                        }
+                        else {
+                            return false; // error found
+                        }
+                    }
+                    return true;
+                case "VarDecl":
+                    currentSymbol = this.symbols.pop();
+                    console.log(currentSymbol);
+                    if (currentNode.childrenNodes[0].value == currentSymbol.type
+                        && currentNode.childrenNodes[1].value == currentSymbol.key) {
+                        var updatedSymbol_1 = this.scopeTree.currentScope.addSymbol(currentSymbol);
+                        if (updatedSymbol_1 != null) {
+                            this.symbolTable.push(updatedSymbol_1);
+                        }
+                        else {
+                            console.log("redeclare error");
+                            return false;
+                        }
+                    }
+                    else {
+                        // won't go here, just if else to make sure
+                    }
+                    return true;
+                case "=":
+                    currentSymbol = this.symbols.pop();
+                    console.log(currentSymbol);
+                    var updatedSymbol = this.scopeTree.currentScope.usedSymbol(currentSymbol);
+                    if (updatedSymbol == null) {
+                        // error!
+                        console.log("redeclare error");
+                        return false;
+                    }
+                    break;
+                default:
+                    break;
+            }
         };
         // blockChildrens: [ { , StatementList, } ]
         SAnalyzer.prototype.analyzeBlock = function (blockNode) {

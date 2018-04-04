@@ -15,7 +15,6 @@ module Compiler {
       let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
       let csTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("cst");
       let asTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("ast");
-      let symbolTableBody: HTMLTableSectionElement = <HTMLTableSectionElement> document.getElementById("symbolTableBody");
       let lexer: Compiler.Lexer = new Lexer();
       let parser: Compiler.Parser = new Parser();
       let sAnalyzer: Compiler.SAnalyzer = new SAnalyzer();
@@ -46,39 +45,39 @@ module Compiler {
           // Lex passed
           log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";            
           let csTree: Tree;
-          let symbolTable: Array<Symbol>;
+          let symbols: Array<Symbol>;
 
           let parseReturn = parser.start(tokenBank);
           if(parseReturn){
             // Parse passed
-            [csTree, symbolTable] = parseReturn;
+            [csTree, symbols] = parseReturn;
             // print CST
             csTree.printTree("cst");
+            console.log(symbols);
             log.value += "\n Parse completed successfully";
 
-            // update symbol table
-            for(let i=0; i<symbolTable.length; i++){
-              var row: HTMLTableRowElement = <HTMLTableRowElement> document.createElement("tr");
-              var cell: HTMLTableCellElement = <HTMLTableCellElement> document.createElement("td");
-              let symbol: Symbol = symbolTable[i];
-              var cellText = document.createTextNode(symbol.key);
-              cell.appendChild(cellText);
-              row.appendChild(cell);
-              cell = document.createElement("td");
-              cellText = document.createTextNode(symbol.type);
-              cell.appendChild(cellText);
-              row.appendChild(cell);
-              cell = document.createElement("td");
-              cellText = document.createTextNode(""+symbol.line);
-              cell.appendChild(cellText);
-              row.appendChild(cell);
-              symbolTableBody.appendChild(row);
-            }
+            log.value += "\n Semantic Analyzer start for Program " + prgNum + "... \n ============= \n   SEMANTIC ANALYZER --> Analyzing Program " + prgNum + "...";
+            let asTree: Tree;
+            let symbolTable: Array<Symbol>;
 
             // start semantic analyzer
-            let asTree = sAnalyzer.start(csTree);
-            console.log(asTree.current.value);
-            asTree.printTree("ast");
+            let sAnalyzeReturn = sAnalyzer.start(csTree, symbols);
+
+            if(sAnalyzeReturn){
+              // AST generation passed
+              [asTree, symbolTable] = sAnalyzeReturn;
+              asTree.printTree("ast");
+              if(symbolTable){
+                // scope and type checking also passed
+                this.updateSymbolTable(symbolTable);
+                log.value += "\n Semantic Anaylsis completed successfully";
+              } else{
+                log.value += "\n Semantic Anaylsis error";
+              }
+            } else{
+              // AST generation failed
+              asTreeOut.value += "\nAST for Program " + prgNum + ": Skipped due to SEMANTIC ANALYSIS error(s) \n\n";
+            }
           } else{
             // Parse failed
             csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n\n";
@@ -93,6 +92,37 @@ module Compiler {
         }
         prgNum++;
         console.log(input);
+      }
+    }
+
+    public static updateSymbolTable(symbolTable: Symbol[]): void{
+      let symbolTableBody: HTMLTableSectionElement = <HTMLTableSectionElement> document.getElementById("symbolTableBody");
+
+      // update symbol table
+      for(let i=0; i<symbolTable.length; i++){
+        var row: HTMLTableRowElement = <HTMLTableRowElement> document.createElement("tr");
+        var cell: HTMLTableCellElement = <HTMLTableCellElement> document.createElement("td");
+        let symbol: Symbol = symbolTable[i];
+        // Name
+        var cellText = document.createTextNode(symbol.key);
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+        // Type
+        cell = document.createElement("td");
+        cellText = document.createTextNode(symbol.type);
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+        // Scope
+        cell = document.createElement("td");
+        cellText = document.createTextNode(""+symbol.scope);
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+        // Line
+        cell = document.createElement("td");
+        cellText = document.createTextNode(""+symbol.line);
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+        symbolTableBody.appendChild(row);
       }
     }
 
