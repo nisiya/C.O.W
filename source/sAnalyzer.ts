@@ -86,38 +86,50 @@ module Compiler {
           }
           return true;
         case "=":
-          currentSymbol = this.checkScope(currentNode.childrenNodes[0].value);
-          if(currentSymbol != null){
-            let valueType = this.findType(currentNode.childrenNodes[1].value);
-            if(valueType == currentSymbol.type){
-              return true;
-            } else{
-              // error!
-              console.log("type mismatched error");
-            }
-          } else{
-            // error!
-            console.log("undeclare error");
-          }
-          return false;
+          return this.checkChildren(currentNode);
         case "!=":
-          currentSymbol = this.checkScope(currentNode.childrenNodes[0].value);
-          if(currentSymbol != null){
-            let valueType = this.findType(currentNode.childrenNodes[1].value);
-            if(valueType == currentSymbol.type){
-              return true;
+          return this.checkChildren(currentNode);
+        case "==":
+        case "print":
+          let id: RegExp = /[a-z]/;
+          if(id.test(currentNode.childrenNodes[0])){
+            let symbol: Symbol = this.checkScope(currentNode.childrenNodes[0].value);
+            if(symbol != null){
+              if(!symbol.initialized){
+                // warning
+                console.log("uninitialized");
+              }
             } else{
               // error!
-              console.log("type mismatched error");
+              console.log("undeclare error");
+              return false;
             }
-          } else{
-            // error!
-            console.log("undeclare error");
           }
-          return false;
+          return true; // no need to check for string
         default:
           return true;
       }
+    }
+
+    public checkChildren(currentNode): boolean{
+      let symbol: Symbol = this.checkScope(currentNode.childrenNodes[0].value);
+      if(symbol != null){
+        let valueType = this.findType(currentNode.childrenNodes[1].value);
+        if(valueType == symbol.type){
+          if(currentNode.value == "="){
+            symbol.initializeSymbol();
+            this.scopeTree.currentScope.updateSymbol(symbol);
+          }
+          return true;
+        } else{
+          // error!
+          console.log("type mismatched error");
+        }
+      } else{
+        // error!
+        console.log("undeclare error");
+      }
+      return false;
     }
 
     public checkScope(symbolKey: string): Symbol{
@@ -127,7 +139,6 @@ module Compiler {
         symbol = this.scopeTree.currentScope.getSymbol(symbolKey);
         if(symbol != null){
           symbol.used = true;
-          this.scopeTree.currentScope.usedSymbol(symbol);
           this.scopeTree.currentScope = bookmarkScope;
           break;
         }

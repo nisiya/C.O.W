@@ -64,11 +64,8 @@ module Compiler {
       }
     }
 
-    public usedSymbol(symbol: Symbol): void{
-      if(!symbol.used){
-        symbol.used = true;
-        this.symbolMap.set(symbol.key, symbol); // overwrites
-      }
+    public updateSymbol(symbol: Symbol): void{
+      this.symbolMap.set(symbol.key, symbol); // overwrites
     }
 
     public getSymbol(symbolKey: string): Symbol{

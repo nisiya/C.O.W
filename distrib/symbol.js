@@ -11,8 +11,11 @@ var Compiler;
             this.type = type;
             this.scope = -1;
             this.line = line;
-            this.used = false;
+            this.initialized = false;
         }
+        Symbol.prototype.initializeSymbol = function () {
+            this.initialized = true;
+        };
         return Symbol;
     }());
     Compiler.Symbol = Symbol;

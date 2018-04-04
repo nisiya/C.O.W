@@ -52,11 +52,8 @@ var Compiler;
                 return symbol;
             }
         };
-        ScopeNode.prototype.usedSymbol = function (symbol) {
-            if (!symbol.used) {
-                symbol.used = true;
-                this.symbolMap.set(symbol.key, symbol); // overwrites
-            }
+        ScopeNode.prototype.updateSymbol = function (symbol) {
+            this.symbolMap.set(symbol.key, symbol); // overwrites
         };
         ScopeNode.prototype.getSymbol = function (symbolKey) {
             return this.symbolMap.get(symbolKey);

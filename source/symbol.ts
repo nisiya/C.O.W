@@ -11,7 +11,7 @@ module Compiler {
     public type: string;
     public scope: number;
     public line: number;
-    public used: boolean;
+    public initialized: boolean;
 
     constructor(key:string, 
                 type:string,
@@ -20,8 +20,12 @@ module Compiler {
       this.type = type;
       this.scope = -1;
       this.line = line;
-      this.used = false;
+      this.initialized = false;
                   
+    }
+
+    public initializeSymbol(): void{
+      this.initialized = true;
     }
   }
 }
