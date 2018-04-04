@@ -131,8 +131,10 @@ module Compiler {
         case "IntExpr":
           this.analyzeIntExpr(exprType.childrenNodes); // currentNode: parent of Expr
           break;
-        case "StringExpr":
-          this.asTree.addLeafNode(this.analyzeStringExpr(exprType.childrenNodes[1], "")); // currentNode: parent of Expr
+        case "StringExpr": // really analyze the CharList
+          let stringVal:string = this.analyzeCharList(exprType.childrenNodes[1], "");
+          console.log("pls string " + stringVal);
+          this.asTree.addLeafNode(stringVal); // currentNode: parent of Expr
           break;
         case "BooleanExpr":
           this.analyzeIntExpr(exprType.childrenNodes);
@@ -154,12 +156,15 @@ module Compiler {
       return idNode.childrenNodes[0].value;
     }
 
-    public analyzeStringExpr(node: TreeNode, stringVal: string): string{
+    // CharListChildren: [0] or [char | space , CharList]
+    public analyzeCharList(node: TreeNode, stringVal: string): string{
       if(node.childrenNodes.length == 0){
+        console.log("string " + stringVal);
         return stringVal;
+      } else{
+        stringVal = stringVal + node.childrenNodes[0].childrenNodes[0].value; // CharList's char's child's value
+        return this.analyzeCharList(node.childrenNodes[1], stringVal); // CharList's CharList
       }
-      stringVal = stringVal + node.childrenNodes[0].childrenNodes[0].value; // CharList's char's child's value
-      this.analyzeStringExpr(node.childrenNodes[1], stringVal); // CharList's CharList
     }
     
     // IntExprChildren: [digit] or [digit, intop, Expr]

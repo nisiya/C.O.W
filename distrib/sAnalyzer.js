@@ -114,8 +114,10 @@ var Compiler;
                 case "IntExpr":
                     this.analyzeIntExpr(exprType.childrenNodes); // currentNode: parent of Expr
                     break;
-                case "StringExpr":
-                    this.asTree.addLeafNode(this.analyzeStringExpr(exprType.childrenNodes[1], "")); // currentNode: parent of Expr
+                case "StringExpr":// really analyze the CharList
+                    var stringVal = this.analyzeCharList(exprType.childrenNodes[1], "");
+                    console.log("pls string " + stringVal);
+                    this.asTree.addLeafNode(stringVal); // currentNode: parent of Expr
                     break;
                 case "BooleanExpr":
                     this.analyzeIntExpr(exprType.childrenNodes);
@@ -134,12 +136,16 @@ var Compiler;
         SAnalyzer.prototype.analyzeId = function (idNode) {
             return idNode.childrenNodes[0].value;
         };
-        SAnalyzer.prototype.analyzeStringExpr = function (node, stringVal) {
+        // CharListChildren: [0] or [char | space , CharList]
+        SAnalyzer.prototype.analyzeCharList = function (node, stringVal) {
             if (node.childrenNodes.length == 0) {
+                console.log("string " + stringVal);
                 return stringVal;
             }
-            stringVal = stringVal + node.childrenNodes[0].childrenNodes[0].value; // CharList's char's child's value
-            this.analyzeStringExpr(node.childrenNodes[1], stringVal); // CharList's CharList
+            else {
+                stringVal = stringVal + node.childrenNodes[0].childrenNodes[0].value; // CharList's char's child's value
+                return this.analyzeCharList(node.childrenNodes[1], stringVal); // CharList's CharList
+            }
         };
         // IntExprChildren: [digit] or [digit, intop, Expr]
         SAnalyzer.prototype.analyzeIntExpr = function (IntChildren) {
