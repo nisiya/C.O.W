@@ -87,8 +87,9 @@ var Compiler;
                 case "!=":
                     return this.checkChildren(currentNode);
                 case "==":
+                    return this.checkChildren(currentNode);
                 case "print":
-                    var id = /[a-z]/;
+                    var id = /^[a-z]$/;
                     if (id.test(currentNode.childrenNodes[0])) {
                         var symbol = this.checkScope(currentNode.childrenNodes[0].value);
                         if (symbol != null) {
@@ -104,6 +105,16 @@ var Compiler;
                         }
                     }
                     return true; // no need to check for string
+                case "while":
+                    if (this.checkNode(currentNode.childrenNodes[0])) {
+                        return this.checkNode(currentNode.childrenNodes[1]); // the block
+                    }
+                    return false;
+                case "if":
+                    if (this.checkNode(currentNode.childrenNodes[0])) {
+                        return this.checkNode(currentNode.childrenNodes[1]); // the block
+                    }
+                    return false;
                 default:
                     return true;
             }
@@ -111,8 +122,15 @@ var Compiler;
         SAnalyzer.prototype.checkChildren = function (currentNode) {
             var symbol = this.checkScope(currentNode.childrenNodes[0].value);
             if (symbol != null) {
-                var valueType = this.findType(currentNode.childrenNodes[1].value);
+                var valueType = void 0;
+                if (currentNode.childrenNodes[1].value == "+") {
+                    valueType = this.checkAddition(currentNode.childrenNodes[1]);
+                }
+                else {
+                    valueType = this.findType(currentNode.childrenNodes[1].value);
+                }
                 if (valueType == symbol.type) {
+                    console.log(valueType + " sleepsleep");
                     if (currentNode.value == "=") {
                         symbol.initializeSymbol();
                         this.scopeTree.currentScope.updateSymbol(symbol);
@@ -120,8 +138,13 @@ var Compiler;
                     return true;
                 }
                 else {
-                    // error!
-                    console.log("type mismatched error");
+                    if (valueType == "error") {
+                        console.log("not in scope");
+                    }
+                    else {
+                        // error!
+                        console.log("type mismatched error");
+                    }
                 }
             }
             else {
@@ -136,7 +159,6 @@ var Compiler;
             while (this.scopeTree.currentScope != null) {
                 symbol = this.scopeTree.currentScope.getSymbol(symbolKey);
                 if (symbol != null) {
-                    symbol.used = true;
                     this.scopeTree.currentScope = bookmarkScope;
                     break;
                 }
@@ -155,6 +177,31 @@ var Compiler;
             }
             else {
                 return "string";
+            }
+        };
+        SAnalyzer.prototype.checkAddition = function (plusNode) {
+            var digit = /^\d/;
+            var id = /^[a-z]$/;
+            var plus = /^\+$/;
+            if (digit.test(plusNode.childrenNodes[0].value)) {
+                if (id.test(plusNode.childrenNodes[1].value)) {
+                    var symbol = this.checkScope(plusNode.childrenNodes[1].value);
+                    if (symbol != null) {
+                        return symbol.type;
+                    }
+                    else {
+                        return "error";
+                    }
+                }
+                else if (plus.test(plusNode.childrenNodes[1].value)) {
+                    return this.checkAddition(plusNode.childrenNodes[1]);
+                }
+                else {
+                    return "notInt";
+                }
+            }
+            else {
+                return "notInt";
             }
         };
         // blockChildrens: [ { , StatementList, } ]

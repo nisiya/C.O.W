@@ -90,8 +90,9 @@ module Compiler {
         case "!=":
           return this.checkChildren(currentNode);
         case "==":
+          return this.checkChildren(currentNode);
         case "print":
-          let id: RegExp = /[a-z]/;
+          let id: RegExp = /^[a-z]$/;
           if(id.test(currentNode.childrenNodes[0])){
             let symbol: Symbol = this.checkScope(currentNode.childrenNodes[0].value);
             if(symbol != null){
@@ -106,6 +107,16 @@ module Compiler {
             }
           }
           return true; // no need to check for string
+        case "while":
+          if(this.checkNode(currentNode.childrenNodes[0])){ // the boolexpr
+            return this.checkNode(currentNode.childrenNodes[1]); // the block
+          }
+          return false;    
+        case "if":
+          if(this.checkNode(currentNode.childrenNodes[0])){ // the boolexpr
+            return this.checkNode(currentNode.childrenNodes[1]); // the block
+          }
+          return false;  
         default:
           return true;
       }
@@ -114,16 +125,26 @@ module Compiler {
     public checkChildren(currentNode): boolean{
       let symbol: Symbol = this.checkScope(currentNode.childrenNodes[0].value);
       if(symbol != null){
-        let valueType = this.findType(currentNode.childrenNodes[1].value);
+        let valueType:string;
+        if(currentNode.childrenNodes[1].value == "+"){
+          valueType = this.checkAddition(currentNode.childrenNodes[1]);
+        } else{
+          valueType = this.findType(currentNode.childrenNodes[1].value);
+        }
         if(valueType == symbol.type){
+          console.log(valueType + " sleepsleep");
           if(currentNode.value == "="){
             symbol.initializeSymbol();
             this.scopeTree.currentScope.updateSymbol(symbol);
           }
           return true;
         } else{
-          // error!
-          console.log("type mismatched error");
+          if(valueType == "error"){
+            console.log("not in scope");
+          } else{
+            // error!
+            console.log("type mismatched error");
+          }
         }
       } else{
         // error!
@@ -138,7 +159,6 @@ module Compiler {
       while(this.scopeTree.currentScope != null){
         symbol = this.scopeTree.currentScope.getSymbol(symbolKey);
         if(symbol != null){
-          symbol.used = true;
           this.scopeTree.currentScope = bookmarkScope;
           break;
         }
@@ -156,6 +176,28 @@ module Compiler {
         return "boolean";
       } else{
         return "string";
+      }
+    }
+
+    public checkAddition(plusNode: TreeNode): string{
+      let digit:RegExp = /^\d/;
+      let id:RegExp = /^[a-z]$/;
+      let plus:RegExp = /^\+$/;
+      if(digit.test(plusNode.childrenNodes[0].value)){
+        if(id.test(plusNode.childrenNodes[1].value)){
+          let symbol = this.checkScope(plusNode.childrenNodes[1].value);
+          if(symbol != null){
+            return symbol.type;
+          } else{
+            return "error";
+          }
+        } else if(plus.test(plusNode.childrenNodes[1].value)){
+          return this.checkAddition(plusNode.childrenNodes[1]);
+        } else{
+          return "notInt";
+        }
+      } else{
+        return "notInt";
       }
     }
 
