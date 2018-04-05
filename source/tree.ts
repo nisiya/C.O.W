@@ -51,30 +51,11 @@ module Compiler {
           ]
         }
       };
-      this.walkTree(this.root, "", jsonTree.nodeStructure.children);
+      this.buildTree(this.root, jsonTree.nodeStructure.children);
       let visualTree = new Treant(jsonTree);
     }
 
-    public printTree(treeType:string): void{
-      let treeId:string = "#visual-" + treeType;
-      console.log("printing " + treeType);
-      var jsonTree = {
-        chart: {
-            container: treeId
-        },
-        
-        nodeStructure: {
-          text: { name: this.root.value },
-          children: [
-          ]
-        }
-      };
-      this.walkTree(this.root, "", jsonTree.nodeStructure.children);
-      let output: HTMLInputElement = <HTMLInputElement> document.getElementById(treeType);
-      output.value += this.outputTree + "\n\n";
-    }
-
-    public walkTree(node: TreeNode, indent:String, jsonLevel:Object): void{
+    public buildTree(node: TreeNode, jsonLevel:Object): void{
       // for the pretty cst
       if(node != this.root){
         let jsonNode = {
@@ -86,6 +67,28 @@ module Compiler {
         jsonLevel = jsonNode.children;
       }
 
+      let children = node.childrenNodes;
+
+      // print tree in preorder
+      if(children.length == 0){
+        return;
+      } else {
+        for(let i=0; i<children.length; i++){
+          this.buildTree(children[i], jsonLevel);
+        }
+        return;
+      }
+    }
+
+    public printTree(treeType:string): void{
+      let treeId:string = "#visual-" + treeType;
+      console.log("printing " + treeType);
+      this.walkTree(this.root, "");
+      let output: HTMLInputElement = <HTMLInputElement> document.getElementById(treeType);
+      output.value += this.outputTree + "\n\n";
+    }
+
+    public walkTree(node: TreeNode, indent:String): void{
       // for the normal cst
       this.outputTree += indent + "<" + node.value + ">\n";
       let children = node.childrenNodes;
@@ -95,7 +98,7 @@ module Compiler {
         return;
       } else {
         for(let i=0; i<children.length; i++){
-          this.walkTree(children[i], indent+"-", jsonLevel);
+          this.walkTree(children[i], indent+"-");
         }
         return;
       }
