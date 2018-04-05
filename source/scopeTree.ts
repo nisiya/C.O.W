@@ -51,15 +51,15 @@ module Compiler {
       this.childrenScopes = new Array<ScopeNode>();
     }
 
-    public addSymbol(symbol: Symbol): Symbol{
+    public addSymbol(symbol: Symbol): boolean{
       // check if symbol key already exist
       if(this.symbolMap.get(symbol.key) != null){
-        return null; // redeclaration error
+        return false; // redeclaration error
       } else{
         // add symbol
         symbol.scope = this.level; // set scope level
         this.symbolMap.set(symbol.key, symbol);
-        return symbol;
+        return true;
       }
     }
 

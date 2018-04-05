@@ -42,13 +42,13 @@ var Compiler;
         ScopeNode.prototype.addSymbol = function (symbol) {
             // check if symbol key already exist
             if (this.symbolMap.get(symbol.key) != null) {
-                return null; // redeclaration error
+                return false; // redeclaration error
             }
             else {
                 // add symbol
                 symbol.scope = this.level; // set scope level
                 this.symbolMap.set(symbol.key, symbol);
-                return symbol;
+                return true;
             }
         };
         // to set symbol to be initialized
