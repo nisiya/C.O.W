@@ -164,7 +164,17 @@ module Compiler {
                 + "] cannot be assign to int", identifier.location);
                 return false;
               }
-            } else{
+            } else if(valueNode.value == "!=" || valueNode.value == "=="){
+              if(foundSymbol.type != "boolean"){
+                // type mismatched error
+                this.printError("Type mismatched error. " + foundSymbol.type + " [" + foundSymbol.key
+                + "] cannot be assigned to boolean", foundSymbol.location);
+                return false;
+              } else{
+                return this.checkBoolExpr(valueNode);
+              }
+            }
+            else{
               // check type of the assigned value
               return this.checkType(valueNode, foundSymbol, "assigned as");
             }

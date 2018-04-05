@@ -240,6 +240,29 @@ var Compiler;
                     break;
             }
         };
+        // reload tree display
+        Control.reloadTree = function (btn) {
+            if (btn.id == "tab-cst") {
+                var emptyCST = {
+                    chart: {
+                        container: "#visual-cst"
+                    },
+                    nodeStructure: {}
+                };
+                var visualCST = new Treant(emptyCST);
+                _GrandCST.displayTree("cst");
+            }
+            else {
+                var emptyAST = {
+                    chart: {
+                        container: "#visual-ast"
+                    },
+                    nodeStructure: {}
+                };
+                var visualCST = new Treant(emptyAST);
+                _GrandAST.displayTree("ast");
+            }
+        };
         return Control;
     }());
     Compiler.Control = Control;

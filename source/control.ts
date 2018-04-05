@@ -253,6 +253,31 @@ module Compiler {
       }
     }
 
+    // reload tree display
+    public static reloadTree(btn): void{
+      if(btn.id == "tab-cst"){
+        var emptyCST = {
+          chart: {
+              container: "#visual-cst"
+          },
+          nodeStructure: {
+          }
+        };
+        let visualCST = new Treant(emptyCST);
+        _GrandCST.displayTree("cst");
+      } else{
+        var emptyAST = {
+          chart: {
+              container: "#visual-ast"
+          },
+          nodeStructure: {
+          }
+        };
+        let visualCST = new Treant(emptyAST);
+        _GrandAST.displayTree("ast");
+      }
+    }
+
   }
 
 }
