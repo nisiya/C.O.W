@@ -73,7 +73,7 @@ module Compiler {
               if(symbolTable){
                 // scope and type checking also passed
                 this.updateSymbolTable(symbolTable, prgNum);
-                log.value += "\n Semantic Anaylsis completed successfully with " + warningSA + " warnings";
+                log.value += "\n =============\n Semantic Anaylsis completed successfully with " + warningSA + " warnings \n =============";
               }
             } else{
               // AST generation failed

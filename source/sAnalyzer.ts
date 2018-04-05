@@ -65,12 +65,12 @@ module Compiler {
       while(!key.done){
         let symbol:Symbol = scope.symbolMap.get(key.value);
         this.symbolTable.push(symbol);
-        // if(symbol.accessed == 0){
-        //   // declared, not initialized, not used
-        //   this.printWarning("[" + symbol.key + "] declared, but never initialized or used", symbol.location);
-        // } else if(symbol.accessed == 1){
-        //   this.printWarning("[" + symbol.key + "] declared and initialized, but never used", symbol.location);
-        // }
+        if(symbol.accessed == 0){
+          // declared, not initialized, not used
+          this.printWarning("[" + symbol.key + "] declared, but never initialized or used", symbol.location);
+        } else if(symbol.accessed == 1){
+          this.printWarning("[" + symbol.key + "] declared and initialized, but never used after", symbol.location);
+        }
         key = symbolKeys.next();
       }
       for(var i = 0; i<scope.childrenScopes.length; i++){
@@ -112,7 +112,7 @@ module Compiler {
         case "=":
           varId = currentNode.childrenNodes[0];
           expr = currentNode.childrenNodes[1];
-          symbol = this.checkScope(varId);
+          symbol = this.checkScope(varId, false);
           if(symbol != null){
             exprType = this.checkExprType(expr);
             if(exprType == "invalid"){
@@ -140,7 +140,7 @@ module Compiler {
           return true;
         case "while":
           expr = currentNode.childrenNodes[0];
-          if(this.checkBoolExpr(expr)){
+          if(expr.value == "true" || expr.value == "false" || this.checkBoolExpr(expr)){
             expr = currentNode.childrenNodes[1];
             return this.checkStatement(expr); // error already handled, if exist
           } else{
@@ -148,7 +148,7 @@ module Compiler {
           }
         case "if":
           expr = currentNode.childrenNodes[0];
-          if(this.checkBoolExpr(expr)){
+          if(expr.value == "true" || expr.value == "false" || this.checkBoolExpr(expr)){
             expr = currentNode.childrenNodes[1];
             return this.checkStatement(expr); // error already handled, if exist
           } else{
@@ -159,16 +159,34 @@ module Compiler {
       }
     }
 
-    public checkScope(varId:TreeNode): Symbol{
-      this.printStage("Checking scope of [" + varId.value + "]...");
+    public checkScope(varId:TreeNode, beingUsed:boolean): Symbol{
+      this.printStage("Checking scope of [" + varId.value + "] on line " + varId.location[0] + ", column " + varId.location[1] + "...");
       let placeholder = this.scopeTree.currentScope;
-      let foundSymbol:Symbol;
+      let symbol:Symbol;
       while (this.scopeTree.currentScope != null){
         // look up until root scope for symbol
-        foundSymbol = this.scopeTree.currentScope.getSymbol(varId.value);
-        if(foundSymbol != null){
+        symbol = this.scopeTree.currentScope.getSymbol(varId.value);
+        if(symbol != null){
+          // update symbol access for checking warnings later
+          if(beingUsed){
+            // check if initialized
+            if(symbol.accessed > 0){
+              // yes
+              symbol.accessed++;
+            } else{
+              // zero or negative means not initialized
+              symbol.accessed--;
+              this.printWarning("[" + symbol.key + "] used but was not initialized yet", symbol.location);
+            }
+          } else{
+            if(symbol.accessed <= 0){
+              // initialzed for the first time
+              symbol.accessed = 1;
+            }
+          }
+          this.scopeTree.currentScope.updateSymbol(symbol);
           this.scopeTree.currentScope = placeholder;
-          return foundSymbol; // found symbol
+          return symbol; // found symbol
         }
         this.scopeTree.moveUp();
       }
@@ -179,6 +197,7 @@ module Compiler {
     }
 
     public checkExprType(expr:TreeNode): string{
+      this.printStage("Checking for type mismatch in the statement...");
       let exprType:string;
       let isDigit:RegExp = /^\d$/;
       let isPlus:RegExp = /^\+$/;
@@ -197,7 +216,7 @@ module Compiler {
         }
       } else if(isId.test(expr.value)){
         // check scope of id
-        let symbol:Symbol = this.checkScope(expr);
+        let symbol:Symbol = this.checkScope(expr, true);
         if(symbol != null){
           return symbol.type;
         } else{
@@ -229,7 +248,7 @@ module Compiler {
         return true; // addition of int only
       }
       // check scope of id
-      let symbol:Symbol = this.checkScope(expr);
+      let symbol:Symbol = this.checkScope(expr, true);
       if(symbol != null){
         if(symbol.type == "int"){
           return true;
@@ -261,7 +280,7 @@ module Compiler {
       }
     }
   
-    
+
     // Start of functions used to build AST
 
     // blockChildrens: [ { , StatementList, } ]

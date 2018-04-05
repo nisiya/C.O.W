@@ -56,12 +56,13 @@ var Compiler;
             while (!key.done) {
                 var symbol = scope.symbolMap.get(key.value);
                 this.symbolTable.push(symbol);
-                // if(symbol.accessed == 0){
-                //   // declared, not initialized, not used
-                //   this.printWarning("[" + symbol.key + "] declared, but never initialized or used", symbol.location);
-                // } else if(symbol.accessed == 1){
-                //   this.printWarning("[" + symbol.key + "] declared and initialized, but never used", symbol.location);
-                // }
+                if (symbol.accessed == 0) {
+                    // declared, not initialized, not used
+                    this.printWarning("[" + symbol.key + "] declared, but never initialized or used", symbol.location);
+                }
+                else if (symbol.accessed == 1) {
+                    this.printWarning("[" + symbol.key + "] declared and initialized, but never used after", symbol.location);
+                }
                 key = symbolKeys.next();
             }
             for (var i = 0; i < scope.childrenScopes.length; i++) {
@@ -103,7 +104,7 @@ var Compiler;
                 case "=":
                     varId = currentNode.childrenNodes[0];
                     expr = currentNode.childrenNodes[1];
-                    symbol = this.checkScope(varId);
+                    symbol = this.checkScope(varId, false);
                     if (symbol != null) {
                         exprType = this.checkExprType(expr);
                         if (exprType == "invalid") {
@@ -134,7 +135,7 @@ var Compiler;
                     return true;
                 case "while":
                     expr = currentNode.childrenNodes[0];
-                    if (this.checkBoolExpr(expr)) {
+                    if (expr.value == "true" || expr.value == "false" || this.checkBoolExpr(expr)) {
                         expr = currentNode.childrenNodes[1];
                         return this.checkStatement(expr); // error already handled, if exist
                     }
@@ -143,7 +144,7 @@ var Compiler;
                     }
                 case "if":
                     expr = currentNode.childrenNodes[0];
-                    if (this.checkBoolExpr(expr)) {
+                    if (expr.value == "true" || expr.value == "false" || this.checkBoolExpr(expr)) {
                         expr = currentNode.childrenNodes[1];
                         return this.checkStatement(expr); // error already handled, if exist
                     }
@@ -154,16 +155,36 @@ var Compiler;
                     return true;
             }
         };
-        SAnalyzer.prototype.checkScope = function (varId) {
-            this.printStage("Checking scope of [" + varId.value + "]...");
+        SAnalyzer.prototype.checkScope = function (varId, beingUsed) {
+            this.printStage("Checking scope of [" + varId.value + "] on line " + varId.location[0] + ", column " + varId.location[1] + "...");
             var placeholder = this.scopeTree.currentScope;
-            var foundSymbol;
+            var symbol;
             while (this.scopeTree.currentScope != null) {
                 // look up until root scope for symbol
-                foundSymbol = this.scopeTree.currentScope.getSymbol(varId.value);
-                if (foundSymbol != null) {
+                symbol = this.scopeTree.currentScope.getSymbol(varId.value);
+                if (symbol != null) {
+                    // update symbol access for checking warnings later
+                    if (beingUsed) {
+                        // check if initialized
+                        if (symbol.accessed > 0) {
+                            // yes
+                            symbol.accessed++;
+                        }
+                        else {
+                            // zero or negative means not initialized
+                            symbol.accessed--;
+                            this.printWarning("[" + symbol.key + "] used but was not initialized yet", symbol.location);
+                        }
+                    }
+                    else {
+                        if (symbol.accessed <= 0) {
+                            // initialzed for the first time
+                            symbol.accessed = 1;
+                        }
+                    }
+                    this.scopeTree.currentScope.updateSymbol(symbol);
                     this.scopeTree.currentScope = placeholder;
-                    return foundSymbol; // found symbol
+                    return symbol; // found symbol
                 }
                 this.scopeTree.moveUp();
             }
@@ -173,6 +194,7 @@ var Compiler;
             return null;
         };
         SAnalyzer.prototype.checkExprType = function (expr) {
+            this.printStage("Checking for type mismatch in the statement...");
             var exprType;
             var isDigit = /^\d$/;
             var isPlus = /^\+$/;
@@ -193,7 +215,7 @@ var Compiler;
             }
             else if (isId.test(expr.value)) {
                 // check scope of id
-                var symbol = this.checkScope(expr);
+                var symbol = this.checkScope(expr, true);
                 if (symbol != null) {
                     return symbol.type;
                 }
@@ -229,7 +251,7 @@ var Compiler;
                 return true; // addition of int only
             }
             // check scope of id
-            var symbol = this.checkScope(expr);
+            var symbol = this.checkScope(expr, true);
             if (symbol != null) {
                 if (symbol.type == "int") {
                     return true;
