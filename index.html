@@ -210,6 +210,7 @@
                     <th>Type</th>
                     <th>Scope</th>
                     <th>Line</th>
+                    <th>Column</th>
                 </tr>
               </thead>
               <tbody id="symbolTableBody">
@@ -221,34 +222,37 @@
     </div>
   </div>
 
-<!-- need to work on displaying multiple trees, so save for later -->
-  <!-- <div class="container">
+  <div class="container">
     <div class="section"> 
       <div class="row center">
         <div class="col s12">
-          <div class="card grey darken-3">
-            <div class="card-content">
+          <!-- <div class="card grey darken-3"> -->
+            <!-- <div class="card-content">
               <h5> Visual Trees </h5>
-            </div>
-            <div class="card-tabs grey">
+            </div> -->
+            <!-- <div class="card-tabs grey">
               <ul class="tabs tabs-fixed-width grey darken-3">
-                <li class="tab"><a class="active" href="#tab-cst">Visual CST</a></li>
-                <li class="tab"><a href="#tab-ast">Visual AST</a></li>
+                <li class="tab"><a href="#tab-cst" onclick="Compiler.Control.reloadTree(this);">Visual CST</a></li>
+                <li class="tab"><a class="active" href="#tab-ast" onclick="Compiler.Control.reloadTree(this);">Visual AST</a></li>
               </ul>
-            </div>
-            <div class="card-content grey darken-3">
-              <div id="tab-cst">
+            </div> -->
+            <!-- <div class="card-content grey darken-3"> -->
+              <!-- <div id="tab-cst" class="visual-tree"> -->
+                <div class="card-panel grey darken-3">
+                  <h5> Visual CST </h5>
                   <div class="grey lighten-1 center visual-tree" id="visual-cst"> </div>
-              </div>
-              <div id="tab-ast">
-                <div class="grey lighten-1 center visual-tree" id="visual-ast"> </div>
-              </div>
-            </div>
-          </div>
+              <!-- </div> -->
+              <!-- <div id="tab-ast" class="visual-tree"> -->
+                  <h5> Visual AST </h5>
+                  <div class="grey lighten-1 center visual-tree" id="visual-ast"> </div>
+                </div>
+              <!-- </div> -->
+            <!-- </div> -->
+          <!-- </div> -->
         </div>
       </div>
     </div>
-  </div> -->
+  </div>
 
   
 

@@ -36,6 +36,7 @@ b=1+a
 }$
 ```
 ### Nested boolExpr
+#### Passed
 ```java
 {
     int a
@@ -44,6 +45,17 @@ b=1+a
     b = 0
     if(false != (true == (a == 2))){
         print(a)
+    }
+}
+```
+#### Failed
+```java
+{
+    string a
+    int b
+    // undeclared variable c
+    if ((c == "string") != (a==("hello" == "wendy"))){
+        a = "wendy"
     }
 }
 ```
@@ -102,4 +114,16 @@ b=1+a
 //  3     P      P      F-Undeclared
 //  4     P      P      F-Undeclared
 //  5     P      P      P
+```
+
+### Print statements
+```java
+{
+    int a
+    print(a)
+    print("thhis")
+    print(1+a)
+    print(true)
+    print((true == false))
+}
 ```

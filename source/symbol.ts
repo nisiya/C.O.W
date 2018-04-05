@@ -10,22 +10,18 @@ module Compiler {
     public key: string;
     public type: string;
     public scope: number;
-    public line: number;
-    public initialized: boolean;
+    public location: [number, number];
+    public accessed: number;
 
     constructor(key:string, 
                 type:string,
-                line:number){
+                location:[number, number]){
       this.key = key;
       this.type = type;
       this.scope = -1;
-      this.line = line;
-      this.initialized = false;
+      this.location = location;
+      this.accessed = 0;
                   
-    }
-
-    public initializeSymbol(): void{
-      this.initialized = true;
     }
   }
 }

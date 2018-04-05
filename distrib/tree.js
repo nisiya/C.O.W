@@ -8,26 +8,40 @@ Tree Node - Has a Value, Parent Node, and array of Children Nodes
 var Compiler;
 (function (Compiler) {
     var Tree = /** @class */ (function () {
-        function Tree(value, line) {
-            this.root = new TreeNode(value, line, null);
+        function Tree(value, location) {
+            this.root = new TreeNode(value, location, null);
             this.outputTree = "";
             this.current = this.root;
         }
-        Tree.prototype.addBranchNode = function (value, line) {
-            var node = new TreeNode(value, line, this.current);
+        Tree.prototype.addBranchNode = function (value, location) {
+            var node = new TreeNode(value, location, this.current);
             this.current.childrenNodes.push(node);
             this.current = node;
         };
-        Tree.prototype.addLeafNode = function (value, line) {
-            var node = new TreeNode(value, line, this.current);
+        Tree.prototype.addLeafNode = function (value, location) {
+            var node = new TreeNode(value, location, this.current);
+            this.current.childrenNodes.push(node);
+        };
+        Tree.prototype.addSubTree = function (node) {
             this.current.childrenNodes.push(node);
         };
         Tree.prototype.moveUp = function () {
             this.current = this.current.parentNode;
         };
-        Tree.prototype.removeNode = function () {
-            var parent = this.current.parentNode;
-            parent.childrenNodes.pop();
+        Tree.prototype.displayTree = function (treeType) {
+            var treeId = "#visual-" + treeType;
+            console.log("printing " + treeType);
+            var jsonTree = {
+                chart: {
+                    container: treeId
+                },
+                nodeStructure: {
+                    text: { name: this.root.value },
+                    children: []
+                }
+            };
+            this.walkTree(this.root, "", jsonTree.nodeStructure.children);
+            var visualTree = new Treant(jsonTree);
         };
         Tree.prototype.printTree = function (treeType) {
             var treeId = "#visual-" + treeType;
@@ -44,7 +58,6 @@ var Compiler;
             this.walkTree(this.root, "", jsonTree.nodeStructure.children);
             var output = document.getElementById(treeType);
             output.value += this.outputTree + "\n\n";
-            // let visualTree = new Treant(jsonTree);
         };
         Tree.prototype.walkTree = function (node, indent, jsonLevel) {
             // for the pretty cst
@@ -74,9 +87,9 @@ var Compiler;
     }());
     Compiler.Tree = Tree;
     var TreeNode = /** @class */ (function () {
-        function TreeNode(value, line, parentNode) {
+        function TreeNode(value, location, parentNode) {
             this.value = value;
-            this.line = line;
+            this.location = location;
             this.parentNode = parentNode;
             this.childrenNodes = new Array();
         }

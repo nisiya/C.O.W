@@ -18,6 +18,8 @@ module Compiler {
       let lexer: Compiler.Lexer = new Lexer();
       let parser: Compiler.Parser = new Parser();
       let sAnalyzer: Compiler.SAnalyzer = new SAnalyzer();
+      _GrandCST = new Tree("All Programs",[0,0]);
+      _GrandAST = new Tree("All Programs",[0,0]);
 
       // reset outputs
       this.clearOutputs();
@@ -44,47 +46,50 @@ module Compiler {
         if(tokenBank.length != 0){
           // Lex passed
           log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";            
-          let csTree: Tree;
-          let symbols: Array<Symbol>;
 
-          let parseReturn = parser.start(tokenBank);
-          if(parseReturn){
+          let csTree = parser.start(tokenBank);
+          if(csTree != null){
             // Parse passed
-            [csTree, symbols] = parseReturn;
+            // add to CST containing all programs
+            _GrandCST.addSubTree(csTree.root);
             // print CST
             csTree.printTree("cst");
-            console.log(symbols);
             log.value += "\n ============= \n Parse completed successfully \n =============";
 
             log.value += "\n Semantic Analyzer start for Program " + prgNum 
-                      + "... \n ============= \n   SEMANTIC ANALYZER --> Analyzing Program " + prgNum + "..."
-                      + "\n =============";
+                      + "... \n ============= \n   SEMANTIC ANALYZER --> Analyzing Program " + prgNum + "...";
             let asTree: Tree;
             let symbolTable: Array<Symbol>;
             let warningSA: number;
 
             // start semantic analyzer
-            let sAnalyzeReturn = sAnalyzer.start(csTree, symbols);
+            let sAnalyzeReturn = sAnalyzer.start(csTree);
 
             if(sAnalyzeReturn){
               // AST generation passed
               [asTree, symbolTable, warningSA] = sAnalyzeReturn;
+              _GrandAST.addSubTree(asTree.root);
               asTree.printTree("ast");
               if(symbolTable){
                 // scope and type checking also passed
                 this.updateSymbolTable(symbolTable, prgNum);
-                log.value += "\n Semantic Anaylsis completed successfully with " + warningSA + " warnings";
+                log.value += "\n =============\n Semantic Anaylsis completed successfully with " + warningSA + " warnings \n =============";
               }
             } else{
               // AST generation failed
+              _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0,0]);
               asTreeOut.value += "\nAST for Program " + prgNum + ": Skipped due to SEMANTIC ANALYSIS error(s) \n\n";
             }
           } else{
             // Parse failed
+            _GrandCST.addLeafNode("Prg " + prgNum + " Failed", [0,0]);
+            _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0,0]);
             csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n\n";
           }
         } else {
           // Lex failed
+          _GrandCST.addLeafNode("Prg " + prgNum + " Failed", [0,0]);
+          _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0,0]);
           if(whitespace.test(input)){
             "\n   LEXER --> ERROR! Invalid token"
           }
@@ -94,6 +99,8 @@ module Compiler {
         prgNum++;
         log.scrollTop = log.scrollHeight;
       }
+      _GrandCST.displayTree("cst");
+      _GrandAST.displayTree("ast");
     }
 
     // update symbol table output
@@ -125,7 +132,12 @@ module Compiler {
         row.appendChild(cell);
         // Line
         cell = document.createElement("td");
-        cellText = document.createTextNode(""+symbol.line);
+        cellText = document.createTextNode(""+symbol.location[0]);
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+        // Column
+        cell = document.createElement("td");
+        cellText = document.createTextNode(""+symbol.location[1]);
         cell.appendChild(cellText);
         row.appendChild(cell);
         symbolTableBody.appendChild(row);
@@ -169,7 +181,7 @@ module Compiler {
         symbolTableBody.removeChild(symbolTableBody.firstChild);
       }
 // save pretty tree for later
- /*     var emptyCST = {
+      var emptyCST = {
         chart: {
             container: "#visual-cst"
         },
@@ -185,7 +197,6 @@ module Compiler {
       };
       let visualCST = new Treant(emptyCST);
       let visualAST = new Treant(emptyAST);
-*/
     }
 
     // change test case in console
@@ -239,6 +250,31 @@ module Compiler {
         default:
           editor.setValue("clearing");
           break;
+      }
+    }
+
+    // reload tree display
+    public static reloadTree(btn): void{
+      if(btn.id == "tab-cst"){
+        var emptyCST = {
+          chart: {
+              container: "#visual-cst"
+          },
+          nodeStructure: {
+          }
+        };
+        let visualCST = new Treant(emptyCST);
+        _GrandCST.displayTree("cst");
+      } else{
+        var emptyAST = {
+          chart: {
+              container: "#visual-ast"
+          },
+          nodeStructure: {
+          }
+        };
+        let visualCST = new Treant(emptyAST);
+        _GrandAST.displayTree("ast");
       }
     }
 
