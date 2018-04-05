@@ -23,7 +23,8 @@ module Compiler {
       if(this.buildAST(csTree)){
         // AST built, start scope and type checking
         if(this.scopeTypeCheck()){
-          // this.checkForUnused();
+          console.log(this.scopeTree);
+          this.buildSymbolTable();
           return [this.asTree, this.symbolTable, this.warnings];
         } else{
           return [this.asTree, null, this.warnings];
@@ -53,6 +54,31 @@ module Compiler {
       return this.checkNode(currentNode);
     }
 
+    public buildSymbolTable(): void{
+      let currentScope: ScopeNode = this.scopeTree.root;
+      this.transferSymbols(currentScope);
+    }
+
+    public transferSymbols(scope: ScopeNode): void{
+      let symbolKeys = scope.symbolMap.keys();
+      console.log(scope.symbolMap);
+      console.log(symbolKeys);
+      let key = symbolKeys.next();
+      while(!key.done){
+        let symbol:Symbol = scope.symbolMap.get(key.value);
+        this.symbolTable.push(symbol);
+        if(symbol.accessed == 0){
+          // declared, not initialized, not used
+          this.printWarning("[" + symbol.key + "] declared, but never initialized or used", symbol.location);
+        } else if(symbol.accessed == 1){
+          this.printWarning("[" + symbol.key + "] declared and initialized, but never used", symbol.location);
+        }
+        key = symbolKeys.next();
+      }
+      for(var i = 0; i<scope.childrenScopes.length; i++){
+        this.transferSymbols(scope.childrenScopes[i]);
+      }
+    }
     
     // Start of functions used for scope and type checking
     public checkNode(currentNode): boolean{
@@ -92,23 +118,31 @@ module Compiler {
         case "=":
           // first check scope
           let identifier:TreeNode = currentNode.childrenNodes[0];
+          let placeholder: ScopeNode = this.scopeTree.currentScope;
           let foundSymbol = this.checkScope(identifier);
-          // update symbol access
-          if(foundSymbol.accessed <= 0){
-            // means declared, initialized, and unused
-            foundSymbol.accessed = 1; 
-            this.scopeTree.currentScope.updateSymbol(foundSymbol);
-            // give warning at end of scope and type check
-          }
+          
           if(foundSymbol != null){
+            let foundInScope:ScopeNode = this.scopeTree.currentScope;
+            // return to original scope
+            this.scopeTree.currentScope = placeholder;
+            // update symbol access
+            if(foundSymbol.accessed <= 0){
+              // means declared, initialized, and unused
+              foundSymbol.accessed = 1; 
+              foundInScope.updateSymbol(foundSymbol);
+              // give warning at end of scope and type check
+            }
             let valueNode = currentNode.childrenNodes[1];
             if(isId.test(valueNode.value)){
               // special case of id assign id
+              placeholder = this.scopeTree.currentScope;
               let valueSymbol = this.checkScope(valueNode);
               if(valueSymbol != null){
                 if(valueSymbol.type == foundSymbol.type){
                   // check warning
-                  this.checkUninitializedWarning(valueSymbol);
+                  this.checkUninitializedWarning(valueSymbol, valueSymbol.location, this.scopeTree.currentScope);
+                  // return to original scope
+                  this.scopeTree.currentScope = placeholder;
                   return true;
                 } else{
                   // type mismatched error
@@ -149,8 +183,13 @@ module Compiler {
           return this.checkNode(currentNode.childrenNodes[0]) && this.checkNode(currentNode.childrenNodes[1]);
         case "print":
           if(isId.test(currentNode.childrenNodes[0].value)){
+            let placeholder:ScopeNode = this.scopeTree.currentScope;
             foundSymbol = this.checkScope(currentNode.childrenNodes[0]);
             if(foundSymbol != null){
+              // check warning
+              this.checkUninitializedWarning(foundSymbol, currentNode.childrenNodes[0].location, this.scopeTree.currentScope);
+              // return to original scope
+              this.scopeTree.currentScope = placeholder;
               return true;
             } else{
               return false; // undeclared/out-of-scope error already printed
@@ -172,14 +211,11 @@ module Compiler {
 
     public checkScope(identifier:TreeNode): Symbol{
       this.printStage("Checking scope of [" + identifier.value + "]...");
-      let placeholder: ScopeNode = this.scopeTree.currentScope;
       let foundSymbol:Symbol;
       while (this.scopeTree.currentScope != null){
         // look up until root scope for symbol
         foundSymbol = this.scopeTree.currentScope.getSymbol(identifier.value);
         if(foundSymbol != null){
-          // return to original scope
-          this.scopeTree.currentScope = placeholder; 
           return foundSymbol; // found symbol
         }
         this.scopeTree.moveUp();
@@ -228,12 +264,16 @@ module Compiler {
         valueNode = valueNode.childrenNodes[1]; // id would be left operand
       }
       // found the id operand, check its scope
+      let placeholder:ScopeNode = this.scopeTree.currentScope;
       let addedSymbol = this.checkScope(valueNode);
       if(addedSymbol != null){
         // type of symbol must be int
         this.printStage("Checking type of [" + addedSymbol.key + "]...");
         if(addedSymbol.type == "int"){
-          this.checkUninitializedWarning(addedSymbol);
+          console.log(valueNode);
+          this.checkUninitializedWarning(addedSymbol, valueNode.location, this.scopeTree.currentScope);
+          // return to original scope
+          this.scopeTree.currentScope = placeholder;
           return true;
         } else{
           // type mismatched error
@@ -262,7 +302,10 @@ module Compiler {
           return false; // type match or undeclared error already printed
         }
       }else if(id.test(rightOperand.value)){
+        let placeholder: ScopeNode = this.scopeTree.currentScope;
         rightSymbol = this.checkScope(rightOperand);
+        // return to original scope
+        this.scopeTree.currentScope = placeholder;
         if(rightSymbol == null){
           return false; // undeclared/out-of-scope error already printed
         }
@@ -275,7 +318,10 @@ module Compiler {
       if(boolop.test(leftOperand.value)){
         return this.checkBoolExpr(leftOperand);
       } else if(id.test(leftOperand.value)){
+        let placeholder: ScopeNode = this.scopeTree.currentScope;
         leftSymbol = this.checkScope(leftOperand);
+        // return to original scope
+        this.scopeTree.currentScope = placeholder;
         if(leftSymbol != null){
           if (rightSymbol.type == leftSymbol.type){
             return true;
@@ -293,18 +339,18 @@ module Compiler {
       }
     }
 
-    public checkUninitializedWarning(symbol): void{
+    public checkUninitializedWarning(symbol, location, scope): void{
         // check for warnings
         if(symbol.accessed <= 0){
           // uninitialized warning
-          this.printWarning("Use of uninitialized variable [" + symbol.key + "]", symbol.location);
+          this.printWarning("Use of uninitialized variable [" + symbol.key + "]", location);
           // negative value means declared, uninitialized, and used
           symbol.accessed--; 
         } else{
           // positive means declared, initialized, and used
           symbol.accessed++;
         }
-        this.scopeTree.currentScope.updateSymbol(symbol);
+        scope.updateSymbol(symbol);
     }
 
     // Start of functions used to build AST

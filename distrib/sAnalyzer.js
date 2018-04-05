@@ -18,7 +18,8 @@ var Compiler;
             if (this.buildAST(csTree)) {
                 // AST built, start scope and type checking
                 if (this.scopeTypeCheck()) {
-                    // this.checkForUnused();
+                    console.log(this.scopeTree);
+                    this.buildSymbolTable();
                     return [this.asTree, this.symbolTable, this.warnings];
                 }
                 else {
@@ -44,6 +45,31 @@ var Compiler;
             this.scopeTree = new Compiler.ScopeTree();
             // start from first node
             return this.checkNode(currentNode);
+        };
+        SAnalyzer.prototype.buildSymbolTable = function () {
+            var currentScope = this.scopeTree.root;
+            this.transferSymbols(currentScope);
+        };
+        SAnalyzer.prototype.transferSymbols = function (scope) {
+            var symbolKeys = scope.symbolMap.keys();
+            console.log(scope.symbolMap);
+            console.log(symbolKeys);
+            var key = symbolKeys.next();
+            while (!key.done) {
+                var symbol = scope.symbolMap.get(key.value);
+                this.symbolTable.push(symbol);
+                if (symbol.accessed == 0) {
+                    // declared, not initialized, not used
+                    this.printWarning("[" + symbol.key + "] declared, but never initialized or used", symbol.location);
+                }
+                else if (symbol.accessed == 1) {
+                    this.printWarning("[" + symbol.key + "] declared and initialized, but never used", symbol.location);
+                }
+                key = symbolKeys.next();
+            }
+            for (var i = 0; i < scope.childrenScopes.length; i++) {
+                this.transferSymbols(scope.childrenScopes[i]);
+            }
         };
         // Start of functions used for scope and type checking
         SAnalyzer.prototype.checkNode = function (currentNode) {
@@ -83,23 +109,30 @@ var Compiler;
                 case "=":
                     // first check scope
                     var identifier = currentNode.childrenNodes[0];
+                    var placeholder = this.scopeTree.currentScope;
                     var foundSymbol = this.checkScope(identifier);
-                    // update symbol access
-                    if (foundSymbol.accessed <= 0) {
-                        // means declared, initialized, and unused
-                        foundSymbol.accessed = 1;
-                        this.scopeTree.currentScope.updateSymbol(foundSymbol);
-                        // give warning at end of scope and type check
-                    }
                     if (foundSymbol != null) {
+                        var foundInScope = this.scopeTree.currentScope;
+                        // return to original scope
+                        this.scopeTree.currentScope = placeholder;
+                        // update symbol access
+                        if (foundSymbol.accessed <= 0) {
+                            // means declared, initialized, and unused
+                            foundSymbol.accessed = 1;
+                            foundInScope.updateSymbol(foundSymbol);
+                            // give warning at end of scope and type check
+                        }
                         var valueNode = currentNode.childrenNodes[1];
                         if (isId.test(valueNode.value)) {
                             // special case of id assign id
+                            placeholder = this.scopeTree.currentScope;
                             var valueSymbol = this.checkScope(valueNode);
                             if (valueSymbol != null) {
                                 if (valueSymbol.type == foundSymbol.type) {
                                     // check warning
-                                    this.checkUninitializedWarning(valueSymbol);
+                                    this.checkUninitializedWarning(valueSymbol, valueSymbol.location, this.scopeTree.currentScope);
+                                    // return to original scope
+                                    this.scopeTree.currentScope = placeholder;
                                     return true;
                                 }
                                 else {
@@ -146,8 +179,13 @@ var Compiler;
                     return this.checkNode(currentNode.childrenNodes[0]) && this.checkNode(currentNode.childrenNodes[1]);
                 case "print":
                     if (isId.test(currentNode.childrenNodes[0].value)) {
+                        var placeholder_1 = this.scopeTree.currentScope;
                         foundSymbol = this.checkScope(currentNode.childrenNodes[0]);
                         if (foundSymbol != null) {
+                            // check warning
+                            this.checkUninitializedWarning(foundSymbol, currentNode.childrenNodes[0].location, this.scopeTree.currentScope);
+                            // return to original scope
+                            this.scopeTree.currentScope = placeholder_1;
                             return true;
                         }
                         else {
@@ -172,14 +210,11 @@ var Compiler;
         };
         SAnalyzer.prototype.checkScope = function (identifier) {
             this.printStage("Checking scope of [" + identifier.value + "]...");
-            var placeholder = this.scopeTree.currentScope;
             var foundSymbol;
             while (this.scopeTree.currentScope != null) {
                 // look up until root scope for symbol
                 foundSymbol = this.scopeTree.currentScope.getSymbol(identifier.value);
                 if (foundSymbol != null) {
-                    // return to original scope
-                    this.scopeTree.currentScope = placeholder;
                     return foundSymbol; // found symbol
                 }
                 this.scopeTree.moveUp();
@@ -227,12 +262,16 @@ var Compiler;
                 valueNode = valueNode.childrenNodes[1]; // id would be left operand
             }
             // found the id operand, check its scope
+            var placeholder = this.scopeTree.currentScope;
             var addedSymbol = this.checkScope(valueNode);
             if (addedSymbol != null) {
                 // type of symbol must be int
                 this.printStage("Checking type of [" + addedSymbol.key + "]...");
                 if (addedSymbol.type == "int") {
-                    this.checkUninitializedWarning(addedSymbol);
+                    console.log(valueNode);
+                    this.checkUninitializedWarning(addedSymbol, valueNode.location, this.scopeTree.currentScope);
+                    // return to original scope
+                    this.scopeTree.currentScope = placeholder;
                     return true;
                 }
                 else {
@@ -263,7 +302,10 @@ var Compiler;
                 }
             }
             else if (id.test(rightOperand.value)) {
+                var placeholder = this.scopeTree.currentScope;
                 rightSymbol = this.checkScope(rightOperand);
+                // return to original scope
+                this.scopeTree.currentScope = placeholder;
                 if (rightSymbol == null) {
                     return false; // undeclared/out-of-scope error already printed
                 }
@@ -277,7 +319,10 @@ var Compiler;
                 return this.checkBoolExpr(leftOperand);
             }
             else if (id.test(leftOperand.value)) {
+                var placeholder = this.scopeTree.currentScope;
                 leftSymbol = this.checkScope(leftOperand);
+                // return to original scope
+                this.scopeTree.currentScope = placeholder;
                 if (leftSymbol != null) {
                     if (rightSymbol.type == leftSymbol.type) {
                         return true;
@@ -297,11 +342,11 @@ var Compiler;
                 return this.checkType(leftOperand, rightSymbol);
             }
         };
-        SAnalyzer.prototype.checkUninitializedWarning = function (symbol) {
+        SAnalyzer.prototype.checkUninitializedWarning = function (symbol, location, scope) {
             // check for warnings
             if (symbol.accessed <= 0) {
                 // uninitialized warning
-                this.printWarning("Use of uninitialized variable [" + symbol.key + "]", symbol.location);
+                this.printWarning("Use of uninitialized variable [" + symbol.key + "]", location);
                 // negative value means declared, uninitialized, and used
                 symbol.accessed--;
             }
@@ -309,7 +354,7 @@ var Compiler;
                 // positive means declared, initialized, and used
                 symbol.accessed++;
             }
-            this.scopeTree.currentScope.updateSymbol(symbol);
+            scope.updateSymbol(symbol);
         };
         // Start of functions used to build AST
         // blockChildrens: [ { , StatementList, } ]

@@ -119,7 +119,7 @@ b=1+a
 ### Print statements
 ```java
 {
-    string a
+    int a
     print(a)
     print("thhis")
     print(1+a)
