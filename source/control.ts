@@ -18,6 +18,8 @@ module Compiler {
       let lexer: Compiler.Lexer = new Lexer();
       let parser: Compiler.Parser = new Parser();
       let sAnalyzer: Compiler.SAnalyzer = new SAnalyzer();
+      _GrandCST = new Tree("All Programs",[0,0]);
+      _GrandAST = new Tree("All Programs",[0,0]);
 
       // reset outputs
       this.clearOutputs();
@@ -48,6 +50,8 @@ module Compiler {
           let csTree = parser.start(tokenBank);
           if(csTree != null){
             // Parse passed
+            // add to CST containing all programs
+            _GrandCST.addSubTree(csTree.root);
             // print CST
             csTree.printTree("cst");
             log.value += "\n ============= \n Parse completed successfully \n =============";
@@ -64,6 +68,7 @@ module Compiler {
             if(sAnalyzeReturn){
               // AST generation passed
               [asTree, symbolTable, warningSA] = sAnalyzeReturn;
+              _GrandAST.addSubTree(asTree.root);
               asTree.printTree("ast");
               if(symbolTable){
                 // scope and type checking also passed
@@ -72,14 +77,19 @@ module Compiler {
               }
             } else{
               // AST generation failed
+              _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0,0]);
               asTreeOut.value += "\nAST for Program " + prgNum + ": Skipped due to SEMANTIC ANALYSIS error(s) \n\n";
             }
           } else{
             // Parse failed
+            _GrandCST.addLeafNode("Prg " + prgNum + " Failed", [0,0]);
+            _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0,0]);
             csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n\n";
           }
         } else {
           // Lex failed
+          _GrandCST.addLeafNode("Prg " + prgNum + " Failed", [0,0]);
+          _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0,0]);
           if(whitespace.test(input)){
             "\n   LEXER --> ERROR! Invalid token"
           }
@@ -89,6 +99,8 @@ module Compiler {
         prgNum++;
         log.scrollTop = log.scrollHeight;
       }
+      _GrandCST.displayTree("cst");
+      _GrandAST.displayTree("ast");
     }
 
     // update symbol table output

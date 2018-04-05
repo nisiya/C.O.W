@@ -22,8 +22,26 @@ var Compiler;
             var node = new TreeNode(value, location, this.current);
             this.current.childrenNodes.push(node);
         };
+        Tree.prototype.addSubTree = function (node) {
+            this.current.childrenNodes.push(node);
+        };
         Tree.prototype.moveUp = function () {
             this.current = this.current.parentNode;
+        };
+        Tree.prototype.displayTree = function (treeType) {
+            var treeId = "#visual-" + treeType;
+            console.log("printing " + treeType);
+            var jsonTree = {
+                chart: {
+                    container: treeId
+                },
+                nodeStructure: {
+                    text: { name: this.root.value },
+                    children: []
+                }
+            };
+            this.walkTree(this.root, "", jsonTree.nodeStructure.children);
+            var visualTree = new Treant(jsonTree);
         };
         Tree.prototype.printTree = function (treeType) {
             var treeId = "#visual-" + treeType;
@@ -40,7 +58,6 @@ var Compiler;
             this.walkTree(this.root, "", jsonTree.nodeStructure.children);
             var output = document.getElementById(treeType);
             output.value += this.outputTree + "\n\n";
-            var visualTree = new Treant(jsonTree);
         };
         Tree.prototype.walkTree = function (node, indent, jsonLevel) {
             // for the pretty cst

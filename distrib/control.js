@@ -17,6 +17,8 @@ var Compiler;
             var lexer = new Compiler.Lexer();
             var parser = new Compiler.Parser();
             var sAnalyzer = new Compiler.SAnalyzer();
+            _GrandCST = new Compiler.Tree("All Programs", [0, 0]);
+            _GrandAST = new Compiler.Tree("All Programs", [0, 0]);
             // reset outputs
             this.clearOutputs();
             log.value = " Compiler Activated... \n ============= ";
@@ -43,6 +45,8 @@ var Compiler;
                     var csTree = parser.start(tokenBank);
                     if (csTree != null) {
                         // Parse passed
+                        // add to CST containing all programs
+                        _GrandCST.addSubTree(csTree.root);
                         // print CST
                         csTree.printTree("cst");
                         log.value += "\n ============= \n Parse completed successfully \n =============";
@@ -56,6 +60,7 @@ var Compiler;
                         if (sAnalyzeReturn) {
                             // AST generation passed
                             asTree = sAnalyzeReturn[0], symbolTable = sAnalyzeReturn[1], warningSA = sAnalyzeReturn[2];
+                            _GrandAST.addSubTree(asTree.root);
                             asTree.printTree("ast");
                             if (symbolTable) {
                                 // scope and type checking also passed
@@ -65,16 +70,21 @@ var Compiler;
                         }
                         else {
                             // AST generation failed
+                            _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0, 0]);
                             asTreeOut.value += "\nAST for Program " + prgNum + ": Skipped due to SEMANTIC ANALYSIS error(s) \n\n";
                         }
                     }
                     else {
                         // Parse failed
+                        _GrandCST.addLeafNode("Prg " + prgNum + " Failed", [0, 0]);
+                        _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0, 0]);
                         csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n\n";
                     }
                 }
                 else {
                     // Lex failed
+                    _GrandCST.addLeafNode("Prg " + prgNum + " Failed", [0, 0]);
+                    _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0, 0]);
                     if (whitespace.test(input)) {
                         "\n   LEXER --> ERROR! Invalid token";
                     }
@@ -84,6 +94,8 @@ var Compiler;
                 prgNum++;
                 log.scrollTop = log.scrollHeight;
             }
+            _GrandCST.displayTree("cst");
+            _GrandAST.displayTree("ast");
         };
         // update symbol table output
         Control.updateSymbolTable = function (symbolTable, prgNum) {

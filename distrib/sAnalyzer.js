@@ -161,7 +161,7 @@ var Compiler;
                         }
                         else {
                             // check type of the assigned value
-                            return this.checkType(valueNode, foundSymbol);
+                            return this.checkType(valueNode, foundSymbol, "assigned as");
                         }
                     }
                     else {
@@ -224,7 +224,7 @@ var Compiler;
             this.printError("Use of undeclared/out-of-scope identifier [" + identifier.value + "]", identifier.location);
             return null; // undeclared/out-of-scope
         };
-        SAnalyzer.prototype.checkType = function (valueNode, foundSymbol) {
+        SAnalyzer.prototype.checkType = function (valueNode, foundSymbol, usage) {
             this.printStage("Checking type of [" + foundSymbol.key + "]...");
             var valueType = this.findType(valueNode);
             // check if it matches type of symbol
@@ -234,7 +234,7 @@ var Compiler;
             else {
                 // type mismatched error
                 this.printError("Type mismatched error. " + foundSymbol.type + " [" + foundSymbol.key
-                    + "] cannot be assign to " + valueType, valueNode.location);
+                    + "] cannot be " + usage + " " + valueType, valueNode.location);
                 return false;
             }
         };
@@ -316,7 +316,15 @@ var Compiler;
             }
             // check left operand
             if (boolop.test(leftOperand.value)) {
-                return this.checkBoolExpr(leftOperand);
+                if (rightSymbol.type == "boolean") {
+                    return this.checkBoolExpr(leftOperand);
+                }
+                else {
+                    // type mismatched error
+                    this.printError("Type mismatched error. Cannot compare " + rightSymbol.type + " [" + rightSymbol.key
+                        + "] with boolean value", rightSymbol.location);
+                    return false;
+                }
             }
             else if (id.test(leftOperand.value)) {
                 var placeholder = this.scopeTree.currentScope;
@@ -339,7 +347,7 @@ var Compiler;
                 }
             }
             else {
-                return this.checkType(leftOperand, rightSymbol);
+                return this.checkType(leftOperand, rightSymbol, "compared to");
             }
         };
         SAnalyzer.prototype.checkUninitializedWarning = function (symbol, location, scope) {

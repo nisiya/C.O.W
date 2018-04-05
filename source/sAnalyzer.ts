@@ -166,7 +166,7 @@ module Compiler {
               }
             } else{
               // check type of the assigned value
-              return this.checkType(valueNode, foundSymbol);
+              return this.checkType(valueNode, foundSymbol, "assigned as");
             }
           } else{
             return false; // undeclared/out-of-scope error already printed
@@ -226,7 +226,7 @@ module Compiler {
       return null; // undeclared/out-of-scope
     }
 
-    public checkType(valueNode:TreeNode, foundSymbol:Symbol): boolean{
+    public checkType(valueNode:TreeNode, foundSymbol:Symbol, usage:string): boolean{
       this.printStage("Checking type of [" + foundSymbol.key + "]...");
       let valueType:string = this.findType(valueNode);
       // check if it matches type of symbol
@@ -235,7 +235,7 @@ module Compiler {
       } else{
         // type mismatched error
         this.printError("Type mismatched error. " + foundSymbol.type + " [" + foundSymbol.key
-                        + "] cannot be assign to " + valueType, valueNode.location);
+                        + "] cannot be " + usage + " " + valueType, valueNode.location);
         return false;
       }
     }
@@ -301,7 +301,7 @@ module Compiler {
         } else{
           return false; // type match or undeclared error already printed
         }
-      }else if(id.test(rightOperand.value)){
+      } else if(id.test(rightOperand.value)){
         let placeholder: ScopeNode = this.scopeTree.currentScope;
         rightSymbol = this.checkScope(rightOperand);
         // return to original scope
@@ -316,7 +316,14 @@ module Compiler {
 
       // check left operand
       if(boolop.test(leftOperand.value)){
-        return this.checkBoolExpr(leftOperand);
+        if(rightSymbol.type == "boolean"){
+          return this.checkBoolExpr(leftOperand);
+        } else{
+          // type mismatched error
+          this.printError("Type mismatched error. Cannot compare " + rightSymbol.type + " [" + rightSymbol.key
+          + "] with boolean value", rightSymbol.location);
+          return false;
+        }
       } else if(id.test(leftOperand.value)){
         let placeholder: ScopeNode = this.scopeTree.currentScope;
         leftSymbol = this.checkScope(leftOperand);
@@ -335,7 +342,7 @@ module Compiler {
           return false; // undeclared/out-of-scope error already printed
         }
       } else{
-        return this.checkType(leftOperand, rightSymbol);
+        return this.checkType(leftOperand, rightSymbol, "compared to");
       }
     }
 

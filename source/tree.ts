@@ -30,8 +30,29 @@ module Compiler {
       this.current.childrenNodes.push(node);
     }
 
+    public addSubTree(node: TreeNode): void{
+      this.current.childrenNodes.push(node);
+    }
     public moveUp(): void{
       this.current = this.current.parentNode;
+    }
+
+    public displayTree(treeType:string): void{
+      let treeId:string = "#visual-" + treeType;
+      console.log("printing " + treeType);
+      var jsonTree = {
+        chart: {
+            container: treeId
+        },
+        
+        nodeStructure: {
+          text: { name: this.root.value },
+          children: [
+          ]
+        }
+      };
+      this.walkTree(this.root, "", jsonTree.nodeStructure.children);
+      let visualTree = new Treant(jsonTree);
     }
 
     public printTree(treeType:string): void{
@@ -51,7 +72,6 @@ module Compiler {
       this.walkTree(this.root, "", jsonTree.nodeStructure.children);
       let output: HTMLInputElement = <HTMLInputElement> document.getElementById(treeType);
       output.value += this.outputTree + "\n\n";
-      let visualTree = new Treant(jsonTree);
     }
 
     public walkTree(node: TreeNode, indent:String, jsonLevel:Object): void{
