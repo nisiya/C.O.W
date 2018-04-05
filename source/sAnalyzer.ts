@@ -56,6 +56,7 @@ module Compiler {
     
     // Start of functions used for scope and type checking
     public checkNode(currentNode): boolean{
+      let isId:RegExp = /^[a-z]$/;
       console.log("checking " + currentNode.value); 
       switch(currentNode.value){
         // block means new scope
@@ -85,16 +86,40 @@ module Compiler {
             this.printError("Redeclared identifier [" + key.value + "] in the same scope", key.location);
             return false;
           }
-          return true; // no errors
+        return true; // no errors
 
         // assignment
         case "=":
           // first check scope
           let identifier:TreeNode = currentNode.childrenNodes[0];
           let foundSymbol = this.checkScope(identifier);
+          // update symbol access
+          if(foundSymbol.accessed <= 0){
+            // means declared, initialized, and unused
+            foundSymbol.accessed = 1; 
+            this.scopeTree.currentScope.updateSymbol(foundSymbol);
+            // give warning at end of scope and type check
+          }
           if(foundSymbol != null){
             let valueNode = currentNode.childrenNodes[1];
-            if(valueNode.value == "+"){
+            if(isId.test(valueNode.value)){
+              // special case of id assign id
+              let valueSymbol = this.checkScope(valueNode);
+              if(valueSymbol != null){
+                if(valueSymbol.type == foundSymbol.type){
+                  // check warning
+                  this.checkUninitializedWarning(valueSymbol);
+                  return true;
+                } else{
+                  // type mismatched error
+                  this.printError("Type mismatched error. " + foundSymbol.type + " [" + foundSymbol.key
+                  + "] cannot be assign to " + valueSymbol.type, valueNode.location);
+                  return false;
+                }
+              } else{
+                return false; // undeclared/out-of-scope error already printed
+              }
+            } else if(valueNode.value == "+"){
               // special case of intexpr
               if(foundSymbol.type == "int"){
                 // make sure added id is also int
@@ -112,6 +137,33 @@ module Compiler {
           } else{
             return false; // undeclared/out-of-scope error already printed
           }
+        case "!=":
+          return this.checkBoolExpr(currentNode);
+        case "==":
+          return this.checkBoolExpr(currentNode);
+        case "while":
+          // check boolexpr and block
+          return this.checkNode(currentNode.childrenNodes[0]) && this.checkNode(currentNode.childrenNodes[1]);
+        case "if":
+          // check boolexpr and block
+          return this.checkNode(currentNode.childrenNodes[0]) && this.checkNode(currentNode.childrenNodes[1]);
+        case "print":
+          if(isId.test(currentNode.childrenNodes[0].value)){
+            foundSymbol = this.checkScope(currentNode.childrenNodes[0]);
+            if(foundSymbol != null){
+              return true;
+            } else{
+              return false; // undeclared/out-of-scope error already printed
+            }
+          } else if(currentNode.childrenNodes[0].value == "+"){
+            return this.checkAddition(currentNode.childrenNodes[0]);
+          } else if(currentNode.childrenNodes[0].value == "!="
+                    || currentNode.childrenNodes[0].value == "=="){
+            return this.checkBoolExpr(currentNode.childrenNodes[0]);
+          } else{
+            // is a string
+            return true;
+          }
         default:
           // won't get here, but always need a default statement
           return true;
@@ -126,39 +178,21 @@ module Compiler {
         // look up until root scope for symbol
         foundSymbol = this.scopeTree.currentScope.getSymbol(identifier.value);
         if(foundSymbol != null){
-          if(foundSymbol.accessed == 0){ // 0 means declared only
-            foundSymbol.accessed++; // 1 means initialized only
-          }
-          this.scopeTree.currentScope.updateSymbol(foundSymbol);
-          this.scopeTree.currentScope = placeholder; // return to original scope
+          // return to original scope
+          this.scopeTree.currentScope = placeholder; 
           return foundSymbol; // found symbol
         }
         this.scopeTree.moveUp();
       }
       // no symbol found
       // undeclared/out-of-scope error
-      this.printError("Use of undeclared/out-of-scope identifier", identifier.location);
+      this.printError("Use of undeclared/out-of-scope identifier [" + identifier.value + "]", identifier.location);
       return null; // undeclared/out-of-scope
     }
 
     public checkType(valueNode:TreeNode, foundSymbol:Symbol): boolean{
       this.printStage("Checking type of [" + foundSymbol.key + "]...");
-      let digit:RegExp = /^\d$/;
-      let boolval:RegExp = /^true|false$/;
-      let valueType:string;
-
-      // find the type of assingment value
-      if(digit.test(valueNode.value)){
-        // type is int
-        valueType = "int";
-      } else if(boolval.test(valueNode.value)){
-        // type is boolean
-        valueType = "boolean";
-      } else{
-        // type is string
-        valueType = "string";
-      }
-
+      let valueType:string = this.findType(valueNode);
       // check if it matches type of symbol
       if(valueType == foundSymbol.type){
         return true;
@@ -167,6 +201,23 @@ module Compiler {
         this.printError("Type mismatched error. " + foundSymbol.type + " [" + foundSymbol.key
                         + "] cannot be assign to " + valueType, valueNode.location);
         return false;
+      }
+    }
+
+    public findType(valueNode:TreeNode): string{
+      let digit:RegExp = /^\d$/;
+      let boolval:RegExp = /^true|false$/;
+
+      // find the type of assingment value
+      if(digit.test(valueNode.value)){
+        // type is int
+        return "int";
+      } else if(boolval.test(valueNode.value)){
+        // type is boolean
+        return "boolean";
+      } else{
+        // type is string
+        return "string";
       }
     }
 
@@ -182,6 +233,7 @@ module Compiler {
         // type of symbol must be int
         this.printStage("Checking type of [" + addedSymbol.key + "]...");
         if(addedSymbol.type == "int"){
+          this.checkUninitializedWarning(addedSymbol);
           return true;
         } else{
           // type mismatched error
@@ -193,153 +245,67 @@ module Compiler {
         return false; // undeclared/out-of-scope error already printed
       }
     }
-    /*
-    // check the two children for =, !=, and ==
-    public checkChildren(currentNode): boolean{
-      let boolval: RegExp = /^true|false$/;
 
-      // first child can also be boolval for boolops
-      if(boolval.test(currentNode.childrenNodes[0].value)){
-        // if second
-        let boolop: RegExp = /^!=|==$/;
-        if(boolval.test(currentNode.childrenNodes[1].value)){
-          return true;
-        } else if(boolop.test(currentNode.childrenNodes[1].value)){
-          return this.checkNode(currentNode.childrenNodes[1]);
-        } else{
-          let symbol: Symbol = this.checkScope(currentNode.childrenNodes[1].value);
-          if(symbol != null){
-            if(!symbol.initialized){
-              // warning
-              this.printWarning("Use of uninitialized variable", currentNode.childrenNodes[1].line);
-            }
-    
-            // then check type
-            this.printStage("Checking type of [" + symbol.key + "]");
-            // type should be boolean
-            if(symbol.type == "boolean"){
-              return true;
-            } else{
-              // type mismatched error
-              this.printError("Type mismatched error", currentNode.childrenNodes[1].line);
-            }
-          } else{
-            // no symbol found
-            // undeclared/out-of-scope error
-            this.printError("Use of undeclared/out-of-scope identifier", currentNode.childrenNodes[1].line);
-          }
-        }
-      } else{
-        // first check scope
-        let symbol: Symbol = this.checkScope(currentNode.childrenNodes[0].value);
-        if(symbol != null){
-
-          // for == and !=, check for uninitialized warning
-          if(currentNode.value == "==" || currentNode.value == "!="){
-            if(!symbol.initialized){
-              // warning
-              this.printWarning("Use of uninitialized variable", currentNode.childrenNodes[0].line);
-            }
-          }
-
-          // then check type
-          this.printStage("Checking type of [" + symbol.key + "]");
-          let valueType:string;
-
-          // special case for != and ==, second child is "+"
-          if(currentNode.childrenNodes[1].value == "+"){
-            valueType = this.checkAddition(currentNode.childrenNodes[1]);
-          } else{
-            // case for all
-            valueType = this.findType(currentNode.childrenNodes[1].value);
-          }
-
-          // if type matches symbol's type
-          if(valueType == symbol.type){
-            
-            // special case for =, set symbol to be initialized
-            if(currentNode.value == "="){
-              symbol.initializeSymbol();
-              this.scopeTree.currentScope.updateSymbol(symbol);
-            }
-            return true;
-
-          } else{
-            if(valueType == "error"){ // occurred when checking "+"
-              this.printError("Use of undeclared/out-of-scope identifier", currentNode.childrenNodes[1].line);
-            } else{
-              // type mismatched error
-              this.printError("Type mismatched error", currentNode.childrenNodes[1].line);
-            }
-          }
-        } else{
-          // no symbol found
-          // undeclared/out-of-scope error
-          this.printError("Use of undeclared/out-of-scope identifier", currentNode.childrenNodes[0].line);
-        }
-      }
-      return false;
-    }
-
-    // check for symbol in current and all previous scopes
-    public checkScope(symbolKey: string): Symbol{
-      this.printStage("Checking scope of [" + symbolKey + "]");
-      let bookmarkScope = this.scopeTree.currentScope;
-      let symbol:Symbol;
-      while(this.scopeTree.currentScope != null){
-        symbol = this.scopeTree.currentScope.getSymbol(symbolKey);
-        if(symbol != null){
-          // found symbol, so stop searching
-          this.scopeTree.currentScope = bookmarkScope;
-          break;
-        }
-        this.scopeTree.moveUp();
-      }
-      return symbol;
-    }
-
-    // type not in AST so we have to tell what it is
-    // type -> int | boolean | string
-    public findType(value: string): string{
-      let digit:RegExp = /^\d/;
-      let boolval: RegExp = /^true|false$/;
-
-      if(digit.test(value)){
-        return "int";
-      } else if(boolval.test(value)){
-        return "boolean";
-      } else{
-        return "string";
-      }
-    }
-
-    // special case of nested additions
-    public checkAddition(plusNode: TreeNode): string{
+    public checkBoolExpr(BoolopNode:TreeNode): boolean{
+      let boolop:RegExp = /^!=|==$/;
       let id:RegExp = /^[a-z]$/;
-      let plus:RegExp = /^\+$/;
+      let rightOperand:TreeNode = BoolopNode.childrenNodes[0];
+      let leftOperand:TreeNode = BoolopNode.childrenNodes[1];
+      let rightSymbol:Symbol;
+      let leftSymbol:Symbol;
 
-      // first child always digit
-      // if second child is id, check its scope, type will be checked later
-      if(id.test(plusNode.childrenNodes[1].value)){
-        let symbol = this.checkScope(plusNode.childrenNodes[1].value);
-        if(symbol != null){
-          if(!symbol.initialized){
-            // uninitialized variable warning
-            this.printWarning("Use of uninitialized variable", plusNode.childrenNodes[1].line);
-          }
-          return symbol.type;
+      // check right operand
+      if(boolop.test(rightOperand.value)){
+        if(this.checkBoolExpr(rightOperand)){
+          rightSymbol = new Symbol("boolval", "boolean", rightOperand.location);
         } else{
-          return "error";
+          return false; // type match or undeclared error already printed
         }
-      } else if(plus.test(plusNode.childrenNodes[1].value)){
-        // if second child is still "+", check its children
-        return this.checkAddition(plusNode.childrenNodes[1]);
+      }else if(id.test(rightOperand.value)){
+        rightSymbol = this.checkScope(rightOperand);
+        if(rightSymbol == null){
+          return false; // undeclared/out-of-scope error already printed
+        }
       } else{
-        return "notInt";
+        let rightType = this.findType(rightOperand);
+        rightSymbol = new Symbol(rightOperand.value, rightType, rightOperand.location);
+      }
+
+      // check left operand
+      if(boolop.test(leftOperand.value)){
+        return this.checkBoolExpr(leftOperand);
+      } else if(id.test(leftOperand.value)){
+        leftSymbol = this.checkScope(leftOperand);
+        if(leftSymbol != null){
+          if (rightSymbol.type == leftSymbol.type){
+            return true;
+          } else{
+            // type mismatched error
+            this.printError("Type mismatched error. Cannot compare " + leftSymbol.type + " [" + leftSymbol.key
+            + "] with " + rightSymbol.type + " [" + rightSymbol.key + "]", leftSymbol.location);
+            return false;
+          }
+        } else{
+          return false; // undeclared/out-of-scope error already printed
+        }
+      } else{
+        return this.checkType(leftOperand, rightSymbol);
       }
     }
 
-    */
+    public checkUninitializedWarning(symbol): void{
+        // check for warnings
+        if(symbol.accessed <= 0){
+          // uninitialized warning
+          this.printWarning("Use of uninitialized variable [" + symbol.key + "]", symbol.location);
+          // negative value means declared, uninitialized, and used
+          symbol.accessed--; 
+        } else{
+          // positive means declared, initialized, and used
+          symbol.accessed++;
+        }
+        this.scopeTree.currentScope.updateSymbol(symbol);
+    }
 
     // Start of functions used to build AST
 
@@ -450,8 +416,8 @@ module Compiler {
           this.analyzeIntExpr(exprType.childrenNodes); // currentNode: parent of Expr
           break;
         case "StringExpr": // really analyze the CharList
-          let stringVal:string = this.analyzeCharList(exprType.childrenNodes[1], "");
-          this.asTree.addLeafNode(stringVal, exprType.childrenNodes[1].location); // currentNode: parent of Expr
+          let stringVal:string = this.analyzeCharList(exprType.childrenNodes[1], "\"");
+          this.asTree.addLeafNode(stringVal + "\"", exprType.childrenNodes[1].location); // currentNode: parent of Expr
           break;
         case "BooleanExpr":
           this.analyzeBoolExpr(exprType.childrenNodes);
