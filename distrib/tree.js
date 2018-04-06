@@ -30,7 +30,6 @@ var Compiler;
         };
         Tree.prototype.displayTree = function (treeType) {
             var treeId = "#visual-" + treeType;
-            console.log("printing " + treeType);
             var jsonTree = {
                 chart: {
                     container: treeId
@@ -66,8 +65,6 @@ var Compiler;
             }
         };
         Tree.prototype.printTree = function (treeType) {
-            var treeId = "#visual-" + treeType;
-            console.log("printing " + treeType);
             this.walkTree(this.root, "");
             var output = document.getElementById(treeType);
             output.value += this.outputTree + "\n\n";

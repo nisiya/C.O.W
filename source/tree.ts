@@ -39,7 +39,6 @@ module Compiler {
 
     public displayTree(treeType:string): void{
       let treeId:string = "#visual-" + treeType;
-      console.log("printing " + treeType);
       var jsonTree = {
         chart: {
             container: treeId
@@ -81,8 +80,6 @@ module Compiler {
     }
 
     public printTree(treeType:string): void{
-      let treeId:string = "#visual-" + treeType;
-      console.log("printing " + treeType);
       this.walkTree(this.root, "");
       let output: HTMLInputElement = <HTMLInputElement> document.getElementById(treeType);
       output.value += this.outputTree + "\n\n";

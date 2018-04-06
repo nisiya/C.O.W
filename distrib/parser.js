@@ -22,6 +22,10 @@ var Compiler;
             // this.symbolTable = new Array<Symbol>();
             this.printStage("parseProgram()");
             if (this.parseBlock(false)) {
+                if (this.error) {
+                    // Program was found but there were errors in it
+                    return null;
+                }
                 // true = finished parsing body of program
                 this.csTree.moveUp(); // to Program
                 this.currentToken = this.tokenBank.pop();
@@ -57,6 +61,10 @@ var Compiler;
                 this.csTree.addBranchNode("Block", [this.currentToken.tLine, this.currentToken.tColumn]);
                 this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
                 if (this.parseStmtList()) {
+                    if (this.error) {
+                        // Block was found but there were errors inside
+                        return true;
+                    }
                     // true = finished parsing body of block
                     this.currentToken = this.tokenBank.pop();
                     //check for [}]
@@ -107,8 +115,14 @@ var Compiler;
         Parser.prototype.parseStatement = function () {
             if (this.parseBlock(true) || this.parsePrintStmt() || this.parseAssignStmt()
                 || this.parseVarDecl() || this.parseWhileStmt() || this.parseIfStmt()) {
-                this.csTree.moveUp(); // to Statement
-                return true;
+                if (this.error) {
+                    // Statement was found but there were errors inside
+                    return false;
+                }
+                else {
+                    this.csTree.moveUp(); // to Statement
+                    return true;
+                }
             }
             else {
                 // can be epsilon
@@ -141,19 +155,19 @@ var Compiler;
                             // Expected [])]
                             this.tokenBank.push(this.currentToken);
                             this.printError("T_CloseParen", this.currentToken);
-                            return false;
+                            return true;
                         }
                     }
                     else {
                         // Expected [Expr]
                         this.printError("Expr", this.currentToken);
-                        return false;
+                        return true;
                     }
                 }
                 else {
                     // Expected [(]
                     this.printError("T_OpenParen", this.currentToken);
-                    return false;
+                    return true;
                 }
             }
             else {
@@ -186,13 +200,13 @@ var Compiler;
                     else {
                         // Expected [Expr]
                         this.printError("Expr", this.currentToken);
-                        return false;
+                        return true;
                     }
                 }
                 else {
                     // Expected [=]
                     this.printError("T_Assignment", this.currentToken);
-                    return false;
+                    return true;
                 }
             }
             else {
@@ -222,7 +236,7 @@ var Compiler;
                 }
                 else {
                     this.printError("T_Id", this.currentToken);
-                    return false;
+                    return true;
                 }
             }
             else {
@@ -249,13 +263,13 @@ var Compiler;
                     else {
                         // Expected block
                         this.printError("Block", this.currentToken);
-                        return false;
+                        return true;
                     }
                 }
                 else {
                     // Expected boolexpr
                     this.printError("BoolExpr", this.currentToken);
-                    return false;
+                    return true;
                 }
             }
             else {
@@ -282,13 +296,13 @@ var Compiler;
                     else {
                         // Expected block
                         this.printError("Block", this.currentToken);
-                        return false;
+                        return true;
                     }
                 }
                 else {
                     // Expected boolexpr
                     this.printError("BoolExpr", this.currentToken);
-                    return false;
+                    return true;
                 }
             }
             else {

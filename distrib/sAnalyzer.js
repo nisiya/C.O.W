@@ -18,7 +18,6 @@ var Compiler;
             if (this.buildAST(csTree)) {
                 // AST built, start scope and type checking
                 if (this.scopeTypeCheck()) {
-                    console.log(this.scopeTree);
                     this.buildSymbolTable();
                     return [this.asTree, this.symbolTable, this.warnings];
                 }
@@ -263,19 +262,23 @@ var Compiler;
         };
         SAnalyzer.prototype.checkBoolExpr = function (expr) {
             var rightType = this.checkExprType(expr.childrenNodes[0]);
-            var leftType = this.checkExprType(expr.childrenNodes[1]);
-            if (rightType == "invalid" || leftType == "invalid") {
-                // error already handled
-                return false;
+            if (rightType == "invalid") {
+                return false; // error already handled
             }
             else {
-                if (rightType == leftType) {
-                    return true;
+                var leftType = this.checkExprType(expr.childrenNodes[1]);
+                if (leftType == "invalid") {
+                    return false; // error already handled
                 }
                 else {
-                    // type mismatch
-                    this.printError("Type mismatched error. Cannot compare " + rightType + " with " + leftType, expr.location);
-                    return false;
+                    if (rightType == leftType) {
+                        return true;
+                    }
+                    else {
+                        // type mismatch
+                        this.printError("Type mismatched error. Cannot compare " + rightType + " with " + leftType, expr.location);
+                        return false;
+                    }
                 }
             }
         };
