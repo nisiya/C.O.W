@@ -30,7 +30,6 @@ var Compiler;
         };
         Tree.prototype.displayTree = function (treeType) {
             var treeId = "#visual-" + treeType;
-            console.log("printing " + treeType);
             var jsonTree = {
                 chart: {
                     container: treeId
@@ -40,26 +39,10 @@ var Compiler;
                     children: []
                 }
             };
-            this.walkTree(this.root, "", jsonTree.nodeStructure.children);
+            this.buildTree(this.root, jsonTree.nodeStructure.children);
             var visualTree = new Treant(jsonTree);
         };
-        Tree.prototype.printTree = function (treeType) {
-            var treeId = "#visual-" + treeType;
-            console.log("printing " + treeType);
-            var jsonTree = {
-                chart: {
-                    container: treeId
-                },
-                nodeStructure: {
-                    text: { name: this.root.value },
-                    children: []
-                }
-            };
-            this.walkTree(this.root, "", jsonTree.nodeStructure.children);
-            var output = document.getElementById(treeType);
-            output.value += this.outputTree + "\n\n";
-        };
-        Tree.prototype.walkTree = function (node, indent, jsonLevel) {
+        Tree.prototype.buildTree = function (node, jsonLevel) {
             // for the pretty cst
             if (node != this.root) {
                 var jsonNode = {
@@ -69,6 +52,24 @@ var Compiler;
                 jsonLevel.push(jsonNode);
                 jsonLevel = jsonNode.children;
             }
+            var children = node.childrenNodes;
+            // print tree in preorder
+            if (children.length == 0) {
+                return;
+            }
+            else {
+                for (var i = 0; i < children.length; i++) {
+                    this.buildTree(children[i], jsonLevel);
+                }
+                return;
+            }
+        };
+        Tree.prototype.printTree = function (treeType) {
+            this.walkTree(this.root, "");
+            var output = document.getElementById(treeType);
+            output.value += this.outputTree + "\n\n";
+        };
+        Tree.prototype.walkTree = function (node, indent) {
             // for the normal cst
             this.outputTree += indent + "<" + node.value + ">\n";
             var children = node.childrenNodes;
@@ -78,7 +79,7 @@ var Compiler;
             }
             else {
                 for (var i = 0; i < children.length; i++) {
-                    this.walkTree(children[i], indent + "-", jsonLevel);
+                    this.walkTree(children[i], indent + "-");
                 }
                 return;
             }

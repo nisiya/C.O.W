@@ -92,7 +92,14 @@ b=1+a
 }$
 ```
 
-###
+### Invalid intexpr
+```java
+{
+    int a
+    a = 4
+    a = 1 + "there" // operand needs to be int
+}$
+```
 
 ## Warning Programs
 ```java
@@ -126,4 +133,58 @@ b=1+a
     print(true)
     print((true == false))
 }
+```
+
+## Good Test cases (by Tien)
+### Lots of warnings
+```java
+/* THIS DOES NOT FAIL */
+
+/* This is is show the warning
+ - printing capabilities of this
+ - Semantic Analyzer */
+{
+    int a
+    boolean b
+    {
+        int d
+    }
+    {
+        boolean e
+        string f
+        f = "terhe is"
+        {
+            int g
+            int h
+            h = 4
+            int j
+            int k
+        }
+    }
+    string c
+    {
+    boolean g
+    b = true
+    }
+}$
+```
+
+### Boolean hell && string == boolean
+```java
+/* Assuming you get past Boolean Hell
+ - there is a boolean being compared to
+ - a string which will cause a type error */
+{
+    int a
+    a = 4
+    boolean b
+    b = true
+    boolean c
+    string d
+    d = "there is no spoon"
+    c = (d != "there is a spoon")
+    if(c == (false != (b == (true == (a == 3+1))))) {
+        print((b != d))
+    }
+}$
 ```

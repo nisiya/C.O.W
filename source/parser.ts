@@ -29,6 +29,10 @@ module Compiler {
       this.printStage("parseProgram()");
 
       if(this.parseBlock(false)){
+        if(this.error){
+          // Program was found but there were errors in it
+          return null;
+        }
         // true = finished parsing body of program
         this.csTree.moveUp(); // to Program
         this.currentToken = this.tokenBank.pop();
@@ -66,6 +70,10 @@ module Compiler {
         this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
 
         if(this.parseStmtList()){
+          if(this.error){
+            // Block was found but there were errors inside
+            return true;
+          }
           // true = finished parsing body of block
           this.currentToken = this.tokenBank.pop();
           //check for [}]
@@ -114,8 +122,13 @@ module Compiler {
     public parseStatement(): boolean{
       if(this.parseBlock(true) || this.parsePrintStmt() || this.parseAssignStmt()
         || this.parseVarDecl() || this.parseWhileStmt() || this.parseIfStmt()){
-        this.csTree.moveUp(); // to Statement
-        return true;
+        if(this.error){
+          // Statement was found but there were errors inside
+          return false
+        } else{
+          this.csTree.moveUp(); // to Statement
+          return true;
+        }
       } else{
         // can be epsilon
         return false;
@@ -148,17 +161,17 @@ module Compiler {
               // Expected [])]
               this.tokenBank.push(this.currentToken);
               this.printError("T_CloseParen", this.currentToken);
-              return false;
+              return true;
             }
           } else{
             // Expected [Expr]
             this.printError("Expr", this.currentToken);
-            return false;
+            return true;
           }
         } else{
           // Expected [(]
           this.printError("T_OpenParen", this.currentToken);
-          return false;
+          return true;
         }
       } else{
         // go back to parseStmtList to check other production
@@ -190,12 +203,12 @@ module Compiler {
           } else{
             // Expected [Expr]
             this.printError("Expr", this.currentToken);
-            return false;
+            return true;
           }
         } else{
           // Expected [=]
             this.printError("T_Assignment", this.currentToken);
-          return false;
+          return true;
         }
       } else{
         // go back to parseStmtList to check other productions
@@ -224,7 +237,7 @@ module Compiler {
           return true;
         } else{
           this.printError("T_Id", this.currentToken);
-          return false;
+          return true;
         }
       } else{
         // return to parseStmtList to evaluate other production
@@ -250,12 +263,12 @@ module Compiler {
           } else{
             // Expected block
             this.printError("Block", this.currentToken);
-            return false;
+            return true;
           }
         } else{
           // Expected boolexpr
           this.printError("BoolExpr", this.currentToken);
-          return false;
+          return true;
         }
       } else{
         // return to parseStmtList to evaluate other productions
@@ -281,12 +294,12 @@ module Compiler {
           } else{
             // Expected block
             this.printError("Block", this.currentToken);  
-            return false;
+            return true;
           }
         } else{
           // Expected boolexpr
           this.printError("BoolExpr", this.currentToken);
-          return false;
+          return true;
         }
       } else{
         // return to parseStmtList to evaluate other productions

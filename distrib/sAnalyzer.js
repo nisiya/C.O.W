@@ -18,7 +18,6 @@ var Compiler;
             if (this.buildAST(csTree)) {
                 // AST built, start scope and type checking
                 if (this.scopeTypeCheck()) {
-                    console.log(this.scopeTree);
                     this.buildSymbolTable();
                     return [this.asTree, this.symbolTable, this.warnings];
                 }
@@ -247,41 +246,39 @@ var Compiler;
             while (isPlus.test(expr.value)) {
                 expr = expr.childrenNodes[1];
             }
-            if (isDigit.test(expr.value)) {
-                return true; // addition of int only
+            var exprType = this.checkExprType(expr);
+            if (exprType == "invalid") {
+                // undeclare/out-of-scope error handled already
+                return false;
             }
-            // check scope of id
-            var symbol = this.checkScope(expr, true);
-            if (symbol != null) {
-                if (symbol.type == "int") {
-                    return true;
-                }
-                else {
-                    // type mismatched error
-                    this.printError("Type mismatched error. Addition invalid for " + symbol.type + " [" + symbol.key + "]", symbol.location);
-                    return false;
-                }
+            else if (exprType == "int") {
+                return true;
             }
             else {
-                // undeclared/out-of-scope error already handled
+                // type mismatched error
+                this.printError("Type mismatched error. Addition invalid for " + exprType + " [" + expr.value + "]", expr.location);
                 return false;
             }
         };
         SAnalyzer.prototype.checkBoolExpr = function (expr) {
             var rightType = this.checkExprType(expr.childrenNodes[0]);
-            var leftType = this.checkExprType(expr.childrenNodes[1]);
-            if (rightType == "invalid" || leftType == "invalid") {
-                // error already handled
-                return false;
+            if (rightType == "invalid") {
+                return false; // error already handled
             }
             else {
-                if (rightType == leftType) {
-                    return true;
+                var leftType = this.checkExprType(expr.childrenNodes[1]);
+                if (leftType == "invalid") {
+                    return false; // error already handled
                 }
                 else {
-                    // type mismatch
-                    this.printError("Type mismatched error. Cannot compare " + rightType + " with " + leftType, expr.location);
-                    return false;
+                    if (rightType == leftType) {
+                        return true;
+                    }
+                    else {
+                        // type mismatch
+                        this.printError("Type mismatched error. Cannot compare " + rightType + " with " + leftType, expr.location);
+                        return false;
+                    }
                 }
             }
         };

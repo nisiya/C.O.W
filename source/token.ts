@@ -33,10 +33,5 @@ module Compiler {
     public toString(): string{
       return this.tid + " [ " + this.tValue + " ] on line " + this.tLine + ", column " + this.tColumn;
     }
-
-    public match(value: string){
-      return this.tValue == value;
-    }
-
   }
 }
