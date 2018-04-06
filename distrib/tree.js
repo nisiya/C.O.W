@@ -22,6 +22,13 @@ var Compiler;
             var node = new TreeNode(value, location, this.current);
             this.current.childrenNodes.push(node);
         };
+        Tree.prototype.removeCurrentNode = function () {
+            // only used for epsilon in statement and charlist
+            var parentNode = this.current.parentNode;
+            // would always be the first child
+            parentNode.childrenNodes.pop();
+            this.current = parentNode;
+        };
         Tree.prototype.addSubTree = function (node) {
             this.current.childrenNodes.push(node);
         };

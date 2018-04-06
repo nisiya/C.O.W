@@ -30,9 +30,18 @@ module Compiler {
       this.current.childrenNodes.push(node);
     }
 
+    public removeCurrentNode(): void{
+      // only used for epsilon in statement and charlist
+      let parentNode = this.current.parentNode;
+      // would always be the first child
+      parentNode.childrenNodes.pop();
+      this.current = parentNode;
+    }
+
     public addSubTree(node: TreeNode): void{
       this.current.childrenNodes.push(node);
     }
+    
     public moveUp(): void{
       this.current = this.current.parentNode;
     }
