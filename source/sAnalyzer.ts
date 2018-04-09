@@ -257,6 +257,7 @@ module Compiler {
     }
 
     public checkBoolExpr(expr: TreeNode): boolean{
+      console.log(expr.value);
       let rightType = this.checkExprType(expr.childrenNodes[0]);
       if(rightType == "invalid"){
         return false; // error already handled
