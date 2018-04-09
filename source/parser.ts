@@ -342,7 +342,9 @@ module Compiler {
         this.currentToken = this.tokenBank.pop();
         // 35. <intop> -> <+>
         if(this.currentToken.isEqual("T_Addition")){
+          this.csTree.addBranchNode("intop", [this.currentToken.tLine, this.currentToken.tColumn]);
           this.csTree.addLeafNode(this.currentToken.tValue, [this.currentToken.tLine, this.currentToken.tColumn]);
+          this.csTree.moveUp();
           if(this.parseExpr()){
             this.csTree.moveUp(); // to IntExpr
             return true;

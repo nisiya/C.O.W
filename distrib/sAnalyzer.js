@@ -409,12 +409,13 @@ var Compiler;
         };
         // IntExprChildren: [digit] or [digit, intop, Expr]
         SAnalyzer.prototype.analyzeIntExpr = function (IntChildren) {
+            // console.log(IntChildren);
             if (IntChildren.length == 1) {
                 this.asTree.addLeafNode(IntChildren[0].childrenNodes[0].value, IntChildren[0].childrenNodes[0].location); // the digit
                 // asTree.current = parent of digit
             }
             else {
-                this.asTree.addBranchNode(IntChildren[1].value, IntChildren[1].location); // intop
+                this.asTree.addBranchNode(IntChildren[1].childrenNodes[0].value, IntChildren[1].childrenNodes[0].location); // intop
                 this.asTree.addLeafNode(IntChildren[0].childrenNodes[0].value, IntChildren[0].childrenNodes[0].location); // the first digit
                 this.analyzeExpr(IntChildren[2]); // expr's children
                 this.asTree.moveUp();

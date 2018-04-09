@@ -12,6 +12,7 @@ module Compiler {
   export class Control {
 
     public static startCompile(btn): void {
+      console.time('someFunction');
       let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
       let csTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("cst");
       let asTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("ast");
@@ -101,6 +102,7 @@ module Compiler {
       }
       _GrandCST.displayTree("cst");
       _GrandAST.displayTree("ast");
+      console.timeEnd('someFunction');
     }
 
     // update symbol table output
