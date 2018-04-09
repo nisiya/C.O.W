@@ -261,7 +261,6 @@ var Compiler;
             }
         };
         SAnalyzer.prototype.checkBoolExpr = function (expr) {
-            console.log(expr.value);
             var rightType = this.checkExprType(expr.childrenNodes[0]);
             if (rightType == "invalid") {
                 return false; // error already handled

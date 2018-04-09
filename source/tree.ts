@@ -89,7 +89,6 @@ module Compiler {
     }
 
     public printTree(treeType:string): void{
-      console.log(treeType);
       this.walkTree(this.root, "");
       let output: HTMLInputElement = <HTMLInputElement> document.getElementById(treeType);
       output.value += this.outputTree + "\n\n";

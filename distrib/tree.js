@@ -72,7 +72,6 @@ var Compiler;
             }
         };
         Tree.prototype.printTree = function (treeType) {
-            console.log(treeType);
             this.walkTree(this.root, "");
             var output = document.getElementById(treeType);
             output.value += this.outputTree + "\n\n";

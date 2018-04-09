@@ -12,6 +12,7 @@ module Compiler {
   export class Control {
 
     public static startCompile(btn): void {
+      console.time('someFunction1');
       let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
       let csTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("cst");
       let asTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("ast");
@@ -54,7 +55,7 @@ module Compiler {
             _GrandCST.addSubTree(csTree.root);
             // print CST
             csTree.printTree("cst");
-            csTree.displayTree("cst");
+            // csTree.displayTree("cst");
             log.value += "\n ============= \n Parse completed successfully \n =============";
 
             log.value += "\n Semantic Analyzer start for Program " + prgNum 
@@ -71,7 +72,7 @@ module Compiler {
               [asTree, symbolTable, warningSA] = sAnalyzeReturn;
               _GrandAST.addSubTree(asTree.root);
               asTree.printTree("ast");
-              asTree.displayTree("ast");
+              // asTree.displayTree("ast");
               if(symbolTable){
                 // scope and type checking also passed
                 this.updateSymbolTable(symbolTable, prgNum);
@@ -101,8 +102,9 @@ module Compiler {
         prgNum++;
         log.scrollTop = log.scrollHeight;
       }
-      // _GrandCST.displayTree("cst");
-      // _GrandAST.displayTree("ast");
+      _GrandCST.displayTree("cst");
+      _GrandAST.displayTree("ast");
+      console.timeEnd('someFunction1');
     }
 
     // update symbol table output
