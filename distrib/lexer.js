@@ -133,7 +133,7 @@ var Compiler;
                         // special case of == or =
                         if (equal.test(userPrg.charAt(secondPointer + 1))) {
                             // boolop ==
-                            this.createToken("T_Equal", "==");
+                            this.createToken("T_BoolOp", "==");
                             // since we look at next char..
                             this.currentColumn++;
                             secondPointer++;
@@ -146,7 +146,7 @@ var Compiler;
                     else if (notSymbol.test(currentChar)) {
                         // special case of != or !, which is invalid
                         if (equal.test(userPrg.charAt(secondPointer + 1))) {
-                            this.createToken("T_NotEqual", "!=");
+                            this.createToken("T_BoolOp", "!=");
                             // again since we looked at next char..
                             this.currentColumn++;
                             secondPointer++;
