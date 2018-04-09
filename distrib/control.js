@@ -49,7 +49,7 @@ var Compiler;
                         _GrandCST.addSubTree(csTree.root);
                         // print CST
                         csTree.printTree("cst");
-                        csTree.displayTree("cst");
+                        // csTree.displayTree("cst");
                         log.value += "\n ============= \n Parse completed successfully \n =============";
                         log.value += "\n Semantic Analyzer start for Program " + prgNum
                             + "... \n ============= \n   SEMANTIC ANALYZER --> Analyzing Program " + prgNum + "...";
@@ -63,7 +63,7 @@ var Compiler;
                             asTree = sAnalyzeReturn[0], symbolTable = sAnalyzeReturn[1], warningSA = sAnalyzeReturn[2];
                             _GrandAST.addSubTree(asTree.root);
                             asTree.printTree("ast");
-                            asTree.displayTree("ast");
+                            // asTree.displayTree("ast");
                             if (symbolTable) {
                                 // scope and type checking also passed
                                 this.updateSymbolTable(symbolTable, prgNum);
@@ -96,8 +96,8 @@ var Compiler;
                 prgNum++;
                 log.scrollTop = log.scrollHeight;
             }
-            // _GrandCST.displayTree("cst");
-            // _GrandAST.displayTree("ast");
+            _GrandCST.displayTree("cst");
+            _GrandAST.displayTree("ast");
         };
         // update symbol table output
         Control.updateSymbolTable = function (symbolTable, prgNum) {

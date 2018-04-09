@@ -181,7 +181,8 @@ module Compiler {
         // check for [=]
         currentToken = this.tokenBank.pop();
         if(this.match(currentToken, "T_Assignment")){
-          
+          this.csTree.addLeafNode(currentToken.tValue, [currentToken.tLine, currentToken.tColumn]);
+
           // check for <Expr>
           if(!this.parseExpr()){
             this.printError(currentToken, "Expr");
@@ -378,7 +379,9 @@ module Compiler {
             // check for <BoolOp>
             currentToken = this.tokenBank.pop();
             if(this.match(currentToken, "T_BoolOp")){
+              this.csTree.addBranchNode("BoolOp", [currentToken.tLine, currentToken.tColumn]);
               this.csTree.addLeafNode(currentToken.tValue, [currentToken.tLine, currentToken.tColumn]);
+              this.csTree.moveUp(); // to BoolExpr
               
               // check for <Expr>
               if(this.parseExpr()){
@@ -423,7 +426,6 @@ module Compiler {
         return this.parseCharList();
       } else{
         this.tokenBank.push(currentToken);
-        this.csTree.removeCurrentNode();
         while(this.csTree.current.value == "CharList"){
           this.csTree.moveUp();
         }
