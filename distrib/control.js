@@ -18,6 +18,7 @@ var Compiler;
             var lexer = new Compiler.Lexer();
             var parser = new Compiler.Parser();
             var sAnalyzer = new Compiler.SAnalyzer();
+            var codeGen = new Compiler.CodeGen();
             _GrandCST = new Compiler.Tree("All Programs", [0, 0]);
             _GrandAST = new Compiler.Tree("All Programs", [0, 0]);
             // reset outputs
@@ -69,6 +70,11 @@ var Compiler;
                                 // scope and type checking also passed
                                 this.updateSymbolTable(symbolTable, prgNum);
                                 log.value += "\n =============\n Semantic Anaylsis completed successfully with " + warningSA + " warnings \n =============";
+                                // start code generation
+                                var code = codeGen.start(asTree);
+                            }
+                            else {
+                                // Semantic Analyzer Failed
                             }
                         }
                         else {

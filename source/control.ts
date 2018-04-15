@@ -19,6 +19,7 @@ module Compiler {
       let lexer: Compiler.Lexer = new Lexer();
       let parser: Compiler.Parser = new Parser();
       let sAnalyzer: Compiler.SAnalyzer = new SAnalyzer();
+      let codeGen: Compiler.CodeGen = new CodeGen();
       _GrandCST = new Tree("All Programs",[0,0]);
       _GrandAST = new Tree("All Programs",[0,0]);
 
@@ -77,6 +78,11 @@ module Compiler {
                 // scope and type checking also passed
                 this.updateSymbolTable(symbolTable, prgNum);
                 log.value += "\n =============\n Semantic Anaylsis completed successfully with " + warningSA + " warnings \n =============";
+
+                // start code generation
+                let code = codeGen.start(asTree);
+              } else{
+                // Semantic Analyzer Failed
               }
             } else{
               // AST generation failed
