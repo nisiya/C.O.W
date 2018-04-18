@@ -100,7 +100,7 @@ var Compiler;
                         this.printError("Redeclared identifier [" + varId.value + "] in the same scope", varId.location);
                         return false;
                     }
-                case "=":
+                case "Assign":
                     varId = currentNode.childrenNodes[0];
                     expr = currentNode.childrenNodes[1];
                     symbol = this.checkScope(varId, false);
@@ -196,10 +196,10 @@ var Compiler;
             this.printStage("Checking for type mismatch in the statement...");
             var exprType;
             var isDigit = /^\d$/;
-            var isPlus = /^\+$/;
+            var isPlus = /^Add$/;
             var isId = /^[a-z]$/;
             var isBoolVal = /^true|false$/;
-            var isBoolOp = /^!=|==$/;
+            var isBoolOp = /^Equal|Not Equal$/;
             if (isDigit.test(expr.value)) {
                 return "int";
             }
@@ -240,7 +240,7 @@ var Compiler;
             }
         };
         SAnalyzer.prototype.checkIntExpr = function (expr) {
-            var isPlus = /^\+$/;
+            var isPlus = /^Add$/;
             var isDigit = /^\d$/;
             // find the last operand
             while (isPlus.test(expr.value)) {
@@ -343,7 +343,7 @@ var Compiler;
             // asTree.current = print
         };
         SAnalyzer.prototype.analyzeAssignment = function (AssignChildren) {
-            this.asTree.addBranchNode(AssignChildren[1].value, AssignChildren[1].location); // =
+            this.asTree.addBranchNode("Assign", AssignChildren[1].location); // =
             this.asTree.addLeafNode(this.analyzeId(AssignChildren[0]), AssignChildren[0].location); // id
             this.analyzeExpr(AssignChildren[2]); // Expr's child
             // asTree.current = AssignmentOp
@@ -414,7 +414,7 @@ var Compiler;
                 // asTree.current = parent of digit
             }
             else {
-                this.asTree.addBranchNode(IntChildren[1].childrenNodes[0].value, IntChildren[1].childrenNodes[0].location); // intop
+                this.asTree.addBranchNode("Add", IntChildren[1].childrenNodes[0].location); // intop
                 this.asTree.addLeafNode(IntChildren[0].childrenNodes[0].value, IntChildren[0].childrenNodes[0].location); // the first digit
                 this.analyzeExpr(IntChildren[2]); // expr's children
                 this.asTree.moveUp();
@@ -428,7 +428,8 @@ var Compiler;
                 // asTree.current = while
             }
             else {
-                this.asTree.addBranchNode(BoolChildren[2].childrenNodes[0].value, BoolChildren[2].childrenNodes[0].location); // the boolop
+                var boolop = (BoolChildren[2].childrenNodes[0].value == "==") ? "Equal" : "NotEqual";
+                this.asTree.addBranchNode(boolop, BoolChildren[2].childrenNodes[0].location); // the boolop
                 this.analyzeExpr(BoolChildren[1]); // asTree.current = boolop
                 this.analyzeExpr(BoolChildren[3]);
                 this.asTree.moveUp(); // to while

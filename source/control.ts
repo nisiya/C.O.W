@@ -80,7 +80,7 @@ module Compiler {
                 log.value += "\n =============\n Semantic Anaylsis completed successfully with " + warningSA + " warnings \n =============";
 
                 // start code generation
-                let code = codeGen.start(asTree);
+                let code = codeGen.start(asTree, symbolTable);
               } else{
                 // Semantic Analyzer Failed
               }

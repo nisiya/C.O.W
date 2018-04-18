@@ -71,7 +71,7 @@ var Compiler;
                                 this.updateSymbolTable(symbolTable, prgNum);
                                 log.value += "\n =============\n Semantic Anaylsis completed successfully with " + warningSA + " warnings \n =============";
                                 // start code generation
-                                var code = codeGen.start(asTree);
+                                var code = codeGen.start(asTree, symbolTable);
                             }
                             else {
                                 // Semantic Analyzer Failed
