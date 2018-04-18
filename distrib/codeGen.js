@@ -18,15 +18,19 @@ var Compiler;
             this.currentScope = 0;
             this.varOffset = 1;
             this.stringOffset = -1;
-            this.createCode(this.asTree.root);
+            for (var i = 0; i < this.asTree.root.childrenNodes.length; i++) {
+                this.createCode(this.asTree.root.childrenNodes[i]);
+            }
             console.log(this.code);
         };
         CodeGen.prototype.createCode = function (currentNode) {
             switch (currentNode.value) {
                 case "Block":
+                    this.currentScope++;
                     for (var i = 0; i < currentNode.childrenNodes.length; i++) {
                         this.createCode(currentNode.childrenNodes[i]);
                     }
+                    this.currentScope--;
                     break;
                 case "VarDecl":
                     this.createVarDecl(currentNode);
@@ -75,7 +79,7 @@ var Compiler;
                 var varAddr = this.findTempAddr(value);
                 this.loadAccMem(varAddr);
             }
-            else if (isDigit) {
+            else if (isDigit.test(value)) {
                 // convert value to hex
                 var intValue = parseInt(value);
                 if (intValue < 10) {
@@ -89,6 +93,7 @@ var Compiler;
                 this.calculateSum(assignNode.childrenNodes[1]);
             }
             else if (value == "true") {
+                console.log("hellsssssso");
                 this.loadAccConst("01");
             }
             else if (value == "false") {

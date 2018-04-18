@@ -28,16 +28,20 @@ module Compiler {
       this.varOffset = 1;
       this.stringOffset = -1;
 
-      this.createCode(this.asTree.root);
+      for (var i=0; i<this.asTree.root.childrenNodes.length; i++){
+        this.createCode(this.asTree.root.childrenNodes[i]);
+      }
       console.log(this.code);
     }
 
     public createCode(currentNode:TreeNode): void{
       switch(currentNode.value){
         case "Block":
+          this.currentScope++;
           for (var i=0; i<currentNode.childrenNodes.length; i++){
             this.createCode(currentNode.childrenNodes[i]);
           }
+          this.currentScope--;
           break;
         case "VarDecl":
           this.createVarDecl(currentNode);
@@ -89,7 +93,7 @@ module Compiler {
         let varAddr:string = this.findTempAddr(value);
         this.loadAccMem(varAddr);
 
-      } else if (isDigit){
+      } else if (isDigit.test(value)){
         // convert value to hex
         let intValue = parseInt(value);
         if(intValue < 10){
@@ -102,6 +106,7 @@ module Compiler {
         this.calculateSum(assignNode.childrenNodes[1]);
 
       } else if(value == "true"){
+        console.log("hellsssssso");
         this.loadAccConst("01");
 
       } else if(value == "false"){
