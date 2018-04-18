@@ -19,10 +19,10 @@ var Compiler;
                 // AST built, start scope and type checking
                 if (this.scopeTypeCheck()) {
                     this.buildSymbolTable();
-                    return [this.asTree, this.symbolTable, this.warnings];
+                    return [this.asTree, this.symbolTable, this.scopeTree, this.warnings];
                 }
                 else {
-                    return [this.asTree, null, this.warnings];
+                    return [this.asTree, null, null, this.warnings];
                 }
             }
             else {

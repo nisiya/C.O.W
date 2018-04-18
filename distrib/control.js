@@ -60,9 +60,10 @@ var Compiler;
                         var warningSA = void 0;
                         // start semantic analyzer
                         var sAnalyzeReturn = sAnalyzer.start(csTree);
+                        var scopeTree = void 0;
                         if (sAnalyzeReturn) {
                             // AST generation passed
-                            asTree = sAnalyzeReturn[0], symbolTable = sAnalyzeReturn[1], warningSA = sAnalyzeReturn[2];
+                            asTree = sAnalyzeReturn[0], symbolTable = sAnalyzeReturn[1], scopeTree = sAnalyzeReturn[2], warningSA = sAnalyzeReturn[3];
                             _GrandAST.addSubTree(asTree.root);
                             asTree.printTree("ast");
                             // asTree.displayTree("ast");
@@ -71,7 +72,7 @@ var Compiler;
                                 this.updateSymbolTable(symbolTable, prgNum);
                                 log.value += "\n =============\n Semantic Anaylsis completed successfully with " + warningSA + " warnings \n =============";
                                 // start code generation
-                                var code = codeGen.start(asTree, symbolTable);
+                                var code = codeGen.start(asTree);
                             }
                             else {
                                 // Semantic Analyzer Failed

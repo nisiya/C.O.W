@@ -16,7 +16,7 @@ module Compiler {
     public scopeTree: ScopeTree;
     public warnings: number;
 
-    public start(csTree:Tree): [Tree, Symbol[], number]{
+    public start(csTree:Tree): [Tree, Symbol[], ScopeTree, number]{
       console.log("SA Start");
       this.warnings = 0;
       // buildAST first
@@ -24,9 +24,9 @@ module Compiler {
         // AST built, start scope and type checking
         if(this.scopeTypeCheck()){
           this.buildSymbolTable();
-          return [this.asTree, this.symbolTable, this.warnings];
+          return [this.asTree, this.symbolTable, this.scopeTree, this.warnings];
         } else{
-          return [this.asTree, null, this.warnings];
+          return [this.asTree, null, null, this.warnings];
         }
       } else{
         return null;

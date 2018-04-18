@@ -67,10 +67,11 @@ module Compiler {
 
             // start semantic analyzer
             let sAnalyzeReturn = sAnalyzer.start(csTree);
+            let scopeTree:ScopeTree;
 
             if(sAnalyzeReturn){
               // AST generation passed
-              [asTree, symbolTable, warningSA] = sAnalyzeReturn;
+              [asTree, symbolTable, scopeTree, warningSA] = sAnalyzeReturn;
               _GrandAST.addSubTree(asTree.root);
               asTree.printTree("ast");
               // asTree.displayTree("ast");
@@ -80,7 +81,7 @@ module Compiler {
                 log.value += "\n =============\n Semantic Anaylsis completed successfully with " + warningSA + " warnings \n =============";
 
                 // start code generation
-                let code = codeGen.start(asTree, symbolTable);
+                let code = codeGen.start(asTree);
               } else{
                 // Semantic Analyzer Failed
               }
