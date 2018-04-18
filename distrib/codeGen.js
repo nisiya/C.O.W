@@ -82,21 +82,17 @@ var Compiler;
             else if (isDigit.test(value)) {
                 // convert value to hex
                 var intValue = parseInt(value);
-                if (intValue < 10) {
-                    this.loadAccConst("0" + intValue.toString(16));
-                }
-                else {
-                    this.loadAccConst(intValue.toString(16));
-                }
+                this.loadAccConst(intValue);
             }
             else if (value == "Add") {
                 this.calculateSum(assignNode.childrenNodes[1]);
+                // upon return, Acc will be loaded with appropriate value
             }
             else if (value == "true") {
-                this.loadAccConst("01");
+                this.loadAccConst(1);
             }
             else if (value == "false") {
-                this.loadAccConst("00");
+                this.loadAccConst(0);
             }
             else {
                 // handle string...
@@ -109,22 +105,42 @@ var Compiler;
         };
         CodeGen.prototype.calculateSum = function (additionNode) {
             var isDigit = /^[0-9]$/;
+            // load Acc with value
             var digit = additionNode.childrenNodes[0].value;
-            var sum = parseInt(digit);
+            this.loadAccConst(parseInt(digit));
+            // store at temp address
+            var tempAddr = "T" + this.tempNum + " XX";
+            this.storeAcc(tempAddr);
+            this.staticTable.set("Temp" + this.tempNum, [tempAddr, this.varOffset]);
+            this.tempNum++;
+            this.varOffset++;
+            var sumAddr = tempAddr;
             var rightOperand = additionNode.childrenNodes[1];
+            // check for more addition
             while (rightOperand.value == "Add") {
-                digit = rightOperand.childrenNodes[0].value;
-                sum += parseInt(digit);
-                rightOperand = rightOperand.childrenNodes[1];
+                // load Acc with value
+                var digit_1 = rightOperand.childrenNodes[0].value;
+                this.loadAccConst(parseInt(digit_1));
+                // store at diff temp address each time
+                var tempAddr_1 = "T" + this.tempNum + " XX";
+                this.storeAcc(tempAddr_1);
+                this.staticTable.set("Temp" + this.tempNum, [tempAddr_1, this.varOffset]);
+                this.tempNum++;
+                this.varOffset++;
+                // add value from sum storage
+                this.addAcc(sumAddr);
+                // store value back to sum storage
+                this.storeAcc(sumAddr);
+                rightOperand = additionNode.childrenNodes[1];
             }
             // the last value in IntExpr
             if (isDigit.test(rightOperand.value)) {
                 digit = rightOperand.childrenNodes[0].value;
                 sum += parseInt(digit);
-                this.loadAccConst(sum.toString(16));
+                this.loadAccConst(sum);
             }
             else {
-                this.loadAccConst(sum.toString(16));
+                this.loadAccConst(sum);
                 var varAddr = this.findTempAddr(rightOperand.value);
                 this.addAcc(varAddr);
             }
@@ -142,7 +158,12 @@ var Compiler;
         };
         CodeGen.prototype.loadAccConst = function (value) {
             this.code.push("A9");
-            this.code.push(value);
+            if (value < 10) {
+                this.code.push("0" + value.toString(16));
+            }
+            else {
+                this.code.push(value.toString(16));
+            }
         };
         CodeGen.prototype.loadAccMem = function (tempAddr) {
             this.code.push("AD");
