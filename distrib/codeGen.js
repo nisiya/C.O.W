@@ -93,7 +93,6 @@ var Compiler;
                 this.calculateSum(assignNode.childrenNodes[1]);
             }
             else if (value == "true") {
-                console.log("hellsssssso");
                 this.loadAccConst("01");
             }
             else if (value == "false") {
@@ -108,10 +107,27 @@ var Compiler;
             // store value to temp address
             this.storeAcc(tempAddr);
         };
-        CodeGen.prototype.calculateSum = function (node) {
-            var sum = 0;
-            // while()
-            return sum;
+        CodeGen.prototype.calculateSum = function (additionNode) {
+            var isDigit = /^[0-9]$/;
+            var digit = additionNode.childrenNodes[0].value;
+            var sum = parseInt(digit);
+            var rightOperand = additionNode.childrenNodes[1];
+            while (rightOperand.value == "Add") {
+                digit = rightOperand.childrenNodes[0].value;
+                sum += parseInt(digit);
+                rightOperand = rightOperand.childrenNodes[1];
+            }
+            // the last value in IntExpr
+            if (isDigit.test(rightOperand.value)) {
+                digit = rightOperand.childrenNodes[0].value;
+                sum += parseInt(digit);
+                this.loadAccConst(sum.toString(16));
+            }
+            else {
+                this.loadAccConst(sum.toString(16));
+                var varAddr = this.findTempAddr(rightOperand.value);
+                this.addAcc(varAddr);
+            }
         };
         CodeGen.prototype.findTempAddr = function (id) {
             var locInfo = this.staticTable.get(id + "@" + this.currentScope);

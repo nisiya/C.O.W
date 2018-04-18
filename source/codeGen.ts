@@ -106,7 +106,6 @@ module Compiler {
         this.calculateSum(assignNode.childrenNodes[1]);
 
       } else if(value == "true"){
-        console.log("hellsssssso");
         this.loadAccConst("01");
 
       } else if(value == "false"){
@@ -124,10 +123,28 @@ module Compiler {
       this.storeAcc(tempAddr);
     }
 
-    public calculateSum(node:TreeNode): number{
-      let sum:number = 0;
-      // while()
-      return sum;
+    public calculateSum(additionNode:TreeNode): void{
+      let isDigit:RegExp = /^[0-9]$/;
+
+      let digit:string = additionNode.childrenNodes[0].value;
+      let sum:number = parseInt(digit);
+      let rightOperand:TreeNode = additionNode.childrenNodes[1];
+      while(rightOperand.value == "Add"){
+        digit = rightOperand.childrenNodes[0].value;
+        sum += parseInt(digit);
+        rightOperand = rightOperand.childrenNodes[1];
+      }
+      // the last value in IntExpr
+      if(isDigit.test(rightOperand.value)){
+        digit = rightOperand.childrenNodes[0].value;
+        sum += parseInt(digit);
+        this.loadAccConst(sum.toString(16));
+      } else{
+        this.loadAccConst(sum.toString(16));
+        let varAddr = this.findTempAddr(rightOperand.value);
+        this.addAcc(varAddr);
+      }
+
     }
     public findTempAddr(id:string): string{
       let locInfo:[string, number] = this.staticTable.get(id + "@" + this.currentScope);
