@@ -13,14 +13,19 @@ var Compiler;
         CodeGen.prototype.start = function (asTree) {
             this.asTree = asTree;
             this.code = new Array();
+            this.tempStringMem = new Array();
             this.tempNum = 0;
             this.staticTable = new Map();
             this.currentScope = 0;
             this.varOffset = 1;
-            this.stringOffset = -1;
             for (var i = 0; i < this.asTree.root.childrenNodes.length; i++) {
                 this.createCode(this.asTree.root.childrenNodes[i]);
             }
+            // append strings to the end
+            while (this.tempStringMem.length > 0) {
+                this.code.push(this.tempStringMem.pop());
+            }
+            console.log(this.staticTable);
             console.log(this.code);
         };
         CodeGen.prototype.createCode = function (currentNode) {
@@ -53,35 +58,41 @@ var Compiler;
                     break;
             }
         };
+        CodeGen.prototype.addToStatic = function (id) {
+            var tempAddr = "T" + this.tempNum + " XX";
+            this.staticTable.set(id + "@" + this.currentScope, [tempAddr, this.varOffset]);
+            this.tempNum++;
+            this.varOffset++;
+            return tempAddr;
+        };
         CodeGen.prototype.createVarDecl = function (varDeclNode) {
             var id = varDeclNode.childrenNodes[1].value;
             var type = varDeclNode.childrenNodes[0].value;
-            var tempAddr = "T" + this.tempNum + " XX";
-            this.loadAccConst(0);
-            this.storeAcc(tempAddr);
-            var offset;
-            if (type == "string") {
-                offset = this.stringOffset;
-                this.stringOffset -= id.length;
-            }
-            else {
-                offset = this.varOffset;
-                this.varOffset++;
-            }
-            this.staticTable.set(id + "@" + this.currentScope, [tempAddr, offset]);
-            this.tempNum++;
+            var tempAddr = this.addToStatic(id);
+            if (type != "string") {
+                this.loadAccConst(0);
+                this.storeAcc(tempAddr);
+            } // else load the string pointer when initialized
         };
         CodeGen.prototype.createAssign = function (assignNode) {
             var isId = /^[a-z]$/;
             var isDigit = /^[0-9]$/;
             var isString = /^\"[a-zA-Z]*\"$/;
-            // find temp address
-            var id = assignNode.childrenNodes[0].value;
-            var tempAddr = this.findTempAddr(id);
             // identify value to be loaded
+            var id = assignNode.childrenNodes[0].value;
             var value = assignNode.childrenNodes[1].value;
+            var tempAddr;
             if (isString.test(value)) {
-                this.createString(assignNode);
+                this.tempStringMem.push("00"); // will add to code at the end
+                for (var i = value.length - 2; i > 0; i--) {
+                    // ignore the quotes
+                    var asciiVal = value.charCodeAt(i);
+                    this.tempStringMem.push(asciiVal.toString(16).toUpperCase());
+                }
+                var stringOffset = 256 - this.tempStringMem.length;
+                this.loadAccConst(stringOffset); // pointer to string
+                // add to Static table and get temp address
+                tempAddr = this.addToStatic(id);
             }
             else {
                 if (isId.test(value)) {
@@ -103,9 +114,11 @@ var Compiler;
                 else if (value == "false") {
                     this.loadAccConst(0);
                 }
-                // store value to temp address
-                this.storeAcc(tempAddr);
+                // find temp address
+                tempAddr = this.findTempAddr(id);
             }
+            // store value to temp address
+            this.storeAcc(tempAddr);
         };
         CodeGen.prototype.calculateSum = function (additionNode) {
             var isDigit = /^[0-9]$/;
@@ -159,10 +172,10 @@ var Compiler;
         CodeGen.prototype.loadAccConst = function (value) {
             this.code.push("A9");
             if (value < 10) {
-                this.code.push("0" + value.toString(16));
+                this.code.push("0" + value.toString(16).toUpperCase());
             }
             else {
-                this.code.push(value.toString(16));
+                this.code.push(value.toString(16).toUpperCase());
             }
         };
         CodeGen.prototype.loadAccMem = function (tempAddr) {

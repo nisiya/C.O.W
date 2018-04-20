@@ -12,25 +12,32 @@ module Compiler {
   export class CodeGen {
     public asTree:Tree;
     public code:string[];
-    public tempNum;
+    public tempNum:number;
     public staticTable: Map<string, [string, number]>;
-    public currentScope;
-    public varOffset;
-    public stringOffset;
+    public currentScope:number;
+    public varOffset:number;
+    public tempStringMem:string[];
 
 
     public start(asTree:Tree): void{
       this.asTree = asTree;
       this.code = new Array<string>();
+      this.tempStringMem = new Array<string>();
       this.tempNum = 0;
       this.staticTable = new Map<string, [string, number]>();
       this.currentScope = 0;
       this.varOffset = 1;
-      this.stringOffset = -1;
 
       for (var i=0; i<this.asTree.root.childrenNodes.length; i++){
         this.createCode(this.asTree.root.childrenNodes[i]);
       }
+
+      // append strings to the end
+      while (this.tempStringMem.length > 0){
+        this.code.push(this.tempStringMem.pop());
+      }
+
+      console.log(this.staticTable);
       console.log(this.code);
     }
 
@@ -65,23 +72,22 @@ module Compiler {
       }
     }
 
+    public addToStatic(id): string{
+      let tempAddr = "T" + this.tempNum + " XX";
+      this.staticTable.set(id + "@" + this.currentScope, 
+                           [tempAddr, this.varOffset]);
+      this.tempNum++;
+      this.varOffset++;
+      return tempAddr;
+    }
     public createVarDecl(varDeclNode:TreeNode): void{
       let id:string = varDeclNode.childrenNodes[1].value;
       let type:string = varDeclNode.childrenNodes[0].value;
-      let tempAddr = "T" + this.tempNum + " XX";
-      this.loadAccConst(0);
-      this.storeAcc(tempAddr);
-      let offset:number;
-      if (type == "string"){
-        offset = this.stringOffset;
-        this.stringOffset -= id.length;
-      } else{
-        offset = this.varOffset;
-        this.varOffset++;
-      }
-      this.staticTable.set(id + "@" + this.currentScope, 
-                           [tempAddr, offset]);
-      this.tempNum++;
+      let tempAddr:string = this.addToStatic(id);
+      if (type != "string"){
+        this.loadAccConst(0);
+        this.storeAcc(tempAddr);
+      } // else load the string pointer when initialized
     }
 
     public createAssign(assignNode:TreeNode): void{
@@ -89,15 +95,23 @@ module Compiler {
       let isDigit:RegExp = /^[0-9]$/;
       let isString:RegExp = /^\"[a-zA-Z]*\"$/;
 
-      // find temp address
-      let id:string = assignNode.childrenNodes[0].value;
-      let tempAddr:string = this.findTempAddr(id);
-
       // identify value to be loaded
+      let id:string = assignNode.childrenNodes[0].value;
       let value:string = assignNode.childrenNodes[1].value;
-      if (isString.test(value)){
-        this.createString(assignNode);
-      } else{
+      let tempAddr:string;
+
+      if(isString.test(value)){
+        this.tempStringMem.push("00"); // will add to code at the end
+        for(var i=value.length-2; i>0; i--){
+          // ignore the quotes
+          let asciiVal:number = value.charCodeAt(i);
+          this.tempStringMem.push(asciiVal.toString(16).toUpperCase());
+        }
+        let stringOffset:number = 256 - this.tempStringMem.length;
+        this.loadAccConst(stringOffset); // pointer to string
+        // add to Static table and get temp address
+        tempAddr = this.addToStatic(id);
+      } else {
         if (isId.test(value)){
           let varAddr:string = this.findTempAddr(value);
           this.loadAccMem(varAddr);
@@ -117,9 +131,12 @@ module Compiler {
           this.loadAccConst(0);
 
         }
+        // find temp address
+        tempAddr = this.findTempAddr(id);
+      }
 
-        // store value to temp address
-        this.storeAcc(tempAddr);
+      // store value to temp address
+      this.storeAcc(tempAddr);
     }
 
     public calculateSum(additionNode:TreeNode): void{
@@ -178,9 +195,9 @@ module Compiler {
     public loadAccConst(value:number): void{
       this.code.push("A9");
       if(value < 10){
-        this.code.push("0" + value.toString(16));
+        this.code.push("0" + value.toString(16).toUpperCase());
       } else{
-        this.code.push(value.toString(16));
+        this.code.push(value.toString(16).toUpperCase());
       }
     }
 
