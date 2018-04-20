@@ -39,6 +39,7 @@ var Compiler;
                     this.createAssign(currentNode);
                     break;
                 case "while":
+                    // this.createWhile(currentNode);
                     break;
                 case "if":
                     break;
@@ -56,7 +57,7 @@ var Compiler;
             var id = varDeclNode.childrenNodes[1].value;
             var type = varDeclNode.childrenNodes[0].value;
             var tempAddr = "T" + this.tempNum + " XX";
-            this.loadAccConst("00");
+            this.loadAccConst(0);
             this.storeAcc(tempAddr);
             var offset;
             if (type == "string") {
@@ -73,35 +74,38 @@ var Compiler;
         CodeGen.prototype.createAssign = function (assignNode) {
             var isId = /^[a-z]$/;
             var isDigit = /^[0-9]$/;
-            // identify value to be loaded
-            var value = assignNode.childrenNodes[1].value;
-            if (isId.test(value)) {
-                var varAddr = this.findTempAddr(value);
-                this.loadAccMem(varAddr);
-            }
-            else if (isDigit.test(value)) {
-                // convert value to hex
-                var intValue = parseInt(value);
-                this.loadAccConst(intValue);
-            }
-            else if (value == "Add") {
-                this.calculateSum(assignNode.childrenNodes[1]);
-                // upon return, Acc will be loaded with appropriate value
-            }
-            else if (value == "true") {
-                this.loadAccConst(1);
-            }
-            else if (value == "false") {
-                this.loadAccConst(0);
-            }
-            else {
-                // handle string...
-            }
+            var isString = /^\"[a-zA-Z]*\"$/;
             // find temp address
             var id = assignNode.childrenNodes[0].value;
             var tempAddr = this.findTempAddr(id);
-            // store value to temp address
-            this.storeAcc(tempAddr);
+            // identify value to be loaded
+            var value = assignNode.childrenNodes[1].value;
+            if (isString.test(value)) {
+                this.createString(assignNode);
+            }
+            else {
+                if (isId.test(value)) {
+                    var varAddr = this.findTempAddr(value);
+                    this.loadAccMem(varAddr);
+                }
+                else if (isDigit.test(value)) {
+                    // convert value to hex
+                    var intValue = parseInt(value);
+                    this.loadAccConst(intValue);
+                }
+                else if (value == "Add") {
+                    this.calculateSum(assignNode.childrenNodes[1]);
+                    // upon return, Acc will be loaded with appropriate value
+                }
+                else if (value == "true") {
+                    this.loadAccConst(1);
+                }
+                else if (value == "false") {
+                    this.loadAccConst(0);
+                }
+                // store value to temp address
+                this.storeAcc(tempAddr);
+            }
         };
         CodeGen.prototype.calculateSum = function (additionNode) {
             var isDigit = /^[0-9]$/;
@@ -118,29 +122,25 @@ var Compiler;
             var rightOperand = additionNode.childrenNodes[1];
             // check for more addition
             while (rightOperand.value == "Add") {
+                console.log("Add");
                 // load Acc with value
-                var digit_1 = rightOperand.childrenNodes[0].value;
-                this.loadAccConst(parseInt(digit_1));
-                // store at diff temp address each time
-                var tempAddr_1 = "T" + this.tempNum + " XX";
-                this.storeAcc(tempAddr_1);
-                this.staticTable.set("Temp" + this.tempNum, [tempAddr_1, this.varOffset]);
-                this.tempNum++;
-                this.varOffset++;
+                digit = rightOperand.childrenNodes[0].value;
+                this.loadAccConst(parseInt(digit));
                 // add value from sum storage
                 this.addAcc(sumAddr);
                 // store value back to sum storage
                 this.storeAcc(sumAddr);
-                rightOperand = additionNode.childrenNodes[1];
+                rightOperand = rightOperand.childrenNodes[1];
             }
             // the last value in IntExpr
             if (isDigit.test(rightOperand.value)) {
+                // load Acc with value
                 digit = rightOperand.childrenNodes[0].value;
-                sum += parseInt(digit);
-                this.loadAccConst(sum);
+                this.loadAccConst(parseInt(digit));
+                // add value from sum storage
+                this.addAcc(sumAddr);
             }
             else {
-                this.loadAccConst(sum);
                 var varAddr = this.findTempAddr(rightOperand.value);
                 this.addAcc(varAddr);
             }
