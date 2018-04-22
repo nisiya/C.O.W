@@ -1,7 +1,6 @@
 ///<reference path="globals.ts" />
 ///<reference path="tree.ts" />
 ///<reference path="symbol.ts" />
-
 /* ------------
 SAnalyzer.ts
 Requires global.ts, tree.ts, symbol.ts
@@ -14,19 +13,21 @@ module Compiler {
     public code:string[];
     public tempNum:number;
     public staticTable: Map<string, [string, number]>;
-    public currentScope:number;
+    public currentScope:ScopeNode;
     public varOffset:number;
     public tempStringMem:string[];
 
 
-    public start(asTree:Tree): void{
+    public start(asTree:Tree, scopeTree:ScopeTree): void{
       this.asTree = asTree;
       this.code = new Array<string>();
       this.tempStringMem = new Array<string>();
       this.tempNum = 0;
       this.staticTable = new Map<string, [string, number]>();
-      this.currentScope = 0;
+      this.currentScope = scopeTree.root;
       this.varOffset = 1;
+
+      this.handleBlock(asTree.root);
 
       for (var i=0; i<this.asTree.root.childrenNodes.length; i++){
         this.createCode(this.asTree.root.childrenNodes[i]);
@@ -41,15 +42,26 @@ module Compiler {
       console.log(this.code);
     }
 
+    public handleBlock(blockNode:TreeNode): void{
+      console.log("Block");
+      let childScopeIndex:number = 0;
+      let tempScope:ScopeNode = this.currentScope;
+      for (var i=0; i<blockNode.childrenNodes.length; i++){
+        let childNode:TreeNode = blockNode.childrenNodes[i];
+        if (childNode.value == "Block"){
+          this.currentScope = this.currentScope.childrenScopes[childScopeIndex]; 
+          this.handleBlock(childNode);
+          childScopeIndex++;
+        } else{
+          this.createCode(childNode);
+        }
+      }
+      this.currentScope = tempScope;
+    }
+
     public createCode(currentNode:TreeNode): void{
+      console.log("check");
       switch(currentNode.value){
-        case "Block":
-          this.currentScope++;
-          for (var i=0; i<currentNode.childrenNodes.length; i++){
-            this.createCode(currentNode.childrenNodes[i]);
-          }
-          this.currentScope--;
-          break;
         case "VarDecl":
           this.createVarDecl(currentNode);
           break;
@@ -74,7 +86,7 @@ module Compiler {
 
     public addToStatic(id): string{
       let tempAddr = "T" + this.tempNum + " XX";
-      this.staticTable.set(id + "@" + this.currentScope, 
+      this.staticTable.set(id + "@" + this.currentScope.level, 
                            [tempAddr, this.varOffset]);
       this.tempNum++;
       this.varOffset++;
@@ -123,7 +135,6 @@ module Compiler {
         } else if(value == "Add"){
           this.calculateSum(assignNode.childrenNodes[1]);
           // upon return, Acc will be loaded with appropriate value
-
         } else if(value == "true"){
           this.loadAccConst(1);
 
@@ -180,9 +191,9 @@ module Compiler {
     }
 
     public findTempAddr(id:string): string{
-      let locInfo:[string, number] = this.staticTable.get(id + "@" + this.currentScope);
+      let locInfo:[string, number] = this.staticTable.get(id + "@" + this.currentScope.level);
       if (locInfo == null){
-        let tempScope = this.currentScope - 1;
+        let tempScope = this.currentScope.level - 1;
         while (locInfo == null){
           locInfo = this.staticTable.get(id + "@" + tempScope);
           tempScope--;

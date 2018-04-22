@@ -10,14 +10,15 @@ var Compiler;
     var CodeGen = /** @class */ (function () {
         function CodeGen() {
         }
-        CodeGen.prototype.start = function (asTree) {
+        CodeGen.prototype.start = function (asTree, scopeTree) {
             this.asTree = asTree;
             this.code = new Array();
             this.tempStringMem = new Array();
             this.tempNum = 0;
             this.staticTable = new Map();
-            this.currentScope = 0;
+            this.currentScope = scopeTree.root;
             this.varOffset = 1;
+            this.handleBlock(asTree.root);
             for (var i = 0; i < this.asTree.root.childrenNodes.length; i++) {
                 this.createCode(this.asTree.root.childrenNodes[i]);
             }
@@ -28,15 +29,26 @@ var Compiler;
             console.log(this.staticTable);
             console.log(this.code);
         };
+        CodeGen.prototype.handleBlock = function (blockNode) {
+            console.log("Block");
+            var childScopeIndex = 0;
+            var tempScope = this.currentScope;
+            for (var i = 0; i < blockNode.childrenNodes.length; i++) {
+                var childNode = blockNode.childrenNodes[i];
+                if (childNode.value == "Block") {
+                    this.currentScope = this.currentScope.childrenScopes[childScopeIndex];
+                    this.handleBlock(childNode);
+                    childScopeIndex++;
+                }
+                else {
+                    this.createCode(childNode);
+                }
+            }
+            this.currentScope = tempScope;
+        };
         CodeGen.prototype.createCode = function (currentNode) {
+            console.log("check");
             switch (currentNode.value) {
-                case "Block":
-                    this.currentScope++;
-                    for (var i = 0; i < currentNode.childrenNodes.length; i++) {
-                        this.createCode(currentNode.childrenNodes[i]);
-                    }
-                    this.currentScope--;
-                    break;
                 case "VarDecl":
                     this.createVarDecl(currentNode);
                     break;
@@ -60,7 +72,7 @@ var Compiler;
         };
         CodeGen.prototype.addToStatic = function (id) {
             var tempAddr = "T" + this.tempNum + " XX";
-            this.staticTable.set(id + "@" + this.currentScope, [tempAddr, this.varOffset]);
+            this.staticTable.set(id + "@" + this.currentScope.level, [tempAddr, this.varOffset]);
             this.tempNum++;
             this.varOffset++;
             return tempAddr;
@@ -159,9 +171,9 @@ var Compiler;
             }
         };
         CodeGen.prototype.findTempAddr = function (id) {
-            var locInfo = this.staticTable.get(id + "@" + this.currentScope);
+            var locInfo = this.staticTable.get(id + "@" + this.currentScope.level);
             if (locInfo == null) {
-                var tempScope = this.currentScope - 1;
+                var tempScope = this.currentScope.level - 1;
                 while (locInfo == null) {
                     locInfo = this.staticTable.get(id + "@" + tempScope);
                     tempScope--;
