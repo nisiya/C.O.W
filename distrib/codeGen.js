@@ -19,9 +19,6 @@ var Compiler;
             this.currentScope = scopeTree.root;
             this.varOffset = 1;
             this.handleBlock(asTree.root);
-            for (var i = 0; i < this.asTree.root.childrenNodes.length; i++) {
-                this.createCode(this.asTree.root.childrenNodes[i]);
-            }
             // append strings to the end
             while (this.tempStringMem.length > 0) {
                 this.code.push(this.tempStringMem.pop());
@@ -30,13 +27,12 @@ var Compiler;
             console.log(this.code);
         };
         CodeGen.prototype.handleBlock = function (blockNode) {
-            console.log("Block");
             var childScopeIndex = 0;
             var tempScope = this.currentScope;
             for (var i = 0; i < blockNode.childrenNodes.length; i++) {
                 var childNode = blockNode.childrenNodes[i];
                 if (childNode.value == "Block") {
-                    this.currentScope = this.currentScope.childrenScopes[childScopeIndex];
+                    this.currentScope = tempScope.childrenScopes[childScopeIndex];
                     this.handleBlock(childNode);
                     childScopeIndex++;
                 }
@@ -47,7 +43,6 @@ var Compiler;
             this.currentScope = tempScope;
         };
         CodeGen.prototype.createCode = function (currentNode) {
-            console.log("check");
             switch (currentNode.value) {
                 case "VarDecl":
                     this.createVarDecl(currentNode);
@@ -171,12 +166,13 @@ var Compiler;
             }
         };
         CodeGen.prototype.findTempAddr = function (id) {
+            console.log(this.currentScope);
             var locInfo = this.staticTable.get(id + "@" + this.currentScope.level);
             if (locInfo == null) {
-                var tempScope = this.currentScope.level - 1;
+                var tempScope = this.currentScope.parentScope;
                 while (locInfo == null) {
-                    locInfo = this.staticTable.get(id + "@" + tempScope);
-                    tempScope--;
+                    locInfo = this.staticTable.get(id + "@" + tempScope.level);
+                    tempScope = tempScope.parentScope;
                 }
             }
             return locInfo[0];

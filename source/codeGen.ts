@@ -29,10 +29,6 @@ module Compiler {
 
       this.handleBlock(asTree.root);
 
-      for (var i=0; i<this.asTree.root.childrenNodes.length; i++){
-        this.createCode(this.asTree.root.childrenNodes[i]);
-      }
-
       // append strings to the end
       while (this.tempStringMem.length > 0){
         this.code.push(this.tempStringMem.pop());
@@ -43,13 +39,12 @@ module Compiler {
     }
 
     public handleBlock(blockNode:TreeNode): void{
-      console.log("Block");
       let childScopeIndex:number = 0;
       let tempScope:ScopeNode = this.currentScope;
       for (var i=0; i<blockNode.childrenNodes.length; i++){
         let childNode:TreeNode = blockNode.childrenNodes[i];
         if (childNode.value == "Block"){
-          this.currentScope = this.currentScope.childrenScopes[childScopeIndex]; 
+          this.currentScope = tempScope.childrenScopes[childScopeIndex]; 
           this.handleBlock(childNode);
           childScopeIndex++;
         } else{
@@ -60,7 +55,6 @@ module Compiler {
     }
 
     public createCode(currentNode:TreeNode): void{
-      console.log("check");
       switch(currentNode.value){
         case "VarDecl":
           this.createVarDecl(currentNode);
@@ -191,12 +185,13 @@ module Compiler {
     }
 
     public findTempAddr(id:string): string{
+      console.log(this.currentScope);
       let locInfo:[string, number] = this.staticTable.get(id + "@" + this.currentScope.level);
       if (locInfo == null){
-        let tempScope = this.currentScope.level - 1;
+        let tempScope = this.currentScope.parentScope;
         while (locInfo == null){
-          locInfo = this.staticTable.get(id + "@" + tempScope);
-          tempScope--;
+          locInfo = this.staticTable.get(id + "@" + tempScope.level);
+          tempScope = tempScope.parentScope;
         }
       }
       return locInfo[0];
