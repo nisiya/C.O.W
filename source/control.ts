@@ -12,6 +12,9 @@ module Compiler {
   export class Control {
 
     public static startCompile(btn): void {
+      // let compileBtnLbl: HTMLDivElement = <HTMLDivElement> document.getElementById("compileBtnLbl");
+      // compileBtnLbl.innerHTML = "";
+      // compileBtnLbl.className = "spinner-1";
       console.time('someFunction1');
       let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
       let csTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("cst");
@@ -59,7 +62,7 @@ module Compiler {
             // csTree.displayTree("cst");
             log.value += "\n ============= \n Parse completed successfully \n =============";
 
-            log.value += "\n Semantic Analyzer start for Program " + prgNum 
+            log.value += "\n Semantic Analyzer start for Program " + prgNum
                       + "... \n ============= \n   SEMANTIC ANALYZER --> Analyzing Program " + prgNum + "...";
             let asTree: Tree;
             let symbolTable: Array<Symbol>;
@@ -79,9 +82,17 @@ module Compiler {
                 // scope and type checking also passed
                 this.updateSymbolTable(symbolTable, prgNum);
                 log.value += "\n =============\n Semantic Anaylsis completed successfully with " + warningSA + " warnings \n =============";
+                log.value += "\n Code Generation start for Program " + prgNum
+                          + "... \n ============= \n   CODE GEN --> Generating machine code for Program " + prgNum + "...";
 
                 // start code generation
                 let code = codeGen.start(asTree, scopeTree);
+                if(code != null){
+                  this.printCode(code);
+                } else{
+                  log.value += "\n   CODEGEN --> ERROR! Program " + prgNum + " is too large for 256 bytes";
+                  log.value += "\n   CODEGEN --> Code generation failed with 1 error"; 
+                }
               } else{
                 // Semantic Analyzer Failed
               }
@@ -111,7 +122,16 @@ module Compiler {
       }
       _GrandCST.displayTree("cst");
       _GrandAST.displayTree("ast");
+      // compileBtnLbl.innerHTML = "Compile";
+      // compileBtnLbl.className = "";
       console.timeEnd('someFunction1');
+    }
+
+    public static printCode(code: string[]): void{
+      let machineCode: HTMLInputElement = <HTMLInputElement> document.getElementById("machineCode");
+      for(var i=0; i<code.length; i++){
+        machineCode.value += code[i] + " ";
+      }
     }
 
     // update symbol table output

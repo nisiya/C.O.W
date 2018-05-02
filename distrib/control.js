@@ -11,6 +11,9 @@ var Compiler;
         function Control() {
         }
         Control.startCompile = function (btn) {
+            // let compileBtnLbl: HTMLDivElement = <HTMLDivElement> document.getElementById("compileBtnLbl");
+            // compileBtnLbl.innerHTML = "";
+            // compileBtnLbl.className = "spinner-1";
             console.time('someFunction1');
             var log = document.getElementById("log");
             var csTreeOut = document.getElementById("cst");
@@ -71,8 +74,17 @@ var Compiler;
                                 // scope and type checking also passed
                                 this.updateSymbolTable(symbolTable, prgNum);
                                 log.value += "\n =============\n Semantic Anaylsis completed successfully with " + warningSA + " warnings \n =============";
+                                log.value += "\n Code Generation start for Program " + prgNum
+                                    + "... \n ============= \n   CODE GEN --> Generating machine code for Program " + prgNum + "...";
                                 // start code generation
                                 var code = codeGen.start(asTree, scopeTree);
+                                if (code != null) {
+                                    this.printCode(code);
+                                }
+                                else {
+                                    log.value += "\n   CODEGEN --> ERROR! Program " + prgNum + " is too large for 256 bytes";
+                                    log.value += "\n   CODEGEN --> Code generation failed with 1 error";
+                                }
                             }
                             else {
                                 // Semantic Analyzer Failed
@@ -106,7 +118,15 @@ var Compiler;
             }
             _GrandCST.displayTree("cst");
             _GrandAST.displayTree("ast");
+            // compileBtnLbl.innerHTML = "Compile";
+            // compileBtnLbl.className = "";
             console.timeEnd('someFunction1');
+        };
+        Control.printCode = function (code) {
+            var machineCode = document.getElementById("machineCode");
+            for (var i = 0; i < code.length; i++) {
+                machineCode.value += code[i] + " ";
+            }
         };
         // update symbol table output
         Control.updateSymbolTable = function (symbolTable, prgNum) {
