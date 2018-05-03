@@ -118,12 +118,12 @@ module Compiler {
           csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to LEXER error(s) \n\n";
         }
         prgNum++;
-        log.scrollTop = log.scrollHeight;
       }
       _GrandCST.displayTree("cst");
       _GrandAST.displayTree("ast");
       // compileBtnLbl.innerHTML = "Compile";
       // compileBtnLbl.className = "";
+      log.scrollTop = log.scrollHeight;
       console.timeEnd('someFunction1');
     }
 
@@ -201,11 +201,13 @@ module Compiler {
     // clear outputs only
     public static clearOutputs(): void{
       let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
+      let machineCode: HTMLInputElement = <HTMLInputElement> document.getElementById("machineCode");
       let csTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("cst");
       let asTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("ast");
       let symbolTableBody: HTMLTableSectionElement = <HTMLTableSectionElement> document.getElementById("symbolTableBody");
       // reset outputs
       log.value = "";
+      machineCode.value = "";
       csTreeOut.value = "";
       asTreeOut.value = "";
       while(symbolTableBody.hasChildNodes()){

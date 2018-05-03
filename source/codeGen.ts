@@ -1,10 +1,9 @@
 ///<reference path="globals.ts" />
 ///<reference path="tree.ts" />
 ///<reference path="scopeTree.ts" />
-///<reference path="symbol.ts" />
 /* ------------
-SAnalyzer.ts
-Requires global.ts, tree.ts, symbol.ts
+codeGen.ts
+Requires global.ts, tree.ts, scopeTree.ts
 ------------ */
 
 module Compiler {
@@ -13,10 +12,12 @@ module Compiler {
     public asTree:Tree;
     public code:string[];
     public tempNum:number;
-    public staticTable: Map<string, [string, number]>;
+    public staticTable: Map<string, [string, string, number]>;
     public currentScope:ScopeNode;
     public varOffset:number;
     public tempStringMem:string[];
+    public trueAddr:number; // where string true and false
+    public falseAddr:number; // are stored for printing boolean
 
 
     public start(asTree:Tree, scopeTree:ScopeTree): string[]{
@@ -24,13 +25,25 @@ module Compiler {
       this.code = new Array<string>();
       this.tempStringMem = new Array<string>();
       this.tempNum = 0;
-      this.staticTable = new Map<string, [string, number]>();
+      this.staticTable = new Map<string, [string, string, number]>();
       this.currentScope = scopeTree.root;
       this.varOffset = 0;
+
+      // front load the true and false values
+      this.addString("'false'");
+      this.falseAddr = 255 - this.tempStringMem.length;
+      this.addString("'true'");     
+      this.trueAddr = 255 - this.tempStringMem.length;
 
       this.handleBlock(asTree.root);
       this.addBreak();
       this.handleBackpatch();
+
+      // add 00s
+      while (this.code.length + this.tempStringMem.length < 255){
+        this.code.push("00");
+      }
+
       // append strings to the end
       while (this.tempStringMem.length > 0){
         this.code.push(this.tempStringMem.pop());
@@ -85,10 +98,10 @@ module Compiler {
       }
     }
 
-    public addToStatic(id:string): string{
+    public addToStatic(id:string, type:string): string{
       let tempAddr = "T" + this.tempNum + " XX";
       this.staticTable.set(id + "@" + this.currentScope.level, 
-                           [tempAddr, this.varOffset]);
+                           [type, tempAddr, this.varOffset]);
       this.tempNum++;
       this.varOffset++;
       return tempAddr;
@@ -97,7 +110,7 @@ module Compiler {
     public createVarDecl(varDeclNode:TreeNode): void{
       let id:string = varDeclNode.childrenNodes[1].value;
       let type:string = varDeclNode.childrenNodes[0].value;
-      let tempAddr:string = this.addToStatic(id);
+      let tempAddr:string = this.addToStatic(id, type);
       if (type != "string"){
         this.loadAccConst(0);
         this.storeAcc(tempAddr);
@@ -127,10 +140,10 @@ module Compiler {
 
       if(isString.test(value)){
         this.addString(value);
-        let stringPointer:number = 256 - this.tempStringMem.length;
+        let stringPointer:number = 255 - this.tempStringMem.length;
         this.loadAccConst(stringPointer); // pointer to string
         // add to Static table and get temp address
-        tempAddr = this.addToStatic(id);
+        tempAddr = this.addToStatic(id, "string");
       } else {
         if (isId.test(value)){
           let varAddr:string = this.findTempAddr(value);
@@ -146,10 +159,10 @@ module Compiler {
           // upon return, Acc will be loaded with appropriate value
 
         } else if(value == "true"){
-          this.loadAccConst(1);
+          this.loadAccConst(this.trueAddr);
 
         } else if(value == "false"){
-          this.loadAccConst(0);
+          this.loadAccConst(this.trueAddr);
 
         }
         // find temp address
@@ -170,35 +183,51 @@ module Compiler {
 
       if(isString.test(value)){
         this.addString(value);
-        let stringPointer:number = 256 - this.tempStringMem.length;
+        let stringPointer:number = 255 - this.tempStringMem.length;
         this.loadYConst(stringPointer); // pointer to string
         this.loadXConst(2);
-      } else {
-        if (isId.test(value)){
-          let varAddr:string = this.findTempAddr(value);
-          this.loadYMem(varAddr);
+      } else if(value == "true"){
+        this.loadYConst(this.trueAddr);
+        this.loadXConst(2);
+      } else if(value == "false"){
+        this.loadYConst(this.falseAddr);
+        this.loadXConst(2);
 
-        } else if (isDigit.test(value)){
-          // convert value to hex
-          let intValue = parseInt(value);
-          this.loadYConst(intValue);
-
-        } else if(value == "Add"){
-          let sumAddr:string = this.calculateSum(printNode.childrenNodes[0]);
-          // sumAddr is where the result of the addtion is
-          this.loadYMem(sumAddr); 
-
-        } else if(value == "true"){
-          this.loadYConst(1);
-
-        } else if(value == "false"){
-          this.loadYConst(0);
-
+      } else if (isId.test(value)){
+        let varAddr:string = this.findTempAddr(value);
+        this.loadYMem(varAddr);
+        if(this.findType(value) == "int"){
+          this.loadXConst(1);
+        } else{
+          this.loadXConst(2);
         }
-        
+
+      } else if (isDigit.test(value)){
+        // convert value to hex
+        let intValue = parseInt(value);
+        this.loadYConst(intValue);
         this.loadXConst(1);
-      }      
+
+      } else if(value == "Add"){
+        let sumAddr:string = this.calculateSum(printNode.childrenNodes[0]);
+        // sumAddr is where the result of the addtion is
+        this.loadYMem(sumAddr); 
+        this.loadXConst(1);
+      } 
+            
       this.systemCall();
+    }
+
+    public findType(id:string): string{
+      let locInfo:[string, string, number] = this.staticTable.get(id + "@" + this.currentScope.level);
+      if (locInfo == null){
+        let tempScope = this.currentScope.parentScope;
+        while (locInfo == null){
+          locInfo = this.staticTable.get(id + "@" + tempScope.level);
+          tempScope = tempScope.parentScope;
+        }
+      }
+      return locInfo[0];
     }
 
     public calculateSum(additionNode:TreeNode): string{
@@ -209,7 +238,7 @@ module Compiler {
       // store at temp address
       let tempAddr:string = "T" + this.tempNum + " XX";
       this.storeAcc(tempAddr);
-      this.staticTable.set("Temp" + this.tempNum, [tempAddr, this.varOffset]);
+      this.staticTable.set("Temp" + this.tempNum, ["int", tempAddr, this.varOffset]);
       this.tempNum++;
       this.varOffset++;
       let sumAddr:string = tempAddr;
@@ -246,7 +275,7 @@ module Compiler {
 
     public findTempAddr(id:string): string{
       console.log(this.currentScope);
-      let locInfo:[string, number] = this.staticTable.get(id + "@" + this.currentScope.level);
+      let locInfo:[string, string, number] = this.staticTable.get(id + "@" + this.currentScope.level);
       if (locInfo == null){
         let tempScope = this.currentScope.parentScope;
         while (locInfo == null){
@@ -254,7 +283,7 @@ module Compiler {
           tempScope = tempScope.parentScope;
         }
       }
-      return locInfo[0];
+      return locInfo[1];
     }
 
     public handleBackpatch(): void{
@@ -264,7 +293,7 @@ module Compiler {
       let tempTable = new Map<string, number>();
       while(!key.done){
         let locInfo = this.staticTable.get(key.value);
-        tempTable.set(locInfo[0], locInfo[1]+this.code.length);
+        tempTable.set(locInfo[1], locInfo[2]+this.code.length);
         key = staticKeys.next();
       }
       console.log(tempTable);
@@ -279,15 +308,23 @@ module Compiler {
           console.log("replace " + this.code[i]);
           let staticKeys = this.code[i] + " "+ this.code[i+1];
           let index = tempTable.get(staticKeys);
-          this.code[i] = index.toString(16).toUpperCase();
+          this.code[i] = this.decimalToHex(index);
           this.code[i+1] = "00";
         }
       }
     }
 
+    public decimalToHex(value:number): string{
+      if(value < 16){
+        return "0" + value.toString(16).toUpperCase();
+      } else{
+        return value.toString(16).toUpperCase();
+      }
+    }
+
     public loadAccConst(value:number): void{
       this.code.push("A9");
-      if(value < 10){
+      if(value < 16){
         this.code.push("0" + value.toString(16).toUpperCase());
       } else{
         this.code.push(value.toString(16).toUpperCase());
@@ -317,11 +354,12 @@ module Compiler {
 
     public loadXConst(value:number): void{
       this.code.push("A2");
-      if(value < 10){
+      if(value < 16){
         this.code.push("0" + value.toString(16).toUpperCase());
       } else{
         this.code.push(value.toString(16).toUpperCase());
-      }    }
+      }    
+    }
 
     public loadXMem(tempAddr:string): void{
       this.code.push("AE");
@@ -332,7 +370,7 @@ module Compiler {
 
     public loadYConst(value:number): void{
       this.code.push("A0");
-      if(value < 10){
+      if(value < 16){
         this.code.push("0" + value.toString(16).toUpperCase());
       } else{
         this.code.push(value.toString(16).toUpperCase());

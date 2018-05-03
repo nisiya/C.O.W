@@ -114,12 +114,12 @@ var Compiler;
                     csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to LEXER error(s) \n\n";
                 }
                 prgNum++;
-                log.scrollTop = log.scrollHeight;
             }
             _GrandCST.displayTree("cst");
             _GrandAST.displayTree("ast");
             // compileBtnLbl.innerHTML = "Compile";
             // compileBtnLbl.className = "";
+            log.scrollTop = log.scrollHeight;
             console.timeEnd('someFunction1');
         };
         Control.printCode = function (code) {
@@ -192,11 +192,13 @@ var Compiler;
         // clear outputs only
         Control.clearOutputs = function () {
             var log = document.getElementById("log");
+            var machineCode = document.getElementById("machineCode");
             var csTreeOut = document.getElementById("cst");
             var asTreeOut = document.getElementById("ast");
             var symbolTableBody = document.getElementById("symbolTableBody");
             // reset outputs
             log.value = "";
+            machineCode.value = "";
             csTreeOut.value = "";
             asTreeOut.value = "";
             while (symbolTableBody.hasChildNodes()) {

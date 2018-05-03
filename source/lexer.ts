@@ -355,7 +355,6 @@ module Compiler {
       } else {
         log.value += "\n ============= \n Lexer Failed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
       }
-      log.scrollTop = log.scrollHeight;
     }
   }
 }

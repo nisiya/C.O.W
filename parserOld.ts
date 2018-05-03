@@ -428,7 +428,6 @@ module Compiler {
       console.log("error");
       let output: HTMLInputElement = <HTMLInputElement> document.getElementById("output");
       output.value += "Expected [" + expectedVal + "]. Found [" + foundVal + "].";
-      output.scrollTop = output.scrollHeight;
     }
   }
 }

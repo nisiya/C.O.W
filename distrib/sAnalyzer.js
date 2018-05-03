@@ -442,7 +442,6 @@ var Compiler;
             var log = document.getElementById("log");
             log.value += "\n   SEMANTIC ANALYZER --> ERROR! " + errorType + " on line " + location[0] + ", column " + location[1];
             log.value += "\n   SEMANTIC ANALYZER --> Semantic analysis failed with 1 error... Symbol table is not generated for it";
-            log.scrollTop = log.scrollHeight;
         };
         // prints warning to log
         SAnalyzer.prototype.printWarning = function (warningType, location) {
@@ -450,14 +449,12 @@ var Compiler;
             var log = document.getElementById("log");
             log.value += "\n   SEMANTIC ANALYZER --> WARNING! " + warningType + " on line " + location[0] + ", column " + location[1];
             // log.value += "\n   SEMANTIC ANALYZER --> Semantic analysis completed with 1 warning";                
-            log.scrollTop = log.scrollHeight;
         };
         // print current state
         SAnalyzer.prototype.printStage = function (stage) {
             if (_VerboseMode) {
                 var log = document.getElementById("log");
                 log.value += "\n   SEMANTIC ANALYZER --> " + stage;
-                log.scrollTop = log.scrollHeight;
             }
         };
         return SAnalyzer;

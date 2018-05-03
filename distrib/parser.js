@@ -405,7 +405,6 @@ var Compiler;
                 log.value += "\n   PARSER --> ERROR! Expected [" + expectedValue + "] got [" + token.tid + "] with value '"
                     + token.tValue + "' on line " + token.tLine + ", column " + token.tColumn;
                 log.value += "\n   PARSER --> Parse failed with 1 error";
-                log.scrollTop = log.scrollHeight;
                 this.error = true;
             }
         };
@@ -413,7 +412,6 @@ var Compiler;
             if (_VerboseMode) {
                 var log = document.getElementById("log");
                 log.value += "\n   PARSER --> " + stage;
-                log.scrollTop = log.scrollHeight;
             }
         };
         return Parser;

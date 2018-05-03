@@ -1,10 +1,9 @@
 ///<reference path="globals.ts" />
 ///<reference path="tree.ts" />
 ///<reference path="scopeTree.ts" />
-///<reference path="symbol.ts" />
 /* ------------
-SAnalyzer.ts
-Requires global.ts, tree.ts, symbol.ts
+codeGen.ts
+Requires global.ts, tree.ts, scopeTree.ts
 ------------ */
 var Compiler;
 (function (Compiler) {
@@ -19,9 +18,18 @@ var Compiler;
             this.staticTable = new Map();
             this.currentScope = scopeTree.root;
             this.varOffset = 0;
+            // front load the true and false values
+            this.addString("'false'");
+            this.falseAddr = 255 - this.tempStringMem.length;
+            this.addString("'true'");
+            this.trueAddr = 255 - this.tempStringMem.length;
             this.handleBlock(asTree.root);
             this.addBreak();
             this.handleBackpatch();
+            // add 00s
+            while (this.code.length + this.tempStringMem.length < 255) {
+                this.code.push("00");
+            }
             // append strings to the end
             while (this.tempStringMem.length > 0) {
                 this.code.push(this.tempStringMem.pop());
@@ -74,9 +82,9 @@ var Compiler;
                     break;
             }
         };
-        CodeGen.prototype.addToStatic = function (id) {
+        CodeGen.prototype.addToStatic = function (id, type) {
             var tempAddr = "T" + this.tempNum + " XX";
-            this.staticTable.set(id + "@" + this.currentScope.level, [tempAddr, this.varOffset]);
+            this.staticTable.set(id + "@" + this.currentScope.level, [type, tempAddr, this.varOffset]);
             this.tempNum++;
             this.varOffset++;
             return tempAddr;
@@ -84,7 +92,7 @@ var Compiler;
         CodeGen.prototype.createVarDecl = function (varDeclNode) {
             var id = varDeclNode.childrenNodes[1].value;
             var type = varDeclNode.childrenNodes[0].value;
-            var tempAddr = this.addToStatic(id);
+            var tempAddr = this.addToStatic(id, type);
             if (type != "string") {
                 this.loadAccConst(0);
                 this.storeAcc(tempAddr);
@@ -108,10 +116,10 @@ var Compiler;
             var tempAddr;
             if (isString.test(value)) {
                 this.addString(value);
-                var stringPointer = 256 - this.tempStringMem.length;
+                var stringPointer = 255 - this.tempStringMem.length;
                 this.loadAccConst(stringPointer); // pointer to string
                 // add to Static table and get temp address
-                tempAddr = this.addToStatic(id);
+                tempAddr = this.addToStatic(id, "string");
             }
             else {
                 if (isId.test(value)) {
@@ -128,10 +136,10 @@ var Compiler;
                     // upon return, Acc will be loaded with appropriate value
                 }
                 else if (value == "true") {
-                    this.loadAccConst(1);
+                    this.loadAccConst(this.trueAddr);
                 }
                 else if (value == "false") {
-                    this.loadAccConst(0);
+                    this.loadAccConst(this.trueAddr);
                 }
                 // find temp address
                 tempAddr = this.findTempAddr(id);
@@ -147,34 +155,52 @@ var Compiler;
             var value = printNode.childrenNodes[0].value;
             if (isString.test(value)) {
                 this.addString(value);
-                var stringPointer = 256 - this.tempStringMem.length;
+                var stringPointer = 255 - this.tempStringMem.length;
                 this.loadYConst(stringPointer); // pointer to string
                 this.loadXConst(2);
             }
-            else {
-                if (isId.test(value)) {
-                    var varAddr = this.findTempAddr(value);
-                    this.loadYMem(varAddr);
+            else if (value == "true") {
+                this.loadYConst(this.trueAddr);
+                this.loadXConst(2);
+            }
+            else if (value == "false") {
+                this.loadYConst(this.falseAddr);
+                this.loadXConst(2);
+            }
+            else if (isId.test(value)) {
+                var varAddr = this.findTempAddr(value);
+                this.loadYMem(varAddr);
+                if (this.findType(value) == "int") {
+                    this.loadXConst(1);
                 }
-                else if (isDigit.test(value)) {
-                    // convert value to hex
-                    var intValue = parseInt(value);
-                    this.loadYConst(intValue);
+                else {
+                    this.loadXConst(2);
                 }
-                else if (value == "Add") {
-                    var sumAddr = this.calculateSum(printNode.childrenNodes[0]);
-                    // sumAddr is where the result of the addtion is
-                    this.loadYMem(sumAddr);
-                }
-                else if (value == "true") {
-                    this.loadYConst(1);
-                }
-                else if (value == "false") {
-                    this.loadYConst(0);
-                }
+            }
+            else if (isDigit.test(value)) {
+                // convert value to hex
+                var intValue = parseInt(value);
+                this.loadYConst(intValue);
+                this.loadXConst(1);
+            }
+            else if (value == "Add") {
+                var sumAddr = this.calculateSum(printNode.childrenNodes[0]);
+                // sumAddr is where the result of the addtion is
+                this.loadYMem(sumAddr);
                 this.loadXConst(1);
             }
             this.systemCall();
+        };
+        CodeGen.prototype.findType = function (id) {
+            var locInfo = this.staticTable.get(id + "@" + this.currentScope.level);
+            if (locInfo == null) {
+                var tempScope = this.currentScope.parentScope;
+                while (locInfo == null) {
+                    locInfo = this.staticTable.get(id + "@" + tempScope.level);
+                    tempScope = tempScope.parentScope;
+                }
+            }
+            return locInfo[0];
         };
         CodeGen.prototype.calculateSum = function (additionNode) {
             var isDigit = /^[0-9]$/;
@@ -184,7 +210,7 @@ var Compiler;
             // store at temp address
             var tempAddr = "T" + this.tempNum + " XX";
             this.storeAcc(tempAddr);
-            this.staticTable.set("Temp" + this.tempNum, [tempAddr, this.varOffset]);
+            this.staticTable.set("Temp" + this.tempNum, ["int", tempAddr, this.varOffset]);
             this.tempNum++;
             this.varOffset++;
             var sumAddr = tempAddr;
@@ -226,7 +252,7 @@ var Compiler;
                     tempScope = tempScope.parentScope;
                 }
             }
-            return locInfo[0];
+            return locInfo[1];
         };
         CodeGen.prototype.handleBackpatch = function () {
             console.log(this.code);
@@ -235,7 +261,7 @@ var Compiler;
             var tempTable = new Map();
             while (!key.done) {
                 var locInfo = this.staticTable.get(key.value);
-                tempTable.set(locInfo[0], locInfo[1] + this.code.length);
+                tempTable.set(locInfo[1], locInfo[2] + this.code.length);
                 key = staticKeys.next();
             }
             console.log(tempTable);
@@ -249,14 +275,22 @@ var Compiler;
                     console.log("replace " + this.code[i]);
                     var staticKeys = this.code[i] + " " + this.code[i + 1];
                     var index = tempTable.get(staticKeys);
-                    this.code[i] = index.toString(16).toUpperCase();
+                    this.code[i] = this.decimalToHex(index);
                     this.code[i + 1] = "00";
                 }
             }
         };
+        CodeGen.prototype.decimalToHex = function (value) {
+            if (value < 16) {
+                return "0" + value.toString(16).toUpperCase();
+            }
+            else {
+                return value.toString(16).toUpperCase();
+            }
+        };
         CodeGen.prototype.loadAccConst = function (value) {
             this.code.push("A9");
-            if (value < 10) {
+            if (value < 16) {
                 this.code.push("0" + value.toString(16).toUpperCase());
             }
             else {
@@ -283,7 +317,7 @@ var Compiler;
         };
         CodeGen.prototype.loadXConst = function (value) {
             this.code.push("A2");
-            if (value < 10) {
+            if (value < 16) {
                 this.code.push("0" + value.toString(16).toUpperCase());
             }
             else {
@@ -298,7 +332,7 @@ var Compiler;
         };
         CodeGen.prototype.loadYConst = function (value) {
             this.code.push("A0");
-            if (value < 10) {
+            if (value < 16) {
                 this.code.push("0" + value.toString(16).toUpperCase());
             }
             else {
