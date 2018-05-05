@@ -12,27 +12,34 @@ module Compiler {
     public asTree:Tree;
     public code:string[];
     public tempNum:number;
+    public jumpNum:number;
     public staticTable: Map<string, [string, string, number]>;
+    public jumpTable: Map<string, number>;
     public currentScope:ScopeNode;
     public varOffset:number;
     public tempStringMem:string[];
     public trueAddr:number; // where string true and false
     public falseAddr:number; // are stored for printing boolean
 
+    readonly ACC:[string,string] = ["A9","AD"];
+    readonly XREG:[string,string] = ["A2","AE"];
+    readonly YREG:[string,string] = ["A0","AC"];
 
     public start(asTree:Tree, scopeTree:ScopeTree): string[]{
       this.asTree = asTree;
       this.code = new Array<string>();
       this.tempStringMem = new Array<string>();
       this.tempNum = 0;
+      this.jumpNum = 0;
       this.staticTable = new Map<string, [string, string, number]>();
+      this.jumpTable = new Map<string, number>();
       this.currentScope = scopeTree.root;
       this.varOffset = 0;
 
       // front load the true and false values
-      this.addString("'false'");
+      this.addString("false");
       this.falseAddr = 255 - this.tempStringMem.length;
-      this.addString("'true'");     
+      this.addString("true");     
       this.trueAddr = 255 - this.tempStringMem.length;
 
       this.handleBlock(asTree.root);
@@ -85,11 +92,10 @@ module Compiler {
           // this.createWhile(currentNode);
           break;
         case "if":
+          this.createIf(currentNode);
           break;
         case "print":
           this.createPrint(currentNode);
-          break;
-        case "Add":
           break;
         case "NotEqual":
           break;
@@ -107,64 +113,43 @@ module Compiler {
       return tempAddr;
     }
 
+    public addToJump(): number{
+      let jumpKey:string = "J" + this.jumpNum;
+      this.jumpTable.set(jumpKey, 0);
+      this.code.push("D0");
+      this.code.push(jumpKey);
+      this.jumpNum++;
+
+      return this.code.length-1;
+    }
+
     public createVarDecl(varDeclNode:TreeNode): void{
       let id:string = varDeclNode.childrenNodes[1].value;
       let type:string = varDeclNode.childrenNodes[0].value;
       let tempAddr:string = this.addToStatic(id, type);
       if (type != "string"){
-        this.loadAccConst(0);
+        this.loadRegConst(0, this.ACC[0]);
         this.storeAcc(tempAddr);
       } // else load the string pointer when initialized
     }
 
-
     public addString(value:string): void{
       this.tempStringMem.push("00"); // will add to code at the end
-      for(var i=value.length-2; i>0; i--){
-        // ignore the quotes
+      for(var i=value.length-1; i>=0; i--){
         let asciiVal:number = value.charCodeAt(i);
         this.tempStringMem.push(asciiVal.toString(16).toUpperCase());
       }
     }
 
-
     public createAssign(assignNode:TreeNode): void{
-      let isId:RegExp = /^[a-z]$/;
-      let isDigit:RegExp = /^[0-9]$/;
-      let isString:RegExp = /^\"[a-zA-Z]*\"$/;
-
       // identify value to be loaded
       let id:string = assignNode.childrenNodes[0].value;
-      let value:string = assignNode.childrenNodes[1].value;
+      let varType:string = this.createExpr(assignNode.childrenNodes[1], this.ACC);
       let tempAddr:string;
 
-      if(isString.test(value)){
-        this.addString(value);
-        let stringPointer:number = 255 - this.tempStringMem.length;
-        this.loadAccConst(stringPointer); // pointer to string
-        // add to Static table and get temp address
+      if (varType == "string"){
         tempAddr = this.addToStatic(id, "string");
-      } else {
-        if (isId.test(value)){
-          let varAddr:string = this.findTempAddr(value);
-          this.loadAccMem(varAddr);
-
-        } else if (isDigit.test(value)){
-          // convert value to hex
-          let intValue = parseInt(value);
-          this.loadAccConst(intValue);
-
-        } else if(value == "Add"){
-          let sumAddr:string = this.calculateSum(assignNode.childrenNodes[1]);
-          // upon return, Acc will be loaded with appropriate value
-
-        } else if(value == "true"){
-          this.loadAccConst(this.trueAddr);
-
-        } else if(value == "false"){
-          this.loadAccConst(this.trueAddr);
-
-        }
+      } else{
         // find temp address
         tempAddr = this.findTempAddr(id);
       }
@@ -174,47 +159,14 @@ module Compiler {
     }
 
     public createPrint(printNode:TreeNode): void{
-      let isId:RegExp = /^[a-z]$/;
-      let isDigit:RegExp = /^[0-9]$/;
-      let isString:RegExp = /^\"[a-zA-Z]*\"$/;
+      let varType:string = this.createExpr(printNode.childrenNodes[0], this.YREG);
+      console.log(varType);
+      if(varType == "int"){
+        this.loadRegConst(1, this.XREG[0])
+      } else{
+        this.loadRegConst(2, this.XREG[0])
+      }
 
-      // identify value to be loaded
-      let value:string = printNode.childrenNodes[0].value;
-
-      if(isString.test(value)){
-        this.addString(value);
-        let stringPointer:number = 255 - this.tempStringMem.length;
-        this.loadYConst(stringPointer); // pointer to string
-        this.loadXConst(2);
-      } else if(value == "true"){
-        this.loadYConst(this.trueAddr);
-        this.loadXConst(2);
-      } else if(value == "false"){
-        this.loadYConst(this.falseAddr);
-        this.loadXConst(2);
-
-      } else if (isId.test(value)){
-        let varAddr:string = this.findTempAddr(value);
-        this.loadYMem(varAddr);
-        if(this.findType(value) == "int"){
-          this.loadXConst(1);
-        } else{
-          this.loadXConst(2);
-        }
-
-      } else if (isDigit.test(value)){
-        // convert value to hex
-        let intValue = parseInt(value);
-        this.loadYConst(intValue);
-        this.loadXConst(1);
-
-      } else if(value == "Add"){
-        let sumAddr:string = this.calculateSum(printNode.childrenNodes[0]);
-        // sumAddr is where the result of the addtion is
-        this.loadYMem(sumAddr); 
-        this.loadXConst(1);
-      } 
-            
       this.systemCall();
     }
 
@@ -234,7 +186,7 @@ module Compiler {
       let isDigit:RegExp = /^[0-9]$/;
       // load Acc with value
       let digit:string = additionNode.childrenNodes[0].value;
-      this.loadAccConst(parseInt(digit));
+      this.loadRegConst(parseInt(digit), this.ACC[0]);
       // store at temp address
       let tempAddr:string = "T" + this.tempNum + " XX";
       this.storeAcc(tempAddr);
@@ -249,7 +201,7 @@ module Compiler {
         console.log("Add");
         // load Acc with value
         digit = rightOperand.childrenNodes[0].value;
-        this.loadAccConst(parseInt(digit));
+        this.loadRegConst(parseInt(digit), this.ACC[0]);
         // add value from sum storage
         this.addAcc(sumAddr);
         // store value back to sum storage
@@ -260,7 +212,7 @@ module Compiler {
       if(isDigit.test(rightOperand.value)){
         // load Acc with value
         digit = rightOperand.childrenNodes[0].value;
-        this.loadAccConst(parseInt(digit));
+        this.loadRegConst(parseInt(digit), this.ACC[0]);
         // add value from sum storage
         this.addAcc(sumAddr);
       } else{
@@ -286,6 +238,100 @@ module Compiler {
       return locInfo[1];
     }
 
+    public createIf(ifNode:TreeNode): void{
+      this.createBool(ifNode.childrenNodes[0]);
+      let jumpNdx:number = this.addToJump();
+      this.handleBlock(ifNode.childrenNodes[1]);
+      this.code[jumpNdx] = this.decimalToHex(this.code.length - jumpNdx - 2);
+    }
+
+    public createBool(boolNode:TreeNode):void{
+      let tempAddr:string;
+
+      if(boolNode.value == "true"){
+        this.loadRegConst(this.trueAddr, this.XREG[0]);
+        this.compareX(this.decimalToHex(this.trueAddr) + " 00");
+
+      } else if(boolNode.value == "false"){
+        this.loadRegConst(this.falseAddr, this.XREG[0]);
+        this.compareX(this.decimalToHex(this.falseAddr) + " 00");
+
+      } else{
+        let var1Type:string = this.createExpr(boolNode.childrenNodes[0], this.XREG);
+        let var2Node:TreeNode = boolNode.childrenNodes[1];
+        let isId:RegExp = /^[a-z]$/;
+        let isDigit:RegExp = /^[0-9]$/;
+        let isString:RegExp = /^\"[a-zA-Z]*\"$/;
+
+        if(isString.test(var2Node.value)){
+          this.addString(var2Node.value.substring(1,var2Node.value.length-1)); // ignore the quotes
+          let stringPointer:number = 255 - this.tempStringMem.length;
+          this.loadRegConst(stringPointer, this.ACC[0]); // pointer to string
+          tempAddr = this.addToStatic("string" + this.tempNum, "string");
+          
+        } else if(var2Node.value == "true"){
+          tempAddr = this.decimalToHex(this.trueAddr) + " 00";
+
+        } else if(var2Node.value == "false"){
+          tempAddr = this.decimalToHex(this.falseAddr) + " 00";
+
+        } else if(isId.test(var2Node.value)){
+          tempAddr = this.findTempAddr(var2Node.value);
+
+        } else if(isDigit.test(var2Node.value)){
+          let intValue = parseInt(var2Node.value);
+          this.loadRegConst(intValue, this.ACC[0]);
+          tempAddr = this.addToStatic(var2Node.value + "" + this.tempNum, "int");
+
+        } else if(var2Node.value == "Add"){
+          tempAddr = this.calculateSum(var2Node);
+        }
+
+        this.compareX(tempAddr);
+      }
+    }
+
+    public createExpr(exprNode:TreeNode, register:[string,string]): string{
+      let isId:RegExp = /^[a-z]$/;
+      let isDigit:RegExp = /^[0-9]$/;
+      let isString:RegExp = /^\"[a-zA-Z]*\"$/;
+
+      // identify value to be loaded
+      let value:string = exprNode.value;
+
+      if(isString.test(value)){
+        this.addString(value.substring(1,value.length-1)); // ignore the quotes
+        let stringPointer:number = 255 - this.tempStringMem.length;
+        this.loadRegConst(stringPointer, register[0]); // pointer to string
+        return "string";
+
+      } else if(value == "true"){
+        this.loadRegConst(this.trueAddr, register[0]);
+        return "boolean";
+
+      } else if(value == "false"){
+        this.loadRegConst(this.falseAddr, register[0]);
+        return "boolean";
+
+      } else if (isId.test(value)){
+        let varAddr:string = this.findTempAddr(value);
+        this.loadRegMem(varAddr, register[1]);
+        return this.findType(value);
+
+      } else if (isDigit.test(value)){
+        // convert value to hex
+        let intValue = parseInt(value);
+        this.loadRegConst(intValue, register[0]);
+        return "int";
+
+      } else if(value == "Add"){
+        let sumAddr:string = this.calculateSum(exprNode);
+        // sumAddr is where the result of the addtion is
+        this.loadRegMem(sumAddr, register[1]);
+        return "int";
+      } 
+    }
+
     public handleBackpatch(): void{
       console.log(this.code);
       let staticKeys = this.staticTable.keys();
@@ -296,8 +342,9 @@ module Compiler {
         tempTable.set(locInfo[1], locInfo[2]+this.code.length);
         key = staticKeys.next();
       }
+      console.log(this.code);
       console.log(tempTable);
-      this.backpatch(tempTable);
+      // this.backpatch(tempTable);
     }
 
     public backpatch(tempTable:Map<string, number>): void{
@@ -322,17 +369,14 @@ module Compiler {
       }
     }
 
-    public loadAccConst(value:number): void{
-      this.code.push("A9");
-      if(value < 16){
-        this.code.push("0" + value.toString(16).toUpperCase());
-      } else{
-        this.code.push(value.toString(16).toUpperCase());
-      }
+
+    public loadRegConst(value:number, register:string): void{
+      this.code.push(register);
+      this.code.push(this.decimalToHex(value));
     }
 
-    public loadAccMem(tempAddr:string): void{
-      this.code.push("AD");
+    public loadRegMem(tempAddr:string, register:string): void{
+      this.code.push(register);
       let memAddr:string[] = tempAddr.split(" ");
       this.code.push(memAddr[0]);
       this.code.push(memAddr[1]);
@@ -352,38 +396,6 @@ module Compiler {
       this.code.push(memAddr[1]);
     }
 
-    public loadXConst(value:number): void{
-      this.code.push("A2");
-      if(value < 16){
-        this.code.push("0" + value.toString(16).toUpperCase());
-      } else{
-        this.code.push(value.toString(16).toUpperCase());
-      }    
-    }
-
-    public loadXMem(tempAddr:string): void{
-      this.code.push("AE");
-      let memAddr:string[] = tempAddr.split(" ");
-      this.code.push(memAddr[0]);
-      this.code.push(memAddr[1]);
-    }
-
-    public loadYConst(value:number): void{
-      this.code.push("A0");
-      if(value < 16){
-        this.code.push("0" + value.toString(16).toUpperCase());
-      } else{
-        this.code.push(value.toString(16).toUpperCase());
-      }
-    }
-
-    public loadYMem(tempAddr:string): void{
-      this.code.push("AC");
-      let memAddr:string[] = tempAddr.split(" ");
-      this.code.push(memAddr[0]);
-      this.code.push(memAddr[1]);
-    }
-
     public noOperation(): void{
       this.code.push("EA");
     }
@@ -397,11 +409,6 @@ module Compiler {
       let memAddr:string[] = tempAddr.split(" ");
       this.code.push(memAddr[0]);
       this.code.push(memAddr[1]);
-    }
-
-    public branchByte(value:string): void{
-      this.code.push("D0");
-      this.code.push(value);
     }
 
     public incrementByte(tempAddr:string): void{
