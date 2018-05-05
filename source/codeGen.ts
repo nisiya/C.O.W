@@ -15,6 +15,7 @@ module Compiler {
     public jumpNum:number;
     public staticTable: Map<string, [string, string, number]>;
     public jumpTable: Map<string, number>;
+    public stringTable: Map<string, number>;
     public currentScope:ScopeNode;
     public varOffset:number;
     public tempStringMem:string[];
@@ -33,6 +34,7 @@ module Compiler {
       this.jumpNum = 0;
       this.staticTable = new Map<string, [string, string, number]>();
       this.jumpTable = new Map<string, number>();
+      this.stringTable = new Map<string, number>();
       this.currentScope = scopeTree.root;
       this.varOffset = 0;
 
@@ -134,11 +136,11 @@ module Compiler {
     }
 
     public addString(value:string): void{
-      this.tempStringMem.push("00"); // will add to code at the end
-      for(var i=value.length-1; i>=0; i--){
-        let asciiVal:number = value.charCodeAt(i);
-        this.tempStringMem.push(asciiVal.toString(16).toUpperCase());
-      }
+        this.tempStringMem.push("00"); // will add to code at the end
+        for(var i=value.length-1; i>=0; i--){
+          let asciiVal:number = value.charCodeAt(i);
+          this.tempStringMem.push(asciiVal.toString(16).toUpperCase());
+        }
     }
 
     public createAssign(assignNode:TreeNode): void{
@@ -148,7 +150,10 @@ module Compiler {
       let tempAddr:string;
 
       if (varType == "string"){
-        tempAddr = this.addToStatic(id, "string");
+        tempAddr = this.findTempAddr(id);
+        if(tempAddr == null){
+          tempAddr = this.addToStatic(id, "string");
+        }
       } else{
         // find temp address
         tempAddr = this.findTempAddr(id);
@@ -242,19 +247,26 @@ module Compiler {
       this.createBool(ifNode.childrenNodes[0]);
       let jumpNdx:number = this.addToJump();
       this.handleBlock(ifNode.childrenNodes[1]);
-      this.code[jumpNdx] = this.decimalToHex(this.code.length - jumpNdx - 2);
+      this.code[jumpNdx] = this.decimalToHex(this.code.length - jumpNdx - 1);
     }
 
     public createBool(boolNode:TreeNode):void{
       let tempAddr:string;
+      console.log("BOOL " + boolNode.value);
 
       if(boolNode.value == "true"){
         this.loadRegConst(this.trueAddr, this.XREG[0]);
-        this.compareX(this.decimalToHex(this.trueAddr) + " 00");
+        this.loadRegConst(this.trueAddr, this.ACC[0]);
+        tempAddr = this.addToStatic(boolNode.value + "" + this.tempNum, "bool");
+        this.storeAcc(tempAddr);
+        this.compareX(tempAddr);
 
       } else if(boolNode.value == "false"){
         this.loadRegConst(this.falseAddr, this.XREG[0]);
-        this.compareX(this.decimalToHex(this.falseAddr) + " 00");
+        this.loadRegConst(this.trueAddr, this.ACC[0]);
+        tempAddr = this.addToStatic(boolNode.value + "" + this.tempNum, "bool");
+        this.storeAcc(tempAddr);
+        this.compareX(tempAddr);
 
       } else{
         let var1Type:string = this.createExpr(boolNode.childrenNodes[0], this.XREG);
@@ -264,16 +276,25 @@ module Compiler {
         let isString:RegExp = /^\"[a-zA-Z]*\"$/;
 
         if(isString.test(var2Node.value)){
-          this.addString(var2Node.value.substring(1,var2Node.value.length-1)); // ignore the quotes
-          let stringPointer:number = 255 - this.tempStringMem.length;
+          let stringPointer:number;
+          if(this.stringTable.get(var2Node.value) == null){
+            this.addString(var2Node.value.substring(1,var2Node.value.length-1)); // ignore the quotes
+            let stringPointer:number = 255 - this.tempStringMem.length;
+          } else{
+            stringPointer = this.stringTable.get(var2Node.value);
+          }
           this.loadRegConst(stringPointer, this.ACC[0]); // pointer to string
           tempAddr = this.addToStatic("string" + this.tempNum, "string");
           
         } else if(var2Node.value == "true"){
-          tempAddr = this.decimalToHex(this.trueAddr) + " 00";
+          this.loadRegConst(this.trueAddr, this.ACC[0]);
+          tempAddr = this.addToStatic(var2Node.value + "" + this.tempNum, "bool");
+          this.storeAcc(tempAddr);
 
         } else if(var2Node.value == "false"){
-          tempAddr = this.decimalToHex(this.falseAddr) + " 00";
+          this.loadRegConst(this.falseAddr, this.ACC[0]);
+          tempAddr = this.addToStatic(var2Node.value + "" + this.tempNum, "bool");
+          this.storeAcc(tempAddr);
 
         } else if(isId.test(var2Node.value)){
           tempAddr = this.findTempAddr(var2Node.value);
@@ -282,6 +303,7 @@ module Compiler {
           let intValue = parseInt(var2Node.value);
           this.loadRegConst(intValue, this.ACC[0]);
           tempAddr = this.addToStatic(var2Node.value + "" + this.tempNum, "int");
+          this.storeAcc(tempAddr);
 
         } else if(var2Node.value == "Add"){
           tempAddr = this.calculateSum(var2Node);
@@ -300,8 +322,14 @@ module Compiler {
       let value:string = exprNode.value;
 
       if(isString.test(value)){
-        this.addString(value.substring(1,value.length-1)); // ignore the quotes
-        let stringPointer:number = 255 - this.tempStringMem.length;
+        let stringPointer:number;
+        if(this.stringTable.get(value) == null){
+          this.addString(value.substring(1,value.length-1)); // ignore the quotes
+          stringPointer = 255 - this.tempStringMem.length;
+          this.stringTable.set(value, stringPointer);
+        } else{
+          stringPointer = this.stringTable.get(value);
+        }
         this.loadRegConst(stringPointer, register[0]); // pointer to string
         return "string";
 
@@ -333,7 +361,7 @@ module Compiler {
     }
 
     public handleBackpatch(): void{
-      console.log(this.code);
+      console.log(this.staticTable);
       let staticKeys = this.staticTable.keys();
       let key = staticKeys.next();
       let tempTable = new Map<string, number>();
@@ -344,7 +372,7 @@ module Compiler {
       }
       console.log(this.code);
       console.log(tempTable);
-      // this.backpatch(tempTable);
+      this.backpatch(tempTable);
     }
 
     public backpatch(tempTable:Map<string, number>): void{

@@ -21,6 +21,7 @@ var Compiler;
             this.jumpNum = 0;
             this.staticTable = new Map();
             this.jumpTable = new Map();
+            this.stringTable = new Map();
             this.currentScope = scopeTree.root;
             this.varOffset = 0;
             // front load the true and false values
@@ -123,7 +124,10 @@ var Compiler;
             var varType = this.createExpr(assignNode.childrenNodes[1], this.ACC);
             var tempAddr;
             if (varType == "string") {
-                tempAddr = this.addToStatic(id, "string");
+                tempAddr = this.findTempAddr(id);
+                if (tempAddr == null) {
+                    tempAddr = this.addToStatic(id, "string");
+                }
             }
             else {
                 // find temp address
@@ -210,17 +214,24 @@ var Compiler;
             this.createBool(ifNode.childrenNodes[0]);
             var jumpNdx = this.addToJump();
             this.handleBlock(ifNode.childrenNodes[1]);
-            this.code[jumpNdx] = this.decimalToHex(this.code.length - jumpNdx - 2);
+            this.code[jumpNdx] = this.decimalToHex(this.code.length - jumpNdx - 1);
         };
         CodeGen.prototype.createBool = function (boolNode) {
             var tempAddr;
+            console.log("BOOL " + boolNode.value);
             if (boolNode.value == "true") {
                 this.loadRegConst(this.trueAddr, this.XREG[0]);
-                this.compareX(this.decimalToHex(this.trueAddr) + " 00");
+                this.loadRegConst(this.trueAddr, this.ACC[0]);
+                tempAddr = this.addToStatic(boolNode.value + "" + this.tempNum, "bool");
+                this.storeAcc(tempAddr);
+                this.compareX(tempAddr);
             }
             else if (boolNode.value == "false") {
                 this.loadRegConst(this.falseAddr, this.XREG[0]);
-                this.compareX(this.decimalToHex(this.falseAddr) + " 00");
+                this.loadRegConst(this.trueAddr, this.ACC[0]);
+                tempAddr = this.addToStatic(boolNode.value + "" + this.tempNum, "bool");
+                this.storeAcc(tempAddr);
+                this.compareX(tempAddr);
             }
             else {
                 var var1Type = this.createExpr(boolNode.childrenNodes[0], this.XREG);
@@ -229,16 +240,26 @@ var Compiler;
                 var isDigit = /^[0-9]$/;
                 var isString = /^\"[a-zA-Z]*\"$/;
                 if (isString.test(var2Node.value)) {
-                    this.addString(var2Node.value.substring(1, var2Node.value.length - 1)); // ignore the quotes
-                    var stringPointer = 255 - this.tempStringMem.length;
+                    var stringPointer = void 0;
+                    if (this.stringTable.get(var2Node.value) == null) {
+                        this.addString(var2Node.value.substring(1, var2Node.value.length - 1)); // ignore the quotes
+                        var stringPointer_1 = 255 - this.tempStringMem.length;
+                    }
+                    else {
+                        stringPointer = this.stringTable.get(var2Node.value);
+                    }
                     this.loadRegConst(stringPointer, this.ACC[0]); // pointer to string
                     tempAddr = this.addToStatic("string" + this.tempNum, "string");
                 }
                 else if (var2Node.value == "true") {
-                    tempAddr = this.decimalToHex(this.trueAddr) + " 00";
+                    this.loadRegConst(this.trueAddr, this.ACC[0]);
+                    tempAddr = this.addToStatic(var2Node.value + "" + this.tempNum, "bool");
+                    this.storeAcc(tempAddr);
                 }
                 else if (var2Node.value == "false") {
-                    tempAddr = this.decimalToHex(this.falseAddr) + " 00";
+                    this.loadRegConst(this.falseAddr, this.ACC[0]);
+                    tempAddr = this.addToStatic(var2Node.value + "" + this.tempNum, "bool");
+                    this.storeAcc(tempAddr);
                 }
                 else if (isId.test(var2Node.value)) {
                     tempAddr = this.findTempAddr(var2Node.value);
@@ -247,6 +268,7 @@ var Compiler;
                     var intValue = parseInt(var2Node.value);
                     this.loadRegConst(intValue, this.ACC[0]);
                     tempAddr = this.addToStatic(var2Node.value + "" + this.tempNum, "int");
+                    this.storeAcc(tempAddr);
                 }
                 else if (var2Node.value == "Add") {
                     tempAddr = this.calculateSum(var2Node);
@@ -261,8 +283,15 @@ var Compiler;
             // identify value to be loaded
             var value = exprNode.value;
             if (isString.test(value)) {
-                this.addString(value.substring(1, value.length - 1)); // ignore the quotes
-                var stringPointer = 255 - this.tempStringMem.length;
+                var stringPointer = void 0;
+                if (this.stringTable.get(value) == null) {
+                    this.addString(value.substring(1, value.length - 1)); // ignore the quotes
+                    stringPointer = 255 - this.tempStringMem.length;
+                    this.stringTable.set(value, stringPointer);
+                }
+                else {
+                    stringPointer = this.stringTable.get(value);
+                }
                 this.loadRegConst(stringPointer, register[0]); // pointer to string
                 return "string";
             }
@@ -293,7 +322,7 @@ var Compiler;
             }
         };
         CodeGen.prototype.handleBackpatch = function () {
-            console.log(this.code);
+            console.log(this.staticTable);
             var staticKeys = this.staticTable.keys();
             var key = staticKeys.next();
             var tempTable = new Map();
@@ -304,7 +333,7 @@ var Compiler;
             }
             console.log(this.code);
             console.log(tempTable);
-            // this.backpatch(tempTable);
+            this.backpatch(tempTable);
         };
         CodeGen.prototype.backpatch = function (tempTable) {
             var isTemp = /^T/;
