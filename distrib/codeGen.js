@@ -211,14 +211,26 @@ var Compiler;
             return locInfo[1];
         };
         CodeGen.prototype.createWhile = function (whileNode) {
-            var jumpDes = this.code.length;
+            var tempAddr;
+            var jumpDes = this.code.length; // top of loop
             this.createBool(whileNode.childrenNodes[0]);
+            // noteq case
+            if (whileNode.childrenNodes[0].value == "NotEqual") {
+                this.loadRegConst(0, this.ACC[0]);
+                var neqJumpNdx = this.addToJump();
+                this.code[neqJumpNdx] = "02";
+                this.loadRegConst(1, this.ACC[0]);
+                tempAddr = this.addToStatic("Neq" + this.tempNum, "int");
+                this.storeAcc(tempAddr);
+                this.loadRegConst(0, this.XREG[0]);
+                this.compareX(tempAddr);
+            }
             var jumpNdx = this.addToJump();
             this.handleBlock(whileNode.childrenNodes[1]);
             // jump to top of while
             this.loadRegConst(2, this.XREG[0]);
             this.loadRegConst(1, this.ACC[0]);
-            var tempAddr = this.addToStatic("CpX" + this.tempNum, "int");
+            tempAddr = this.addToStatic("CpX" + this.tempNum, "int");
             this.storeAcc(tempAddr);
             this.compareX(tempAddr);
             var jumpNdx2 = this.addToJump();

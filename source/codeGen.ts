@@ -244,14 +244,29 @@ module Compiler {
     }
 
     public createWhile(whileNode:TreeNode): void{
-      let jumpDes:number = this.code.length;
+      let tempAddr:string;
+      let jumpDes:number = this.code.length; // top of loop
+
       this.createBool(whileNode.childrenNodes[0]);
+
+      // noteq case
+      if(whileNode.childrenNodes[0].value == "NotEqual"){
+        this.loadRegConst(0, this.ACC[0]);
+        let neqJumpNdx:number = this.addToJump();
+        this.code[neqJumpNdx] = "02";
+        this.loadRegConst(1, this.ACC[0]);
+        tempAddr = this.addToStatic("Neq"+this.tempNum, "int");
+        this.storeAcc(tempAddr);
+        this.loadRegConst(0, this.XREG[0]);
+        this.compareX(tempAddr);
+      }
+
       let jumpNdx:number = this.addToJump();
       this.handleBlock(whileNode.childrenNodes[1]);
       // jump to top of while
       this.loadRegConst(2, this.XREG[0]);
       this.loadRegConst(1,this.ACC[0]);
-      let tempAddr:string = this.addToStatic("CpX"+this.tempNum, "int");
+      tempAddr = this.addToStatic("CpX"+this.tempNum, "int");
       this.storeAcc(tempAddr);
       this.compareX(tempAddr);
       let jumpNdx2:number = this.addToJump();
