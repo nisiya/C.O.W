@@ -73,7 +73,7 @@ var Compiler;
                     this.createAssign(currentNode);
                     break;
                 case "while":
-                    // this.createWhile(currentNode);
+                    this.createWhile(currentNode);
                     break;
                 case "if":
                     this.createIf(currentNode);
@@ -209,6 +209,21 @@ var Compiler;
                 }
             }
             return locInfo[1];
+        };
+        CodeGen.prototype.createWhile = function (whileNode) {
+            var jumpDes = this.code.length;
+            this.createBool(whileNode.childrenNodes[0]);
+            var jumpNdx = this.addToJump();
+            this.handleBlock(whileNode.childrenNodes[1]);
+            // jump to top of while
+            this.loadRegConst(2, this.XREG[0]);
+            this.loadRegConst(1, this.ACC[0]);
+            var tempAddr = this.addToStatic("CpX" + this.tempNum, "int");
+            this.storeAcc(tempAddr);
+            this.compareX(tempAddr);
+            var jumpNdx2 = this.addToJump();
+            this.code[jumpNdx2] = this.decimalToHex((256 - this.code.length) + jumpDes);
+            this.code[jumpNdx] = this.decimalToHex(this.code.length - jumpNdx - 1);
         };
         CodeGen.prototype.createIf = function (ifNode) {
             this.createBool(ifNode.childrenNodes[0]);

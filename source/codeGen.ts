@@ -91,7 +91,7 @@ module Compiler {
           this.createAssign(currentNode);
           break;
         case "while":
-          // this.createWhile(currentNode);
+          this.createWhile(currentNode);
           break;
         case "if":
           this.createIf(currentNode);
@@ -241,6 +241,22 @@ module Compiler {
         }
       }
       return locInfo[1];
+    }
+
+    public createWhile(whileNode:TreeNode): void{
+      let jumpDes:number = this.code.length;
+      this.createBool(whileNode.childrenNodes[0]);
+      let jumpNdx:number = this.addToJump();
+      this.handleBlock(whileNode.childrenNodes[1]);
+      // jump to top of while
+      this.loadRegConst(2, this.XREG[0]);
+      this.loadRegConst(1,this.ACC[0]);
+      let tempAddr:string = this.addToStatic("CpX"+this.tempNum, "int");
+      this.storeAcc(tempAddr);
+      this.compareX(tempAddr);
+      let jumpNdx2:number = this.addToJump();
+      this.code[jumpNdx2] = this.decimalToHex((256 - this.code.length) + jumpDes);
+      this.code[jumpNdx] = this.decimalToHex(this.code.length - jumpNdx - 1);
     }
 
     public createIf(ifNode:TreeNode): void{
@@ -396,7 +412,6 @@ module Compiler {
         return value.toString(16).toUpperCase();
       }
     }
-
 
     public loadRegConst(value:number, register:string): void{
       this.code.push(register);
