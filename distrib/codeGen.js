@@ -239,6 +239,17 @@ var Compiler;
         };
         CodeGen.prototype.createIf = function (ifNode) {
             this.createBool(ifNode.childrenNodes[0]);
+            // noteq case
+            if (ifNode.childrenNodes[0].value == "NotEqual") {
+                this.loadRegConst(0, this.ACC[0]);
+                var neqJumpNdx = this.addToJump();
+                this.code[neqJumpNdx] = "02";
+                this.loadRegConst(1, this.ACC[0]);
+                var tempAddr = this.addToStatic("Neq" + this.tempNum, "int");
+                this.storeAcc(tempAddr);
+                this.loadRegConst(0, this.XREG[0]);
+                this.compareX(tempAddr);
+            }
             var jumpNdx = this.addToJump();
             this.handleBlock(ifNode.childrenNodes[1]);
             this.code[jumpNdx] = this.decimalToHex(this.code.length - jumpNdx - 1);

@@ -276,6 +276,17 @@ module Compiler {
 
     public createIf(ifNode:TreeNode): void{
       this.createBool(ifNode.childrenNodes[0]);
+      // noteq case
+      if(ifNode.childrenNodes[0].value == "NotEqual"){
+        this.loadRegConst(0, this.ACC[0]);
+        let neqJumpNdx:number = this.addToJump();
+        this.code[neqJumpNdx] = "02";
+        this.loadRegConst(1, this.ACC[0]);
+        let tempAddr:string = this.addToStatic("Neq"+this.tempNum, "int");
+        this.storeAcc(tempAddr);
+        this.loadRegConst(0, this.XREG[0]);
+        this.compareX(tempAddr);
+      }
       let jumpNdx:number = this.addToJump();
       this.handleBlock(ifNode.childrenNodes[1]);
       this.code[jumpNdx] = this.decimalToHex(this.code.length - jumpNdx - 1);
