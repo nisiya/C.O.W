@@ -24,6 +24,7 @@ var Compiler;
             this.stringTable = new Map();
             this.currentScope = scopeTree.root;
             this.varOffset = 0;
+            this.hasError = false;
             // front load the true and false values
             this.addString("false");
             this.falseAddr = 255 - this.tempStringMem.length;
@@ -376,7 +377,6 @@ var Compiler;
             this.backpatch(tempTable, tempCodeLen);
         };
         CodeGen.prototype.backpatch = function (tempTable, tempCodeLen) {
-            var log = document.getElementById("log");
             var isTemp = /^T/;
             for (var i = 0; i < tempCodeLen; i++) {
                 if (isTemp.test(this.code[i])) {
@@ -385,7 +385,7 @@ var Compiler;
                     console.log("index " + index);
                     this.code[i] = this.decimalToHex(index);
                     this.code[i + 1] = "00";
-                    log.value += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" + this.code[i] + this.code[i + 1] + "] ...";
+                    _OutputLog += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" + this.code[i] + this.code[i + 1] + "] ...";
                 }
             }
         };
@@ -398,9 +398,8 @@ var Compiler;
             }
         };
         CodeGen.prototype.pushByte = function (value) {
-            var log = document.getElementById("log");
             this.code.push(value);
-            log.value += "\n   CODEGEN --> Pushing byte [" + value + "] to memory...";
+            _OutputLog += "\n   CODEGEN --> Pushing byte [" + value + "] to memory...";
         };
         CodeGen.prototype.loadRegConst = function (value, register) {
             this.pushByte(register);

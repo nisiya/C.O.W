@@ -29,7 +29,7 @@ module Compiler {
           return [this.asTree, null, null, this.warnings];
         }
       } else{
-        return null;
+        return [null, null, null, null];
       }
     }
 
@@ -451,24 +451,21 @@ module Compiler {
     // Start of functions for outputs
     // prints error to log
     public printError(errorType: string, location: [number, number]): void{
-      let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
-      log.value += "\n   SEMANTIC ANALYZER --> ERROR! " + errorType + " on line " + location[0] + ", column " + location[1];
-      log.value += "\n   SEMANTIC ANALYZER --> Semantic analysis failed with 1 error... Symbol table is not generated for it";
+      _OutputLog += "\n   SEMANTIC ANALYZER --> ERROR! " + errorType + " on line " + location[0] + ", column " + location[1];
+      _OutputLog += "\n   SEMANTIC ANALYZER --> Semantic analysis failed with 1 error... Symbol table is not generated for it";
     }
 
     // prints warning to log
     public printWarning(warningType: string, location: [number, number]): void{
       this.warnings++;
-      let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
-      log.value += "\n   SEMANTIC ANALYZER --> WARNING! " + warningType + " on line " + location[0] + ", column " + location[1];
+      _OutputLog += "\n   SEMANTIC ANALYZER --> WARNING! " + warningType + " on line " + location[0] + ", column " + location[1];
       // log.value += "\n   SEMANTIC ANALYZER --> Semantic analysis completed with 1 warning";                
     }
 
     // print current state
     public printStage(stage: string){
       if(_VerboseMode){
-        let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
-        log.value += "\n   SEMANTIC ANALYZER --> " + stage;
+        _OutputLog += "\n   SEMANTIC ANALYZER --> " + stage;
       }
     }
   }

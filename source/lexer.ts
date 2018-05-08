@@ -308,22 +308,21 @@ module Compiler {
     }
 
     public displayTokens(): void{
-      let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
       let lexError: number = 0;
       let lexWarning: number = 0;
       let index: number = 0;
       let token = this.tokenBank[index];
       
       if(this.tokenBank.length == 0){
-        log.value += "\n   LEXER --> ERROR! No program(s) found";
-        log.value += "\n ============= \n Lexer Failed... 0 Warning(s) ... 1 Error(s)";
+        _OutputLog += "\n   LEXER --> ERROR! No program(s) found";
+        _OutputLog += "\n ============= \n Lexer Failed... 0 Warning(s) ... 1 Error(s)";
         return;
       }
 
       // print all tokens
       if(_VerboseMode){
         while(index < this.tokenBank.length-1){
-          log.value += "\n   LEXER --> " + token.toString();
+          _OutputLog += "\n   LEXER --> " + token.toString();
           index++; 
           token = this.tokenBank[index];
         }
@@ -333,16 +332,16 @@ module Compiler {
       }
       // reached the last token
       if(token.isEqual("T_Invalid")){
-        log.value += "\n   LEXER --> ERROR! Invalid token"
+        _OutputLog += "\n   LEXER --> ERROR! Invalid token"
                       + " [ " + token.tValue + " ] on line " + token.tLine
                       + ", column " + token.tColumn;
         lexError++;
       } else {
         if(_VerboseMode){
-          log.value += "\n   LEXER --> " + token.toString();
+          _OutputLog += "\n   LEXER --> " + token.toString();
         }
         if(!token.isEqual("T_EOP")){
-          log.value += "\n   LEXER --> WARNING! No End Of Program [$] found."
+          _OutputLog += "\n   LEXER --> WARNING! No End Of Program [$] found."
                       + "\n Inserted at line " + token.tLine + ", column " + (token.tColumn+1);
           let eopToken: Token = new Token("T_EOP", "$", token.tLine, token.tColumn+1);
           this.tokenBank.push(eopToken);
@@ -350,10 +349,10 @@ module Compiler {
         }
       }
       if(lexError == 0){
-        log.value += "\n ============= \n Lexer completed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
-        log.value += "\n Token bank loaded... \n =============";
+        _OutputLog += "\n ============= \n Lexer completed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
+        _OutputLog += "\n Token bank loaded... \n =============";
       } else {
-        log.value += "\n ============= \n Lexer Failed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
+        _OutputLog += "\n ============= \n Lexer Failed... " + lexWarning + " Warning(s) ... " + lexError + " Error(s)";
       }
     }
   }

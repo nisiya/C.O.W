@@ -20,6 +20,10 @@ const APP_VERSION: string = "0.07";   // uhhhh
 // Big tree to store all programs
 var _GrandCST; 
 var _GrandAST;
+
+// output logs
+var _OutputLog:string;
+
 // Global vars
 let _VerboseMode: boolean;
 var onDocumentLoad = function() {

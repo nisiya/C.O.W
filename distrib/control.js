@@ -46,6 +46,7 @@ var Compiler;
                 tokenBank = lexerReturn[0], input = lexerReturn[1];
                 if (tokenBank.length != 0) {
                     // Lex passed
+                    log.value += _OutputLog;
                     log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";
                     var csTree = parser.start(tokenBank);
                     if (csTree != null) {
@@ -54,25 +55,23 @@ var Compiler;
                         _GrandCST.addSubTree(csTree.root);
                         // print CST
                         csTree.printTree("cst");
-                        // csTree.displayTree("cst");
+                        log.value += _OutputLog;
                         log.value += "\n ============= \n Parse completed successfully \n =============";
                         log.value += "\n Semantic Analyzer start for Program " + prgNum
                             + "... \n ============= \n   SEMANTIC ANALYZER --> Analyzing Program " + prgNum + "...";
-                        var asTree = void 0;
-                        var symbolTable = void 0;
-                        var warningSA = void 0;
                         // start semantic analyzer
-                        var sAnalyzeReturn = sAnalyzer.start(csTree);
-                        var scopeTree = void 0;
-                        if (sAnalyzeReturn) {
+                        var _a = sAnalyzer.start(csTree), asTree = _a[0], symbolTable = _a[1], scopeTree = _a[2], warningSA = _a[3];
+                        if (asTree) {
                             // AST generation passed
-                            asTree = sAnalyzeReturn[0], symbolTable = sAnalyzeReturn[1], scopeTree = sAnalyzeReturn[2], warningSA = sAnalyzeReturn[3];
+                            // [asTree, symbolTable, scopeTree, warningSA, saLog] = sAnalyzeReturn;
                             _GrandAST.addSubTree(asTree.root);
                             asTree.printTree("ast");
+                            log.value += _OutputLog;
                             // asTree.displayTree("ast");
                             if (symbolTable) {
                                 // scope and type checking also passed
                                 this.updateSymbolTable(symbolTable, prgNum);
+                                log.value += _OutputLog;
                                 log.value += "\n =============\n Semantic Anaylsis completed successfully with " + warningSA + " warnings \n =============";
                                 log.value += "\n Code Generation start for Program " + prgNum
                                     + "... \n ============= \n   CODE GEN --> Generating machine code for Program " + prgNum + "...";
@@ -80,25 +79,30 @@ var Compiler;
                                 var code = codeGen.start(asTree, scopeTree);
                                 if (code != null) {
                                     this.printCode(code);
+                                    log.value += _OutputLog;
                                     log.value += "\n =============\n Code Generation completed successfully with 0 warnings \n =============";
                                 }
                                 else {
+                                    log.value += _OutputLog;
                                     log.value += "\n   CODEGEN --> ERROR! Program " + prgNum + " is too large for 256 bytes";
                                     log.value += "\n   CODEGEN --> Code generation failed with 1 error";
                                 }
                             }
                             else {
                                 // Semantic Analyzer Failed
+                                log.value += _OutputLog;
                             }
                         }
                         else {
                             // AST generation failed
+                            log.value += _OutputLog;
                             _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0, 0]);
                             asTreeOut.value += "\nAST for Program " + prgNum + ": Skipped due to SEMANTIC ANALYSIS error(s) \n\n";
                         }
                     }
                     else {
                         // Parse failed
+                        log.value += _OutputLog;
                         _GrandCST.addLeafNode("Prg " + prgNum + " Failed", [0, 0]);
                         _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0, 0]);
                         csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n\n";
@@ -108,6 +112,7 @@ var Compiler;
                     // Lex failed
                     _GrandCST.addLeafNode("Prg " + prgNum + " Failed", [0, 0]);
                     _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0, 0]);
+                    log.value += _OutputLog;
                     if (whitespace.test(input)) {
                         "\n   LEXER --> ERROR! Invalid token";
                     }

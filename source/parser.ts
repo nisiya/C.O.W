@@ -430,18 +430,16 @@ module Compiler {
 
     public printError(token: Token, expectedValue: string): void{
       if(!this.error){
-        let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
-        log.value += "\n   PARSER --> ERROR! Expected [" + expectedValue + "] got [" + token.tid + "] with value '" 
+        _OutputLog += "\n   PARSER --> ERROR! Expected [" + expectedValue + "] got [" + token.tid + "] with value '" 
                   + token.tValue + "' on line " + token.tLine + ", column " + token.tColumn;
-        log.value += "\n   PARSER --> Parse failed with 1 error";                
+        _OutputLog += "\n   PARSER --> Parse failed with 1 error";                
         this.error = true;
       }
     }
     
     public printStage(stage: string){
       if(_VerboseMode){
-        let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
-        log.value += "\n   PARSER --> " + stage;
+        _OutputLog += "\n   PARSER --> " + stage;
       }
     }
   }
