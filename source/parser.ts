@@ -18,6 +18,8 @@ module Compiler {
 
     // 1. <Program> -> <Block> $
     public start(tokenBank:Array<Token>): Tree{
+      _OutputLog = "";
+      
       // need to start with first token
       this.tokenBank = tokenBank.reverse(); 
       this.error = false;

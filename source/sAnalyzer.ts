@@ -17,6 +17,8 @@ module Compiler {
     public warnings: number;
 
     public start(csTree:Tree): [Tree, Symbol[], ScopeTree, number]{
+      _OutputLog = "";
+
       console.log("SA Start");
       this.warnings = 0;
       // buildAST first

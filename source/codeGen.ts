@@ -28,6 +28,8 @@ module Compiler {
     readonly YREG:[string,string] = ["A0","AC"];
 
     public start(asTree:Tree, scopeTree:ScopeTree): string[]{
+      _OutputLog = "";
+
       this.asTree = asTree;
       this.code = new Array<string>();
       this.tempStringMem = new Array<string>();
@@ -57,7 +59,7 @@ module Compiler {
 
       // append strings to the end
       while (this.tempStringMem.length > 0){
-        this.code.push(this.tempStringMem.pop());
+        this.pushByte(this.tempStringMem.pop());
       }
 
       this.handleBackpatch(tempCodeLen);

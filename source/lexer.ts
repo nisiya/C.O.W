@@ -17,6 +17,8 @@ module Compiler {
     public errorFound: boolean;
 
     public start(userPrg:string): [Token[], string] {
+      _OutputLog = "";
+
       // RegExp
       let alphaNumeric:RegExp = /[a-z0-9]/;
       let charKey = /[a-z]/;

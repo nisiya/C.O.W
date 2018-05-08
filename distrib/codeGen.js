@@ -14,6 +14,7 @@ var Compiler;
             this.YREG = ["A0", "AC"];
         }
         CodeGen.prototype.start = function (asTree, scopeTree) {
+            _OutputLog = "";
             this.asTree = asTree;
             this.code = new Array();
             this.tempStringMem = new Array();
@@ -39,7 +40,7 @@ var Compiler;
             }
             // append strings to the end
             while (this.tempStringMem.length > 0) {
-                this.code.push(this.tempStringMem.pop());
+                this.pushByte(this.tempStringMem.pop());
             }
             this.handleBackpatch(tempCodeLen);
             console.log(this.staticTable);

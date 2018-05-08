@@ -12,6 +12,7 @@ var Compiler;
         function SAnalyzer() {
         }
         SAnalyzer.prototype.start = function (csTree) {
+            _OutputLog = "";
             console.log("SA Start");
             this.warnings = 0;
             // buildAST first

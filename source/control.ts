@@ -87,10 +87,12 @@ module Compiler {
                 // start code generation
                 let code = codeGen.start(asTree, scopeTree);
                 if(code != null){
-                  this.printCode(code);
+                  this.printCode(code, prgNum);
                   log.value += _OutputLog;
                   log.value += "\n =============\n Code Generation completed successfully with 0 warnings \n =============";
                 } else{
+                  // Code Generation Failed
+                  this.printCode(null, prgNum);
                   log.value += _OutputLog;
                   log.value += "\n   CODEGEN --> ERROR! Program " + prgNum + " is too large for 256 bytes";
                   log.value += "\n   CODEGEN --> Code generation failed with 1 error"; 
@@ -133,11 +135,17 @@ module Compiler {
       console.timeEnd('someFunction1');
     }
 
-    public static printCode(code: string[]): void{
+    public static printCode(code: string[], prgNum:number): void{
       let machineCode: HTMLInputElement = <HTMLInputElement> document.getElementById("machineCode");
-      for(var i=0; i<code.length; i++){
-        machineCode.value += code[i] + " ";
+      machineCode.value += "======================== Program " + prgNum + " ========================\n";
+      if(code){
+        for(var i=0; i<code.length; i++){
+          machineCode.value += code[i] + " ";
+        }
+      } else{
+        machineCode.value += "Memory exceeds 256 bytes\n";
       }
+      machineCode.value += "===========================================================\n";
     }
 
     // update symbol table output

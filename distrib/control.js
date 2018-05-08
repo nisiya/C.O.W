@@ -78,11 +78,13 @@ var Compiler;
                                 // start code generation
                                 var code = codeGen.start(asTree, scopeTree);
                                 if (code != null) {
-                                    this.printCode(code);
+                                    this.printCode(code, prgNum);
                                     log.value += _OutputLog;
                                     log.value += "\n =============\n Code Generation completed successfully with 0 warnings \n =============";
                                 }
                                 else {
+                                    // Code Generation Failed
+                                    this.printCode(null, prgNum);
                                     log.value += _OutputLog;
                                     log.value += "\n   CODEGEN --> ERROR! Program " + prgNum + " is too large for 256 bytes";
                                     log.value += "\n   CODEGEN --> Code generation failed with 1 error";
@@ -128,11 +130,18 @@ var Compiler;
             log.scrollTop = log.scrollHeight;
             console.timeEnd('someFunction1');
         };
-        Control.printCode = function (code) {
+        Control.printCode = function (code, prgNum) {
             var machineCode = document.getElementById("machineCode");
-            for (var i = 0; i < code.length; i++) {
-                machineCode.value += code[i] + " ";
+            machineCode.value += "======================== Program " + prgNum + " ========================\n";
+            if (code) {
+                for (var i = 0; i < code.length; i++) {
+                    machineCode.value += code[i] + " ";
+                }
             }
+            else {
+                machineCode.value += "Memory exceeds 256 bytes\n";
+            }
+            machineCode.value += "===========================================================\n";
         };
         // update symbol table output
         Control.updateSymbolTable = function (symbolTable, prgNum) {

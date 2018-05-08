@@ -14,6 +14,7 @@ var Compiler;
         }
         // 1. <Program> -> <Block> $
         Parser.prototype.start = function (tokenBank) {
+            _OutputLog = "";
             // need to start with first token
             this.tokenBank = tokenBank.reverse();
             this.error = false;

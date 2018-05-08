@@ -12,6 +12,7 @@ var Compiler;
         function Lexer() {
         }
         Lexer.prototype.start = function (userPrg) {
+            _OutputLog = "";
             // RegExp
             var alphaNumeric = /[a-z0-9]/;
             var charKey = /[a-z]/;
