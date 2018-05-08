@@ -80,6 +80,7 @@ var Compiler;
                                 var code = codeGen.start(asTree, scopeTree);
                                 if (code != null) {
                                     this.printCode(code);
+                                    log.value += "\n =============\n Code Generation completed successfully with 0 warnings \n =============";
                                 }
                                 else {
                                     log.value += "\n   CODEGEN --> ERROR! Program " + prgNum + " is too large for 256 bytes";

@@ -46,7 +46,7 @@ module Compiler {
 
       this.handleBlock(asTree.root);
       this.addBreak();
-      this.handleBackpatch();
+      let tempCodeLen = this.code.length;
 
       // add 00s
       while (this.code.length + this.tempStringMem.length < 255){
@@ -57,6 +57,8 @@ module Compiler {
       while (this.tempStringMem.length > 0){
         this.code.push(this.tempStringMem.pop());
       }
+
+      this.handleBackpatch(tempCodeLen);
 
       console.log(this.staticTable);
       if(this.code.length > 256){
@@ -118,8 +120,8 @@ module Compiler {
     public addToJump(): number{
       let jumpKey:string = "J" + this.jumpNum;
       this.jumpTable.set(jumpKey, 0);
-      this.code.push("D0");
-      this.code.push(jumpKey);
+      this.pushByte("D0");
+      this.pushByte(jumpKey);
       this.jumpNum++;
 
       return this.code.length-1;
@@ -358,19 +360,20 @@ module Compiler {
     public createExpr(exprNode:TreeNode, register:[string,string]): string{
       let isId:RegExp = /^[a-z]$/;
       let isDigit:RegExp = /^[0-9]$/;
-      let isString:RegExp = /^\"[a-zA-Z]*\"$/;
+      let isString:RegExp = /^\"([a-zA-Z]|\s)*\"$/;
 
       // identify value to be loaded
       let value:string = exprNode.value;
 
       if(isString.test(value)){
         let stringPointer:number;
-        if(this.stringTable.get(value) == null){
-          this.addString(value.substring(1,value.length-1)); // ignore the quotes
+        let stringVal:string = value.substring(1,value.length-1);
+        if(this.stringTable.get(stringVal) == null){
+          this.addString(stringVal); // ignore the quotes
           stringPointer = 255 - this.tempStringMem.length;
-          this.stringTable.set(value, stringPointer);
+          this.stringTable.set(stringVal, stringPointer);
         } else{
-          stringPointer = this.stringTable.get(value);
+          stringPointer = this.stringTable.get(stringVal);
         }
         this.loadRegConst(stringPointer, register[0]); // pointer to string
         return "string";
@@ -402,31 +405,32 @@ module Compiler {
       } 
     }
 
-    public handleBackpatch(): void{
+    public handleBackpatch(tempCodeLen:number): void{
       console.log(this.staticTable);
       let staticKeys = this.staticTable.keys();
       let key = staticKeys.next();
       let tempTable = new Map<string, number>();
       while(!key.done){
         let locInfo = this.staticTable.get(key.value);
-        tempTable.set(locInfo[1], locInfo[2]+this.code.length);
+        tempTable.set(locInfo[1], locInfo[2]+tempCodeLen);
         key = staticKeys.next();
       }
       console.log(this.code);
       console.log(tempTable);
-      this.backpatch(tempTable);
+      this.backpatch(tempTable, tempCodeLen);
     }
 
-    public backpatch(tempTable:Map<string, number>): void{
+    public backpatch(tempTable:Map<string, number>, tempCodeLen:number): void{
+      let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
       let isTemp:RegExp = /^T/;
-      for(var i=0; i<this.code.length; i++){
-        console.log("code " + this.code[i]);
+      for(var i=0; i<tempCodeLen; i++){
         if(isTemp.test(this.code[i])){
-          console.log("replace " + this.code[i]);
           let staticKeys = this.code[i] + " "+ this.code[i+1];
           let index = tempTable.get(staticKeys);
+          console.log("index " + index);
           this.code[i] = this.decimalToHex(index);
           this.code[i+1] = "00";
+          log.value += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" + this.code[i] + this.code[i+1] + "] ...";
         }
       }
     }
@@ -438,57 +442,63 @@ module Compiler {
         return value.toString(16).toUpperCase();
       }
     }
+    
+    public pushByte(value:string): void{
+      let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
+      this.code.push(value);
+      log.value += "\n   CODEGEN --> Pushing byte [" + value + "] to memory...";
+    }
 
     public loadRegConst(value:number, register:string): void{
-      this.code.push(register);
-      this.code.push(this.decimalToHex(value));
+      this.pushByte(register);
+      this.pushByte(this.decimalToHex(value));
     }
 
     public loadRegMem(tempAddr:string, register:string): void{
-      this.code.push(register);
+      this.pushByte(register);
       let memAddr:string[] = tempAddr.split(" ");
-      this.code.push(memAddr[0]);
-      this.code.push(memAddr[1]);
+      this.pushByte(memAddr[0]);
+      this.pushByte(memAddr[1]);
     }
 
     public storeAcc(tempAddr:string): void{
-      this.code.push("8D");
+      this.pushByte("8D");
       let memAddr:string[] = tempAddr.split(" ");
-      this.code.push(memAddr[0]);
-      this.code.push(memAddr[1]);
+      this.pushByte(memAddr[0]);
+      this.pushByte(memAddr[1]);
     }
 
     public addAcc(tempAddr:string): void{
-      this.code.push("6D");
+      this.pushByte("6D");
       let memAddr:string[] = tempAddr.split(" ");
-      this.code.push(memAddr[0]);
-      this.code.push(memAddr[1]);
+      this.pushByte(memAddr[0]);
+      this.pushByte(memAddr[1]);
     }
 
     public noOperation(): void{
-      this.code.push("EA");
+      this.pushByte("EA");
     }
 
     public addBreak(): void{
-      this.code.push("00");
+      this.pushByte("00");
     }
 
     public compareX(tempAddr:string): void{
-      this.code.push("EC");
+      this.pushByte("EC");
       let memAddr:string[] = tempAddr.split(" ");
-      this.code.push(memAddr[0]);
-      this.code.push(memAddr[1]);
+      this.pushByte(memAddr[0]);
+      this.pushByte(memAddr[1]);
     }
 
     public incrementByte(tempAddr:string): void{
-      this.code.push("EE");
+      this.pushByte("EE");
       let memAddr:string[] = tempAddr.split(" ");
-      this.code.push(memAddr[0]);
-      this.code.push(memAddr[1]);
+      this.pushByte(memAddr[0]);
+      this.pushByte(memAddr[1]);
     }
 
     public systemCall(): void{
-      this.code.push("FF");
+      this.pushByte("FF");
     }
   }
 }

@@ -31,7 +31,7 @@ var Compiler;
             this.trueAddr = 255 - this.tempStringMem.length;
             this.handleBlock(asTree.root);
             this.addBreak();
-            this.handleBackpatch();
+            var tempCodeLen = this.code.length;
             // add 00s
             while (this.code.length + this.tempStringMem.length < 255) {
                 this.code.push("00");
@@ -40,6 +40,7 @@ var Compiler;
             while (this.tempStringMem.length > 0) {
                 this.code.push(this.tempStringMem.pop());
             }
+            this.handleBackpatch(tempCodeLen);
             console.log(this.staticTable);
             if (this.code.length > 256) {
                 return null;
@@ -97,8 +98,8 @@ var Compiler;
         CodeGen.prototype.addToJump = function () {
             var jumpKey = "J" + this.jumpNum;
             this.jumpTable.set(jumpKey, 0);
-            this.code.push("D0");
-            this.code.push(jumpKey);
+            this.pushByte("D0");
+            this.pushByte(jumpKey);
             this.jumpNum++;
             return this.code.length - 1;
         };
@@ -317,18 +318,19 @@ var Compiler;
         CodeGen.prototype.createExpr = function (exprNode, register) {
             var isId = /^[a-z]$/;
             var isDigit = /^[0-9]$/;
-            var isString = /^\"[a-zA-Z]*\"$/;
+            var isString = /^\"([a-zA-Z]|\s)*\"$/;
             // identify value to be loaded
             var value = exprNode.value;
             if (isString.test(value)) {
                 var stringPointer = void 0;
-                if (this.stringTable.get(value) == null) {
-                    this.addString(value.substring(1, value.length - 1)); // ignore the quotes
+                var stringVal = value.substring(1, value.length - 1);
+                if (this.stringTable.get(stringVal) == null) {
+                    this.addString(stringVal); // ignore the quotes
                     stringPointer = 255 - this.tempStringMem.length;
-                    this.stringTable.set(value, stringPointer);
+                    this.stringTable.set(stringVal, stringPointer);
                 }
                 else {
-                    stringPointer = this.stringTable.get(value);
+                    stringPointer = this.stringTable.get(stringVal);
                 }
                 this.loadRegConst(stringPointer, register[0]); // pointer to string
                 return "string";
@@ -359,30 +361,31 @@ var Compiler;
                 return "int";
             }
         };
-        CodeGen.prototype.handleBackpatch = function () {
+        CodeGen.prototype.handleBackpatch = function (tempCodeLen) {
             console.log(this.staticTable);
             var staticKeys = this.staticTable.keys();
             var key = staticKeys.next();
             var tempTable = new Map();
             while (!key.done) {
                 var locInfo = this.staticTable.get(key.value);
-                tempTable.set(locInfo[1], locInfo[2] + this.code.length);
+                tempTable.set(locInfo[1], locInfo[2] + tempCodeLen);
                 key = staticKeys.next();
             }
             console.log(this.code);
             console.log(tempTable);
-            this.backpatch(tempTable);
+            this.backpatch(tempTable, tempCodeLen);
         };
-        CodeGen.prototype.backpatch = function (tempTable) {
+        CodeGen.prototype.backpatch = function (tempTable, tempCodeLen) {
+            var log = document.getElementById("log");
             var isTemp = /^T/;
-            for (var i = 0; i < this.code.length; i++) {
-                console.log("code " + this.code[i]);
+            for (var i = 0; i < tempCodeLen; i++) {
                 if (isTemp.test(this.code[i])) {
-                    console.log("replace " + this.code[i]);
                     var staticKeys = this.code[i] + " " + this.code[i + 1];
                     var index = tempTable.get(staticKeys);
+                    console.log("index " + index);
                     this.code[i] = this.decimalToHex(index);
                     this.code[i + 1] = "00";
+                    log.value += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" + this.code[i] + this.code[i + 1] + "] ...";
                 }
             }
         };
@@ -394,48 +397,53 @@ var Compiler;
                 return value.toString(16).toUpperCase();
             }
         };
+        CodeGen.prototype.pushByte = function (value) {
+            var log = document.getElementById("log");
+            this.code.push(value);
+            log.value += "\n   CODEGEN --> Pushing byte [" + value + "] to memory...";
+        };
         CodeGen.prototype.loadRegConst = function (value, register) {
-            this.code.push(register);
-            this.code.push(this.decimalToHex(value));
+            this.pushByte(register);
+            this.pushByte(this.decimalToHex(value));
         };
         CodeGen.prototype.loadRegMem = function (tempAddr, register) {
-            this.code.push(register);
+            this.pushByte(register);
             var memAddr = tempAddr.split(" ");
-            this.code.push(memAddr[0]);
-            this.code.push(memAddr[1]);
+            this.pushByte(memAddr[0]);
+            this.pushByte(memAddr[1]);
         };
         CodeGen.prototype.storeAcc = function (tempAddr) {
-            this.code.push("8D");
+            this.pushByte("8D");
             var memAddr = tempAddr.split(" ");
-            this.code.push(memAddr[0]);
-            this.code.push(memAddr[1]);
+            this.pushByte(memAddr[0]);
+            this.pushByte(memAddr[1]);
         };
         CodeGen.prototype.addAcc = function (tempAddr) {
-            this.code.push("6D");
+            this.pushByte("6D");
             var memAddr = tempAddr.split(" ");
-            this.code.push(memAddr[0]);
-            this.code.push(memAddr[1]);
+            this.pushByte(memAddr[0]);
+            this.pushByte(memAddr[1]);
         };
         CodeGen.prototype.noOperation = function () {
-            this.code.push("EA");
+            this.pushByte("EA");
         };
         CodeGen.prototype.addBreak = function () {
-            this.code.push("00");
+            this.pushByte("00");
         };
         CodeGen.prototype.compareX = function (tempAddr) {
-            this.code.push("EC");
+            this.pushByte("EC");
             var memAddr = tempAddr.split(" ");
-            this.code.push(memAddr[0]);
-            this.code.push(memAddr[1]);
+            this.pushByte(memAddr[0]);
+            this.pushByte(memAddr[1]);
         };
         CodeGen.prototype.incrementByte = function (tempAddr) {
-            this.code.push("EE");
+            this.pushByte("EE");
             var memAddr = tempAddr.split(" ");
-            this.code.push(memAddr[0]);
-            this.code.push(memAddr[1]);
+            this.pushByte(memAddr[0]);
+            this.pushByte(memAddr[1]);
         };
         CodeGen.prototype.systemCall = function () {
-            this.code.push("FF");
+            this.pushByte("FF");
         };
         return CodeGen;
     }());
