@@ -19,6 +19,7 @@ module Compiler {
       let lexer: Compiler.Lexer = new Lexer();
       let parser: Compiler.Parser = new Parser();
       let sAnalyzer: Compiler.SAnalyzer = new SAnalyzer();
+      let codeGen: Compiler.CodeGen = new CodeGen();
       _GrandCST = new Tree("All Programs",[0,0]);
       _GrandAST = new Tree("All Programs",[0,0]);
 
@@ -46,6 +47,7 @@ module Compiler {
         [tokenBank, input] = lexerReturn;
         if(tokenBank.length != 0){
           // Lex passed
+          log.value += _OutputLog;
           log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";            
 
           let csTree = parser.start(tokenBank);
@@ -55,34 +57,54 @@ module Compiler {
             _GrandCST.addSubTree(csTree.root);
             // print CST
             csTree.printTree("cst");
+            log.value += _OutputLog;
             log.value += "\n ============= \n Parse completed successfully \n =============";
 
-            log.value += "\n Semantic Analyzer start for Program " + prgNum 
+            log.value += "\n Semantic Analyzer start for Program " + prgNum
                       + "... \n ============= \n   SEMANTIC ANALYZER --> Analyzing Program " + prgNum + "...";
-            let asTree: Tree;
-            let symbolTable: Array<Symbol>;
-            let warningSA: number;
 
             // start semantic analyzer
-            let sAnalyzeReturn = sAnalyzer.start(csTree);
+            let [asTree, symbolTable, scopeTree, warningSA] = sAnalyzer.start(csTree);
 
-            if(sAnalyzeReturn){
+            if(asTree){
               // AST generation passed
-              [asTree, symbolTable, warningSA] = sAnalyzeReturn;
               _GrandAST.addSubTree(asTree.root);
               asTree.printTree("ast");
+              log.value += _OutputLog;
               if(symbolTable){
                 // scope and type checking also passed
                 this.updateSymbolTable(symbolTable, prgNum);
+                log.value += _OutputLog;
                 log.value += "\n =============\n Semantic Anaylsis completed successfully with " + warningSA + " warnings \n =============";
+                log.value += "\n Code Generation start for Program " + prgNum
+                          + "... \n ============= \n   CODE GEN --> Generating machine code for Program " + prgNum + "...";
+
+                // start code generation
+                let code = codeGen.start(asTree, scopeTree);
+                if(code != null){
+                  this.printCode(code, prgNum);
+                  log.value += _OutputLog;
+                  log.value += "\n =============\n Code Generation completed successfully with 0 warnings \n =============";
+                } else{
+                  // Code Generation Failed
+                  this.printCode(null, prgNum);
+                  log.value += _OutputLog;
+                  log.value += "\n   CODEGEN --> ERROR! Program " + prgNum + " is too large for 256 bytes";
+                  log.value += "\n   CODEGEN --> Code generation failed with 1 error"; 
+                }
+              } else{
+                // Semantic Analyzer Failed
+                log.value += _OutputLog;
               }
             } else{
               // AST generation failed
+              log.value += _OutputLog;
               _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0,0]);
               asTreeOut.value += "\nAST for Program " + prgNum + ": Skipped due to SEMANTIC ANALYSIS error(s) \n\n";
             }
           } else{
             // Parse failed
+            log.value += _OutputLog;
             _GrandCST.addLeafNode("Prg " + prgNum + " Failed", [0,0]);
             _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0,0]);
             csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n\n";
@@ -91,6 +113,7 @@ module Compiler {
           // Lex failed
           _GrandCST.addLeafNode("Prg " + prgNum + " Failed", [0,0]);
           _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0,0]);
+          log.value += _OutputLog;
           if(whitespace.test(input)){
             "\n   LEXER --> ERROR! Invalid token"
           }
@@ -98,11 +121,23 @@ module Compiler {
           csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to LEXER error(s) \n\n";
         }
         prgNum++;
-        log.scrollTop = log.scrollHeight;
       }
       _GrandCST.displayTree("cst");
       _GrandAST.displayTree("ast");
-      console.timeEnd('someFunction');
+      log.scrollTop = log.scrollHeight;
+    }
+
+    public static printCode(code: string[], prgNum:number): void{
+      let machineCode: HTMLInputElement = <HTMLInputElement> document.getElementById("machineCode");
+      machineCode.value += "======================== Program " + prgNum + " ========================\n";
+      if(code){
+        for(var i=0; i<code.length; i++){
+          machineCode.value += code[i] + " ";
+        }
+      } else{
+        machineCode.value += "Memory exceeds 256 bytes\n";
+      }
+      machineCode.value += "===========================================================\n";
     }
 
     // update symbol table output
@@ -172,11 +207,13 @@ module Compiler {
     // clear outputs only
     public static clearOutputs(): void{
       let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
+      let machineCode: HTMLInputElement = <HTMLInputElement> document.getElementById("machineCode");
       let csTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("cst");
       let asTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("ast");
       let symbolTableBody: HTMLTableSectionElement = <HTMLTableSectionElement> document.getElementById("symbolTableBody");
       // reset outputs
       log.value = "";
+      machineCode.value = "";
       csTreeOut.value = "";
       asTreeOut.value = "";
       while(symbolTableBody.hasChildNodes()){
@@ -249,6 +286,22 @@ module Compiler {
         case "saRedeclare":
           editor.setValue("{int a string a}$");
           break;
+        case "cdWhileNeq":
+          editor.setValue("{ int a \n int b \n a = 0 \n b = 0 \n if(false != (true == (a == 2))) \n { print(a)}}$");
+          break;
+        case "cgScope":
+          editor.setValue("{ \n int b\n int a \n {\n a = 0 \n boolean a\n a = true\n {" 
+                          + "\n boolean b \n b = false \n } \n { \n a = false \n int a \n a = 9"
+                          + "\n } \n }\n {\n a = 1 \n boolean b \n b = true \n } \n b = 1\n }$");
+          break;
+        case "cgAddition":
+          editor.setValue("    {\n int a \n a = 1 \n  while (a != 5) { \n  a = 1 + a \n print(a)\n }\n  } $");
+          break;
+        case "cgExceedMem":
+          editor.setValue("{\n  \/\/ there is no line wrap in console only here"
+                          + "\n print(\"i see trees of green red roses too i see em bloom for me and for you and i think to myself what a wonderful world i see skies of blue clouds of white bright blessed days dark sacred nights and i think to myself what a wonderful world the colors of the rainbow so pretty in the sky\")"
+                          + "\n \/\/ but this exceeds 256 bytes}$");
+          break;          
         default:
           editor.setValue("clearing");
           break;

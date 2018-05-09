@@ -16,20 +16,21 @@ module Compiler {
     public scopeTree: ScopeTree;
     public warnings: number;
 
-    public start(csTree:Tree): [Tree, Symbol[], number]{
-      console.log("SA Start");
+    public start(csTree:Tree): [Tree, Symbol[], ScopeTree, number]{
+      _OutputLog = "";
+
       this.warnings = 0;
       // buildAST first
       if(this.buildAST(csTree)){
         // AST built, start scope and type checking
         if(this.scopeTypeCheck()){
           this.buildSymbolTable();
-          return [this.asTree, this.symbolTable, this.warnings];
+          return [this.asTree, this.symbolTable, this.scopeTree, this.warnings];
         } else{
-          return [this.asTree, null, this.warnings];
+          return [this.asTree, null, null, this.warnings];
         }
       } else{
-        return null;
+        return [null, null, null, null];
       }
     }
 
@@ -108,7 +109,7 @@ module Compiler {
             this.printError("Redeclared identifier [" + varId.value + "] in the same scope", varId.location);
             return false;
           }
-        case "=":
+        case "Assign":
           varId = currentNode.childrenNodes[0];
           expr = currentNode.childrenNodes[1];
           symbol = this.checkScope(varId, false);
@@ -199,10 +200,10 @@ module Compiler {
       this.printStage("Checking for type mismatch in the statement...");
       let exprType:string;
       let isDigit:RegExp = /^\d$/;
-      let isPlus:RegExp = /^\+$/;
+      let isPlus:RegExp = /^Add$/;
       let isId:RegExp = /^[a-z]$/;
       let isBoolVal:RegExp = /^true|false$/;
-      let isBoolOp:RegExp = /^!=|==$/;
+      let isBoolOp:RegExp = /^Equal|Not Equal$/;
 
       if(isDigit.test(expr.value)){
         return "int";
@@ -237,7 +238,7 @@ module Compiler {
     }
 
     public checkIntExpr(expr:TreeNode): boolean{
-      let isPlus:RegExp = /^\+$/;
+      let isPlus:RegExp = /^Add$/;
       let isDigit:RegExp = /^\d$/;
       // find the last operand
       while(isPlus.test(expr.value)){
@@ -344,7 +345,7 @@ module Compiler {
     }
 
     public analyzeAssignment(AssignChildren:  TreeNode[]): void{
-      this.asTree.addBranchNode(AssignChildren[1].value, AssignChildren[1].location); // =
+      this.asTree.addBranchNode("Assign", AssignChildren[1].location); // =
       this.asTree.addLeafNode(this.analyzeId(AssignChildren[0]), AssignChildren[0].location); // id
       this.analyzeExpr(AssignChildren[2]); // Expr's child
       
@@ -426,7 +427,7 @@ module Compiler {
         this.asTree.addLeafNode(IntChildren[0].childrenNodes[0].value, IntChildren[0].childrenNodes[0].location); // the digit
         // asTree.current = parent of digit
       } else{
-        this.asTree.addBranchNode(IntChildren[1].childrenNodes[0].value, IntChildren[1].childrenNodes[0].location); // intop
+        this.asTree.addBranchNode("Add", IntChildren[1].childrenNodes[0].location); // intop
         this.asTree.addLeafNode(IntChildren[0].childrenNodes[0].value, IntChildren[0].childrenNodes[0].location); // the first digit
         this.analyzeExpr(IntChildren[2]); // expr's children
         this.asTree.moveUp();
@@ -440,7 +441,8 @@ module Compiler {
         this.asTree.addLeafNode(BoolChildren[0].childrenNodes[0].value, BoolChildren[0].childrenNodes[0].location); // the boolval
         // asTree.current = while
       } else{
-        this.asTree.addBranchNode(BoolChildren[2].childrenNodes[0].value, BoolChildren[2].childrenNodes[0].location); // the boolop
+        let boolop = (BoolChildren[2].childrenNodes[0].value == "==") ? "Equal" : "NotEqual";
+        this.asTree.addBranchNode(boolop, BoolChildren[2].childrenNodes[0].location); // the boolop
         this.analyzeExpr(BoolChildren[1]); // asTree.current = boolop
         this.analyzeExpr(BoolChildren[3]); 
         this.asTree.moveUp(); // to while
@@ -451,27 +453,21 @@ module Compiler {
     // Start of functions for outputs
     // prints error to log
     public printError(errorType: string, location: [number, number]): void{
-      let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
-      log.value += "\n   SEMANTIC ANALYZER --> ERROR! " + errorType + " on line " + location[0] + ", column " + location[1];
-      log.value += "\n   SEMANTIC ANALYZER --> Semantic analysis failed with 1 error... Symbol table is not generated for it";
-      log.scrollTop = log.scrollHeight;
+      _OutputLog += "\n   SEMANTIC ANALYZER --> ERROR! " + errorType + " on line " + location[0] + ", column " + location[1];
+      _OutputLog += "\n   SEMANTIC ANALYZER --> Semantic analysis failed with 1 error... Symbol table is not generated for it";
     }
 
     // prints warning to log
     public printWarning(warningType: string, location: [number, number]): void{
       this.warnings++;
-      let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
-      log.value += "\n   SEMANTIC ANALYZER --> WARNING! " + warningType + " on line " + location[0] + ", column " + location[1];
+      _OutputLog += "\n   SEMANTIC ANALYZER --> WARNING! " + warningType + " on line " + location[0] + ", column " + location[1];
       // log.value += "\n   SEMANTIC ANALYZER --> Semantic analysis completed with 1 warning";                
-      log.scrollTop = log.scrollHeight;
     }
 
     // print current state
     public printStage(stage: string){
       if(_VerboseMode){
-        let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
-        log.value += "\n   SEMANTIC ANALYZER --> " + stage;
-        log.scrollTop = log.scrollHeight;
+        _OutputLog += "\n   SEMANTIC ANALYZER --> " + stage;
       }
     }
   }

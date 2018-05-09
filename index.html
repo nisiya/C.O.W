@@ -24,6 +24,7 @@
   <script type="text/javascript" src="distrib/scopeTree.js"></script>
   <script type="text/javascript" src="distrib/parser.js"></script>
   <script type="text/javascript" src="distrib/sAnalyzer.js"></script>
+  <script type="text/javascript" src="distrib/codeGen.js"></script>
 
 </head>
 <body onload="onDocumentLoad()">
@@ -36,7 +37,7 @@
       <div class="row">
         <div class="col s3">  
           <button class="waves-effect waves-light btn"
-                    onclick="Compiler.Control.startCompile(this);">Compile</button>
+                  onclick="Compiler.Control.startCompile(this);"> <div id="compileBtnLbl">Compile</div></button>
         </div>
         <div class="col s3 controlBtn">
           <a class='dropdown-button indigo lighten-1 waves-effect waves-light btn' href='#' data-activates='dropdown1' data-beloworigin="true">
@@ -57,6 +58,9 @@
             </a></li>
             <li><a class='dropdown-button2 d' href='#' data-activates='saPrg' data-hover="hover" data-alignment="left">
               SA<i class="tiny material-icons right">chevron_right</i>
+            </a></li>
+            <li><a class='dropdown-button2 d' href='#' data-activates='cgPrg' data-hover="hover" data-alignment="left">
+              CodeGen<i class="tiny material-icons right">chevron_right</i>
             </a></li>
           </ul>
           <ul id='validPrg' class='dropdown-content grey lighten-5'>
@@ -115,6 +119,21 @@
               </a></li>
               <li><a id="saRedeclare" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
                 Redeclaration Error
+              </a></li>
+          </ul>
+          <ul id='cgPrg' class='dropdown-content grey lighten-5'>
+            <li><a id="cdWhileNeq" href="#!" onclick="Compiler.Control.changeInput(this);">
+                While !=
+              </a></li>
+              <li><a id="cgScope" href="#!" onclick="Compiler.Control.changeInput(this);">
+                Nested Blocks
+              </a></li>
+              <li><a id="cgAddition" href="#!" onclick="Compiler.Control.changeInput(this);">
+                Addition
+              </a></li>
+              <li class="divider"></li>
+              <li><a id="cgExceedMem" class="errorPrg" href="#!" onclick="Compiler.Control.changeInput(this);">
+                Exceed Mem Error
               </a></li>
           </ul>
         </div>
@@ -180,30 +199,17 @@
   <div class="container">
     <div class="section"> 
       <div class="row center">
-        <div class="col s7">
+        <div class="col s7">             
           <div class="card-panel">
-            <h5 class="center"> CST </h5>
-            <textarea class="output" id="cst" disabled></textarea>
+            <h5 class="center"> Machine Code: </h5>
+            <textarea class="output" id="machineCode" disabled></textarea>
           </div>
         </div>
-        <div class="col s5">
-          <div class="card-panel">
-            <h5 class="center"> AST </h5>
-            <textarea class="output" id="ast" disabled></textarea>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="container">
-    <div class="section"> 
-      <div class="row center">
-        <div class="col s6 offset-s3">             
+        <div class="col s5">             
           <div class="card-panel">
             <h5 class="center"> Symbol Table </h5>
             <table class="striped centered grey lighten-5 bordered" id="symbolTable">
-              <thead>
+              <thead id="symbolTableHead">
                 <tr>
                     <th>Program</th>
                     <th>Name</th>
@@ -225,35 +231,36 @@
   <div class="container">
     <div class="section"> 
       <div class="row center">
-        <div class="col s12">
-          <!-- <div class="card grey darken-3"> -->
-            <!-- <div class="card-content">
-              <h5> Visual Trees </h5>
-            </div> -->
-            <!-- <div class="card-tabs grey">
-              <ul class="tabs tabs-fixed-width grey darken-3">
-                <li class="tab"><a href="#tab-cst" onclick="Compiler.Control.reloadTree(this);">Visual CST</a></li>
-                <li class="tab"><a class="active" href="#tab-ast" onclick="Compiler.Control.reloadTree(this);">Visual AST</a></li>
-              </ul>
-            </div> -->
-            <!-- <div class="card-content grey darken-3"> -->
-              <!-- <div id="tab-cst" class="visual-tree"> -->
-                <div class="card-panel grey darken-3">
-                  <h5> Visual CST </h5>
-                  <div class="grey lighten-1 center visual-tree" id="visual-cst"> </div>
-              <!-- </div> -->
-              <!-- <div id="tab-ast" class="visual-tree"> -->
-                  <h5> Visual AST </h5>
-                  <div class="grey lighten-1 center visual-tree" id="visual-ast"> </div>
-                </div>
-              <!-- </div> -->
-            <!-- </div> -->
-          <!-- </div> -->
+        <div class="col s7">
+          <div class="card-panel">
+            <h5 class="center"> CST </h5>
+            <textarea class="output" id="cst" disabled></textarea>
+          </div>
+        </div>
+        <div class="col s5">
+          <div class="card-panel">
+            <h5 class="center"> AST </h5>
+            <textarea class="output" id="ast" disabled></textarea>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
+  <div class="container">
+    <div class="section"> 
+      <div class="row center">
+        <div class="col s12">
+          <div class="card-panel grey darken-3">
+            <h5> Visual CST </h5>
+            <div class="grey lighten-1 center visual-tree" id="visual-cst"> </div>
+            <h5> Visual AST </h5>
+            <div class="grey lighten-1 center visual-tree" id="visual-ast"> </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   
 
   <footer class="page-footer teal lighten-1">

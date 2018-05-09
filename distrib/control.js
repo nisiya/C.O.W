@@ -18,6 +18,7 @@ var Compiler;
             var lexer = new Compiler.Lexer();
             var parser = new Compiler.Parser();
             var sAnalyzer = new Compiler.SAnalyzer();
+            var codeGen = new Compiler.CodeGen();
             _GrandCST = new Compiler.Tree("All Programs", [0, 0]);
             _GrandAST = new Compiler.Tree("All Programs", [0, 0]);
             // reset outputs
@@ -42,6 +43,7 @@ var Compiler;
                 tokenBank = lexerReturn[0], input = lexerReturn[1];
                 if (tokenBank.length != 0) {
                     // Lex passed
+                    log.value += _OutputLog;
                     log.value += "\n Parser start for Program " + prgNum + "... \n ============= \n   PARSER --> Parsing Program " + prgNum + "...";
                     var csTree = parser.start(tokenBank);
                     if (csTree != null) {
@@ -50,33 +52,54 @@ var Compiler;
                         _GrandCST.addSubTree(csTree.root);
                         // print CST
                         csTree.printTree("cst");
+                        log.value += _OutputLog;
                         log.value += "\n ============= \n Parse completed successfully \n =============";
                         log.value += "\n Semantic Analyzer start for Program " + prgNum
                             + "... \n ============= \n   SEMANTIC ANALYZER --> Analyzing Program " + prgNum + "...";
-                        var asTree = void 0;
-                        var symbolTable = void 0;
-                        var warningSA = void 0;
                         // start semantic analyzer
-                        var sAnalyzeReturn = sAnalyzer.start(csTree);
-                        if (sAnalyzeReturn) {
+                        var _a = sAnalyzer.start(csTree), asTree = _a[0], symbolTable = _a[1], scopeTree = _a[2], warningSA = _a[3];
+                        if (asTree) {
                             // AST generation passed
-                            asTree = sAnalyzeReturn[0], symbolTable = sAnalyzeReturn[1], warningSA = sAnalyzeReturn[2];
                             _GrandAST.addSubTree(asTree.root);
                             asTree.printTree("ast");
+                            log.value += _OutputLog;
                             if (symbolTable) {
                                 // scope and type checking also passed
                                 this.updateSymbolTable(symbolTable, prgNum);
+                                log.value += _OutputLog;
                                 log.value += "\n =============\n Semantic Anaylsis completed successfully with " + warningSA + " warnings \n =============";
+                                log.value += "\n Code Generation start for Program " + prgNum
+                                    + "... \n ============= \n   CODE GEN --> Generating machine code for Program " + prgNum + "...";
+                                // start code generation
+                                var code = codeGen.start(asTree, scopeTree);
+                                if (code != null) {
+                                    this.printCode(code, prgNum);
+                                    log.value += _OutputLog;
+                                    log.value += "\n =============\n Code Generation completed successfully with 0 warnings \n =============";
+                                }
+                                else {
+                                    // Code Generation Failed
+                                    this.printCode(null, prgNum);
+                                    log.value += _OutputLog;
+                                    log.value += "\n   CODEGEN --> ERROR! Program " + prgNum + " is too large for 256 bytes";
+                                    log.value += "\n   CODEGEN --> Code generation failed with 1 error";
+                                }
+                            }
+                            else {
+                                // Semantic Analyzer Failed
+                                log.value += _OutputLog;
                             }
                         }
                         else {
                             // AST generation failed
+                            log.value += _OutputLog;
                             _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0, 0]);
                             asTreeOut.value += "\nAST for Program " + prgNum + ": Skipped due to SEMANTIC ANALYSIS error(s) \n\n";
                         }
                     }
                     else {
                         // Parse failed
+                        log.value += _OutputLog;
                         _GrandCST.addLeafNode("Prg " + prgNum + " Failed", [0, 0]);
                         _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0, 0]);
                         csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to PARSER error(s) \n\n";
@@ -86,6 +109,7 @@ var Compiler;
                     // Lex failed
                     _GrandCST.addLeafNode("Prg " + prgNum + " Failed", [0, 0]);
                     _GrandAST.addLeafNode("Prg " + prgNum + " Failed", [0, 0]);
+                    log.value += _OutputLog;
                     if (whitespace.test(input)) {
                         "\n   LEXER --> ERROR! Invalid token";
                     }
@@ -93,11 +117,23 @@ var Compiler;
                     csTreeOut.value += "\nCST for Program " + prgNum + ": Skipped due to LEXER error(s) \n\n";
                 }
                 prgNum++;
-                log.scrollTop = log.scrollHeight;
             }
             _GrandCST.displayTree("cst");
             _GrandAST.displayTree("ast");
-            console.timeEnd('someFunction');
+            log.scrollTop = log.scrollHeight;
+        };
+        Control.printCode = function (code, prgNum) {
+            var machineCode = document.getElementById("machineCode");
+            machineCode.value += "======================== Program " + prgNum + " ========================\n";
+            if (code) {
+                for (var i = 0; i < code.length; i++) {
+                    machineCode.value += code[i] + " ";
+                }
+            }
+            else {
+                machineCode.value += "Memory exceeds 256 bytes\n";
+            }
+            machineCode.value += "===========================================================\n";
         };
         // update symbol table output
         Control.updateSymbolTable = function (symbolTable, prgNum) {
@@ -163,11 +199,13 @@ var Compiler;
         // clear outputs only
         Control.clearOutputs = function () {
             var log = document.getElementById("log");
+            var machineCode = document.getElementById("machineCode");
             var csTreeOut = document.getElementById("cst");
             var asTreeOut = document.getElementById("ast");
             var symbolTableBody = document.getElementById("symbolTableBody");
             // reset outputs
             log.value = "";
+            machineCode.value = "";
             csTreeOut.value = "";
             asTreeOut.value = "";
             while (symbolTableBody.hasChildNodes()) {
@@ -236,6 +274,22 @@ var Compiler;
                     break;
                 case "saRedeclare":
                     editor.setValue("{int a string a}$");
+                    break;
+                case "cdWhileNeq":
+                    editor.setValue("{ int a \n int b \n a = 0 \n b = 0 \n if(false != (true == (a == 2))) \n { print(a)}}$");
+                    break;
+                case "cgScope":
+                    editor.setValue("{ \n int b\n int a \n {\n a = 0 \n boolean a\n a = true\n {"
+                        + "\n boolean b \n b = false \n } \n { \n a = false \n int a \n a = 9"
+                        + "\n } \n }\n {\n a = 1 \n boolean b \n b = true \n } \n b = 1\n }$");
+                    break;
+                case "cgAddition":
+                    editor.setValue("    {\n int a \n a = 1 \n  while (a != 5) { \n  a = 1 + a \n print(a)\n }\n  } $");
+                    break;
+                case "cgExceedMem":
+                    editor.setValue("{\n  \/\/ there is no line wrap in console only here"
+                        + "\n print(\"i see trees of green red roses too i see em bloom for me and for you and i think to myself what a wonderful world i see skies of blue clouds of white bright blessed days dark sacred nights and i think to myself what a wonderful world the colors of the rainbow so pretty in the sky\")"
+                        + "\n \/\/ but this exceeds 256 bytes}$");
                     break;
                 default:
                     editor.setValue("clearing");
