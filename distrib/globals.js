@@ -17,6 +17,8 @@ var APP_VERSION = "0.07"; // uhhhh
 // Big tree to store all programs
 var _GrandCST;
 var _GrandAST;
+// output logs
+var _OutputLog;
 // Global vars
 var _VerboseMode;
 var onDocumentLoad = function () {

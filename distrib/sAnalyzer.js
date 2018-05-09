@@ -12,6 +12,7 @@ var Compiler;
         function SAnalyzer() {
         }
         SAnalyzer.prototype.start = function (csTree) {
+            _OutputLog = "";
             console.log("SA Start");
             this.warnings = 0;
             // buildAST first
@@ -26,7 +27,7 @@ var Compiler;
                 }
             }
             else {
-                return null;
+                return [null, null, null, null];
             }
         };
         SAnalyzer.prototype.buildAST = function (csTree) {
@@ -439,22 +440,19 @@ var Compiler;
         // Start of functions for outputs
         // prints error to log
         SAnalyzer.prototype.printError = function (errorType, location) {
-            var log = document.getElementById("log");
-            log.value += "\n   SEMANTIC ANALYZER --> ERROR! " + errorType + " on line " + location[0] + ", column " + location[1];
-            log.value += "\n   SEMANTIC ANALYZER --> Semantic analysis failed with 1 error... Symbol table is not generated for it";
+            _OutputLog += "\n   SEMANTIC ANALYZER --> ERROR! " + errorType + " on line " + location[0] + ", column " + location[1];
+            _OutputLog += "\n   SEMANTIC ANALYZER --> Semantic analysis failed with 1 error... Symbol table is not generated for it";
         };
         // prints warning to log
         SAnalyzer.prototype.printWarning = function (warningType, location) {
             this.warnings++;
-            var log = document.getElementById("log");
-            log.value += "\n   SEMANTIC ANALYZER --> WARNING! " + warningType + " on line " + location[0] + ", column " + location[1];
+            _OutputLog += "\n   SEMANTIC ANALYZER --> WARNING! " + warningType + " on line " + location[0] + ", column " + location[1];
             // log.value += "\n   SEMANTIC ANALYZER --> Semantic analysis completed with 1 warning";                
         };
         // print current state
         SAnalyzer.prototype.printStage = function (stage) {
             if (_VerboseMode) {
-                var log = document.getElementById("log");
-                log.value += "\n   SEMANTIC ANALYZER --> " + stage;
+                _OutputLog += "\n   SEMANTIC ANALYZER --> " + stage;
             }
         };
         return SAnalyzer;

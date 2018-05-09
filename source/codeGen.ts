@@ -21,12 +21,15 @@ module Compiler {
     public tempStringMem:string[];
     public trueAddr:number; // where string true and false
     public falseAddr:number; // are stored for printing boolean
+    public hasError:boolean;
 
     readonly ACC:[string,string] = ["A9","AD"];
     readonly XREG:[string,string] = ["A2","AE"];
     readonly YREG:[string,string] = ["A0","AC"];
 
     public start(asTree:Tree, scopeTree:ScopeTree): string[]{
+      _OutputLog = "";
+
       this.asTree = asTree;
       this.code = new Array<string>();
       this.tempStringMem = new Array<string>();
@@ -37,6 +40,7 @@ module Compiler {
       this.stringTable = new Map<string, number>();
       this.currentScope = scopeTree.root;
       this.varOffset = 0;
+      this.hasError = false;
 
       // front load the true and false values
       this.addString("false");
@@ -55,7 +59,7 @@ module Compiler {
 
       // append strings to the end
       while (this.tempStringMem.length > 0){
-        this.code.push(this.tempStringMem.pop());
+        this.pushByte(this.tempStringMem.pop());
       }
 
       this.handleBackpatch(tempCodeLen);
@@ -85,6 +89,7 @@ module Compiler {
     }
 
     public createCode(currentNode:TreeNode): void{
+
       switch(currentNode.value){
         case "VarDecl":
           this.createVarDecl(currentNode);
@@ -168,9 +173,9 @@ module Compiler {
     public createPrint(printNode:TreeNode): void{
       let varType:string = this.createExpr(printNode.childrenNodes[0], this.YREG);
       if(varType == "int"){
-        this.loadRegConst(1, this.XREG[0])
+        this.loadRegConst(1, this.XREG[0]);
       } else{
-        this.loadRegConst(2, this.XREG[0])
+        this.loadRegConst(2, this.XREG[0]);
       }
 
       this.systemCall();
@@ -414,7 +419,6 @@ module Compiler {
     }
 
     public backpatch(tempTable:Map<string, number>, tempCodeLen:number): void{
-      let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
       let isTemp:RegExp = /^T/;
       for(var i=0; i<tempCodeLen; i++){
         if(isTemp.test(this.code[i])){
@@ -422,8 +426,7 @@ module Compiler {
           let index = tempTable.get(staticKeys);
           this.code[i] = this.decimalToHex(index);
           this.code[i+1] = "00";
-          log.value += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" 
-                    + this.code[i] + " " +this.code[i+1] + "] ...";
+          _OutputLog += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" + this.code[i] + this.code[i+1] + "] ...";
         }
       }
     }
@@ -437,9 +440,9 @@ module Compiler {
     }
     
     public pushByte(value:string): void{
-      let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
       this.code.push(value);
-      log.value += "\n   CODEGEN --> Pushing byte [" + value + "] to memory...";
+      _OutputLog += "\n   CODEGEN --> Pushing byte [" + value + "] to memory...";
+      
     }
 
     public loadRegConst(value:number, register:string): void{
