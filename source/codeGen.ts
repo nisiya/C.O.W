@@ -10,15 +10,15 @@ module Compiler {
     
   export class CodeGen {
     public asTree:Tree;
-    public code:string[];
-    public tempNum:number;
-    public jumpNum:number;
+    public code:string[]; 
+    public tempNum:number; // temp location counter
+    public jumpNum:number; // jump number counter
     public staticTable: Map<string, [string, string, number]>;
     public jumpTable: Map<string, number>;
-    public stringTable: Map<string, number>;
+    public stringTable: Map<string, number>; // map addr to added strings
     public currentScope:ScopeNode;
-    public varOffset:number;
-    public tempStringMem:string[];
+    public varOffset:number; // from end of code area
+    public heap:string[]; //
     public trueAddr:number; // where string true and false
     public falseAddr:number; // are stored for printing boolean
 
@@ -31,7 +31,7 @@ module Compiler {
 
       this.asTree = asTree;
       this.code = new Array<string>();
-      this.tempStringMem = new Array<string>();
+      this.heap = new Array<string>();
       this.tempNum = 0;
       this.jumpNum = 0;
       this.staticTable = new Map<string, [string, string, number]>();
@@ -42,36 +42,39 @@ module Compiler {
 
       // front load the true and false values
       this.addString("false");
-      this.falseAddr = 255 - this.tempStringMem.length;
+      this.falseAddr = 255 - this.heap.length;
       this.addString("true");     
-      this.trueAddr = 255 - this.tempStringMem.length;
+      this.trueAddr = 255 - this.heap.length;
 
+      // start with root like always
       this.handleBlock(asTree.root);
+
+      // end of code
       this.addBreak();
+      
       let tempCodeLen = this.code.length;
 
-      // add 00s
-      while (this.code.length + this.tempStringMem.length < 255){
+      // pad the 00s
+      while (this.code.length + this.heap.length < 255){
         this.code.push("00");
       }
 
-      // append strings to the end
-      while (this.tempStringMem.length > 0){
-        this.pushByte(this.tempStringMem.pop());
+      // append heap to the end
+      while (this.heap.length > 0){
+        this.pushByte(this.heap.pop());
       }
 
       this.handleBackpatch(tempCodeLen);
 
-      console.log(this.staticTable);
       if(this.code.length > 256){
-        return null;
+        return null; // memory exceeds 256 bytes
       } else {
         return this.code;
       }
     }
 
     public handleBlock(blockNode:TreeNode): void{
-      let childScopeIndex:number = 0;
+      let childScopeIndex:number = 0; // which child to visit
       let tempScope:ScopeNode = this.currentScope;
       for (var i=0; i<blockNode.childrenNodes.length; i++){
         let childNode:TreeNode = blockNode.childrenNodes[i];
@@ -88,7 +91,8 @@ module Compiler {
     }
 
     public createCode(currentNode:TreeNode): void{
-
+      _OutputLog += "\n   CODEGEN --> Found [" + currentNode.value 
+                 + "] on line " + currentNode.location[0] + " and column " + currentNode.location[1];
       switch(currentNode.value){
         case "VarDecl":
           this.createVarDecl(currentNode);
@@ -108,6 +112,8 @@ module Compiler {
       }
     }
 
+    // add entry to static table
+    // returns the temp location address
     public addToStatic(id:string, type:string): string{
       let tempAddr = "T" + this.tempNum + " XX";
       this.staticTable.set(id + "@" + this.currentScope.level, 
@@ -117,6 +123,8 @@ module Compiler {
       return tempAddr;
     }
 
+    // add entry to jump table
+    // returns current point in code
     public addToJump(): number{
       let jumpKey:string = "J" + this.jumpNum;
       this.jumpTable.set(jumpKey, 0);
@@ -131,32 +139,35 @@ module Compiler {
       let id:string = varDeclNode.childrenNodes[1].value;
       let type:string = varDeclNode.childrenNodes[0].value;
       let tempAddr:string = this.addToStatic(id, type);
+
       if (type != "string"){
         this.loadRegConst(0, this.ACC[0]);
         this.storeAcc(tempAddr);
       } // else load the string pointer when initialized
     }
 
+    // add to heap
     public addString(value:string): void{
-        this.tempStringMem.push("00"); // will add to code at the end
-        for(var i=value.length-1; i>=0; i--){
+        this.heap.push("00"); // strings are 00-terminated
+        for (var i=value.length-1; i>=0; i--){
           let asciiVal:number = value.charCodeAt(i);
-          this.tempStringMem.push(asciiVal.toString(16).toUpperCase());
+          this.heap.push(asciiVal.toString(16).toUpperCase());
         }
     }
 
     public createAssign(assignNode:TreeNode): void{
-      // identify value to be loaded
       let id:string = assignNode.childrenNodes[0].value;
+      // identify value to be loaded
       let varType:string = this.createExpr(assignNode.childrenNodes[1], this.ACC);
       let tempAddr:string;
 
       if (varType == "string"){
-        tempAddr = this.findTempAddr(id);
-        console.log("id " + id + " scope " + this.currentScope.level);
-        if(tempAddr == null){
+        tempAddr = this.findTempAddr(id); // string reassignment
+
+        if (tempAddr == null){ // new string assignment
           tempAddr = this.addToStatic(id, "string");
         }
+
       } else{
         // find temp address
         tempAddr = this.findTempAddr(id);
@@ -168,15 +179,17 @@ module Compiler {
 
     public createPrint(printNode:TreeNode): void{
       let varType:string = this.createExpr(printNode.childrenNodes[0], this.YREG);
+
       if(varType == "int"){
         this.loadRegConst(1, this.XREG[0]);
       } else{
         this.loadRegConst(2, this.XREG[0]);
       }
 
-      this.systemCall();
+      this.pushByte("FF"); //system call
     }
 
+    // identify type of variable
     public findType(id:string): string{
       let locInfo:[string, string, number] = this.staticTable.get(id + "@" + this.currentScope.level);
       if (locInfo == null){
@@ -189,7 +202,10 @@ module Compiler {
       return locInfo[0];
     }
 
+    // does addition by adding to accumulator and storing at temp location
     public calculateSum(additionNode:TreeNode): string{
+      _OutputLog += "\n   CODEGEN --> Found [" + additionNode.value 
+                 + "] on line " + additionNode.location[0] + " and column " + additionNode.location[1];
       let isDigit:RegExp = /^[0-9]$/;
       // load Acc with value
       let digit:string = additionNode.childrenNodes[0].value;
@@ -231,6 +247,7 @@ module Compiler {
       return sumAddr;
     }
 
+    // find the corresponding TXXX address
     public findTempAddr(id:string): string{
       let locInfo:[string, string, number] = this.staticTable.get(id + "@" + this.currentScope.level);
       if (locInfo == null){
@@ -243,27 +260,31 @@ module Compiler {
       return locInfo[1];
     }
 
+    public handleNotEq(): void{
+      this.loadRegConst(0, this.ACC[0]);
+      let neqJumpNdx:number = this.addToJump();
+      this.code[neqJumpNdx] = "02";
+      this.loadRegConst(1, this.ACC[0]);
+      let tempAddr:string = this.addToStatic("Neq"+this.tempNum, "int");
+      this.storeAcc(tempAddr);
+      this.loadRegConst(0, this.XREG[0]);
+      this.compareX(tempAddr);
+    }
+
     public createWhile(whileNode:TreeNode): void{
       let tempAddr:string;
       let jumpDes:number = this.code.length; // top of loop
 
       this.createBool(whileNode.childrenNodes[0]);
 
-      // noteq case
+      // NotEqual case
       if(whileNode.childrenNodes[0].value == "NotEqual"){
-        this.loadRegConst(0, this.ACC[0]);
-        let neqJumpNdx:number = this.addToJump();
-        this.code[neqJumpNdx] = "02";
-        this.loadRegConst(1, this.ACC[0]);
-        tempAddr = this.addToStatic("Neq"+this.tempNum, "int");
-        this.storeAcc(tempAddr);
-        this.loadRegConst(0, this.XREG[0]);
-        this.compareX(tempAddr);
+        this.handleNotEq();
       }
 
       let jumpNdx:number = this.addToJump();
       this.handleBlock(whileNode.childrenNodes[1]);
-      // jump to top of while
+      // jump forward to top of while
       this.loadRegConst(2, this.XREG[0]);
       this.loadRegConst(1,this.ACC[0]);
       tempAddr = this.addToStatic("CpX"+this.tempNum, "int");
@@ -276,21 +297,17 @@ module Compiler {
 
     public createIf(ifNode:TreeNode): void{
       this.createBool(ifNode.childrenNodes[0]);
-      // noteq case
+
+      // NotEqual case
       if(ifNode.childrenNodes[0].value == "NotEqual"){
-        this.loadRegConst(0, this.ACC[0]);
-        let neqJumpNdx:number = this.addToJump();
-        this.code[neqJumpNdx] = "02";
-        this.loadRegConst(1, this.ACC[0]);
-        let tempAddr:string = this.addToStatic("Neq"+this.tempNum, "int");
-        this.storeAcc(tempAddr);
-        this.loadRegConst(0, this.XREG[0]);
-        this.compareX(tempAddr);
+        this.handleNotEq();
       }
+
       let jumpNdx:number = this.addToJump();
       this.handleBlock(ifNode.childrenNodes[1]);
       this.code[jumpNdx] = this.decimalToHex(this.code.length - jumpNdx - 1);
     }
+
 
     public createBool(boolNode:TreeNode):void{
       let tempAddr:string;
@@ -310,22 +327,27 @@ module Compiler {
         this.compareX(tempAddr);
 
       } else{
+        // check first variable
         let var1Type:string = this.createExpr(boolNode.childrenNodes[0], this.XREG);
         let var2Node:TreeNode = boolNode.childrenNodes[1];
         let isId:RegExp = /^[a-z]$/;
         let isDigit:RegExp = /^[0-9]$/;
         var isString:RegExp = /^\"([a-zA-Z]|\s)*\"$/;
 
+        // then check second varible
         if(isString.test(var2Node.value)){
           let stringPointer:number;
           let stringVal:string = var2Node.value.substring(1,var2Node.value.length-1);
+          
+          // add to heap if string does not already exist
           if(this.stringTable.get(stringVal) == null){
             this.addString(stringVal); // ignore the quotes
-            stringPointer = 255 - this.tempStringMem.length;
+            stringPointer = 255 - this.heap.length;
             this.stringTable.set(stringVal, stringPointer);
           } else{
             stringPointer = this.stringTable.get(stringVal);
           }
+          
           this.loadRegConst(stringPointer, this.ACC[0]); // pointer to string
           tempAddr = this.addToStatic("string" + this.tempNum, "string");
           this.storeAcc(tempAddr);
@@ -368,13 +390,16 @@ module Compiler {
       if(isString.test(value)){
         let stringPointer:number;
         let stringVal:string = value.substring(1,value.length-1);
+
+        // add to heap if string does not already exist
         if(this.stringTable.get(stringVal) == null){
           this.addString(stringVal); // ignore the quotes
-          stringPointer = 255 - this.tempStringMem.length;
+          stringPointer = 255 - this.heap.length;
           this.stringTable.set(stringVal, stringPointer);
         } else{
           stringPointer = this.stringTable.get(stringVal);
         }
+
         this.loadRegConst(stringPointer, register[0]); // pointer to string
         return "string";
 
@@ -392,7 +417,6 @@ module Compiler {
         return this.findType(value);
 
       } else if (isDigit.test(value)){
-        // convert value to hex
         let intValue = parseInt(value);
         this.loadRegConst(intValue, register[0]);
         return "int";
@@ -409,25 +433,22 @@ module Compiler {
       let staticKeys = this.staticTable.keys();
       let key = staticKeys.next();
       let tempTable = new Map<string, number>();
+      // make table with just TXXX and offset
       while(!key.done){
         let locInfo = this.staticTable.get(key.value);
         tempTable.set(locInfo[1], locInfo[2]+tempCodeLen);
         key = staticKeys.next();
       }
-      console.log(this.staticTable);
       this.backpatch(tempTable, tempCodeLen);
-      // console.log(tempTable);
     }
 
-    public backpatch(tempTable:Map<string, number>, tempCodeLen:number): void{
-      // console.log(this.code);
-      
+    public backpatch(tempTable:Map<string, number>, tempCodeLen:number): void{      
       let isTemp:RegExp = /^T/;
       for(var i=0; i<tempCodeLen; i++){
+        // walkthrough the code and replace with correct addresses
         if(isTemp.test(this.code[i])){
           let staticKeys = this.code[i] + " "+ this.code[i+1];
           let index = tempTable.get(staticKeys);
-          // console.log("i " + i);
           this.code[i] = this.decimalToHex(index);
           this.code[i+1] = "00";
           _OutputLog += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" + this.code[i] + this.code[i+1] + "] ...";
@@ -475,10 +496,6 @@ module Compiler {
       this.pushByte(memAddr[1]);
     }
 
-    public noOperation(): void{
-      this.pushByte("EA");
-    }
-
     public addBreak(): void{
       this.pushByte("00");
     }
@@ -490,15 +507,5 @@ module Compiler {
       this.pushByte(memAddr[1]);
     }
 
-    public incrementByte(tempAddr:string): void{
-      this.pushByte("EE");
-      let memAddr:string[] = tempAddr.split(" ");
-      this.pushByte(memAddr[0]);
-      this.pushByte(memAddr[1]);
-    }
-
-    public systemCall(): void{
-      this.pushByte("FF");
-    }
   }
 }

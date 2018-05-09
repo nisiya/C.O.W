@@ -11,7 +11,6 @@ var Compiler;
         function Control() {
         }
         Control.startCompile = function (btn) {
-            console.time('someFunction1');
             var log = document.getElementById("log");
             var csTreeOut = document.getElementById("cst");
             var asTreeOut = document.getElementById("ast");
@@ -60,11 +59,9 @@ var Compiler;
                         var _a = sAnalyzer.start(csTree), asTree = _a[0], symbolTable = _a[1], scopeTree = _a[2], warningSA = _a[3];
                         if (asTree) {
                             // AST generation passed
-                            // [asTree, symbolTable, scopeTree, warningSA, saLog] = sAnalyzeReturn;
                             _GrandAST.addSubTree(asTree.root);
                             asTree.printTree("ast");
                             log.value += _OutputLog;
-                            // asTree.displayTree("ast");
                             if (symbolTable) {
                                 // scope and type checking also passed
                                 this.updateSymbolTable(symbolTable, prgNum);
@@ -123,7 +120,6 @@ var Compiler;
             _GrandCST.displayTree("cst");
             _GrandAST.displayTree("ast");
             log.scrollTop = log.scrollHeight;
-            console.timeEnd('someFunction1');
         };
         Control.printCode = function (code, prgNum) {
             var machineCode = document.getElementById("machineCode");
@@ -277,6 +273,22 @@ var Compiler;
                     break;
                 case "saRedeclare":
                     editor.setValue("{int a string a}$");
+                    break;
+                case "cdWhileNeq":
+                    editor.setValue("{ int a \n int b \n a = 0 \n b = 0 \n if(false != (true == (a == 2))) \n { print(a)}}$");
+                    break;
+                case "cgScope":
+                    editor.setValue("{ \n int b\n int a \n {\n a = 0 \n boolean a\n a = true\n {"
+                        + "\n boolean b \n b = false \n } \n { \n a = false \n int a \n a = 9"
+                        + "\n } \n }\n {\n a = 1 \n boolean b \n b = true \n } \n b = 1\n }$");
+                    break;
+                case "cgAddition":
+                    editor.setValue("    {\n int a \n a = 1 \n  while (a != 5) { \n  a = 1 + a \n print(a)\n }\n  } $");
+                    break;
+                case "cgExceedMem":
+                    editor.setValue("{\n  \/\/ there is no line wrap in console only here"
+                        + "\n print(\"i see trees of green red roses too i see em bloom for me and for you and i think to myself what a wonderful world i see skies of blue clouds of white bright blessed days dark sacred nights and i think to myself what a wonderful world the colors of the rainbow so pretty in the sky\")"
+                        + "\n \/\/ but this exceeds 256 bytes}$");
                     break;
                 default:
                     editor.setValue("clearing");

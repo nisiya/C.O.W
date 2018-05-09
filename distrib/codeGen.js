@@ -17,7 +17,7 @@ var Compiler;
             _OutputLog = "";
             this.asTree = asTree;
             this.code = new Array();
-            this.tempStringMem = new Array();
+            this.heap = new Array();
             this.tempNum = 0;
             this.jumpNum = 0;
             this.staticTable = new Map();
@@ -27,31 +27,32 @@ var Compiler;
             this.varOffset = 0;
             // front load the true and false values
             this.addString("false");
-            this.falseAddr = 255 - this.tempStringMem.length;
+            this.falseAddr = 255 - this.heap.length;
             this.addString("true");
-            this.trueAddr = 255 - this.tempStringMem.length;
+            this.trueAddr = 255 - this.heap.length;
+            // start with root like always
             this.handleBlock(asTree.root);
+            // end of code
             this.addBreak();
             var tempCodeLen = this.code.length;
-            // add 00s
-            while (this.code.length + this.tempStringMem.length < 255) {
+            // pad the 00s
+            while (this.code.length + this.heap.length < 255) {
                 this.code.push("00");
             }
-            // append strings to the end
-            while (this.tempStringMem.length > 0) {
-                this.pushByte(this.tempStringMem.pop());
+            // append heap to the end
+            while (this.heap.length > 0) {
+                this.pushByte(this.heap.pop());
             }
             this.handleBackpatch(tempCodeLen);
-            console.log(this.staticTable);
             if (this.code.length > 256) {
-                return null;
+                return null; // memory exceeds 256 bytes
             }
             else {
                 return this.code;
             }
         };
         CodeGen.prototype.handleBlock = function (blockNode) {
-            var childScopeIndex = 0;
+            var childScopeIndex = 0; // which child to visit
             var tempScope = this.currentScope;
             for (var i = 0; i < blockNode.childrenNodes.length; i++) {
                 var childNode = blockNode.childrenNodes[i];
@@ -68,6 +69,8 @@ var Compiler;
             this.currentScope = tempScope;
         };
         CodeGen.prototype.createCode = function (currentNode) {
+            _OutputLog += "\n   CODEGEN --> Found [" + currentNode.value
+                + "] on line " + currentNode.location[0] + " and column " + currentNode.location[1];
             switch (currentNode.value) {
                 case "VarDecl":
                     this.createVarDecl(currentNode);
@@ -86,6 +89,8 @@ var Compiler;
                     break;
             }
         };
+        // add entry to static table
+        // returns the temp location address
         CodeGen.prototype.addToStatic = function (id, type) {
             var tempAddr = "T" + this.tempNum + " XX";
             this.staticTable.set(id + "@" + this.currentScope.level, [type, tempAddr, this.varOffset]);
@@ -93,6 +98,8 @@ var Compiler;
             this.varOffset++;
             return tempAddr;
         };
+        // add entry to jump table
+        // returns current point in code
         CodeGen.prototype.addToJump = function () {
             var jumpKey = "J" + this.jumpNum;
             this.jumpTable.set(jumpKey, 0);
@@ -110,21 +117,21 @@ var Compiler;
                 this.storeAcc(tempAddr);
             } // else load the string pointer when initialized
         };
+        // add to heap
         CodeGen.prototype.addString = function (value) {
-            this.tempStringMem.push("00"); // will add to code at the end
+            this.heap.push("00"); // strings are 00-terminated
             for (var i = value.length - 1; i >= 0; i--) {
                 var asciiVal = value.charCodeAt(i);
-                this.tempStringMem.push(asciiVal.toString(16).toUpperCase());
+                this.heap.push(asciiVal.toString(16).toUpperCase());
             }
         };
         CodeGen.prototype.createAssign = function (assignNode) {
-            // identify value to be loaded
             var id = assignNode.childrenNodes[0].value;
+            // identify value to be loaded
             var varType = this.createExpr(assignNode.childrenNodes[1], this.ACC);
             var tempAddr;
             if (varType == "string") {
-                tempAddr = this.findTempAddr(id);
-                console.log("id " + id + " scope " + this.currentScope.level);
+                tempAddr = this.findTempAddr(id); // string reassignment
                 if (tempAddr == null) {
                     tempAddr = this.addToStatic(id, "string");
                 }
@@ -144,8 +151,9 @@ var Compiler;
             else {
                 this.loadRegConst(2, this.XREG[0]);
             }
-            this.systemCall();
+            this.pushByte("FF"); //system call
         };
+        // identify type of variable
         CodeGen.prototype.findType = function (id) {
             var locInfo = this.staticTable.get(id + "@" + this.currentScope.level);
             if (locInfo == null) {
@@ -157,7 +165,10 @@ var Compiler;
             }
             return locInfo[0];
         };
+        // does addition by adding to accumulator and storing at temp location
         CodeGen.prototype.calculateSum = function (additionNode) {
+            _OutputLog += "\n   CODEGEN --> Found [" + additionNode.value
+                + "] on line " + additionNode.location[0] + " and column " + additionNode.location[1];
             var isDigit = /^[0-9]$/;
             // load Acc with value
             var digit = additionNode.childrenNodes[0].value;
@@ -196,6 +207,7 @@ var Compiler;
             this.storeAcc(sumAddr);
             return sumAddr;
         };
+        // find the corresponding TXXX address
         CodeGen.prototype.findTempAddr = function (id) {
             var locInfo = this.staticTable.get(id + "@" + this.currentScope.level);
             if (locInfo == null) {
@@ -207,24 +219,27 @@ var Compiler;
             }
             return locInfo[1];
         };
+        CodeGen.prototype.handleNotEq = function () {
+            this.loadRegConst(0, this.ACC[0]);
+            var neqJumpNdx = this.addToJump();
+            this.code[neqJumpNdx] = "02";
+            this.loadRegConst(1, this.ACC[0]);
+            var tempAddr = this.addToStatic("Neq" + this.tempNum, "int");
+            this.storeAcc(tempAddr);
+            this.loadRegConst(0, this.XREG[0]);
+            this.compareX(tempAddr);
+        };
         CodeGen.prototype.createWhile = function (whileNode) {
             var tempAddr;
             var jumpDes = this.code.length; // top of loop
             this.createBool(whileNode.childrenNodes[0]);
-            // noteq case
+            // NotEqual case
             if (whileNode.childrenNodes[0].value == "NotEqual") {
-                this.loadRegConst(0, this.ACC[0]);
-                var neqJumpNdx = this.addToJump();
-                this.code[neqJumpNdx] = "02";
-                this.loadRegConst(1, this.ACC[0]);
-                tempAddr = this.addToStatic("Neq" + this.tempNum, "int");
-                this.storeAcc(tempAddr);
-                this.loadRegConst(0, this.XREG[0]);
-                this.compareX(tempAddr);
+                this.handleNotEq();
             }
             var jumpNdx = this.addToJump();
             this.handleBlock(whileNode.childrenNodes[1]);
-            // jump to top of while
+            // jump forward to top of while
             this.loadRegConst(2, this.XREG[0]);
             this.loadRegConst(1, this.ACC[0]);
             tempAddr = this.addToStatic("CpX" + this.tempNum, "int");
@@ -236,16 +251,9 @@ var Compiler;
         };
         CodeGen.prototype.createIf = function (ifNode) {
             this.createBool(ifNode.childrenNodes[0]);
-            // noteq case
+            // NotEqual case
             if (ifNode.childrenNodes[0].value == "NotEqual") {
-                this.loadRegConst(0, this.ACC[0]);
-                var neqJumpNdx = this.addToJump();
-                this.code[neqJumpNdx] = "02";
-                this.loadRegConst(1, this.ACC[0]);
-                var tempAddr = this.addToStatic("Neq" + this.tempNum, "int");
-                this.storeAcc(tempAddr);
-                this.loadRegConst(0, this.XREG[0]);
-                this.compareX(tempAddr);
+                this.handleNotEq();
             }
             var jumpNdx = this.addToJump();
             this.handleBlock(ifNode.childrenNodes[1]);
@@ -268,17 +276,20 @@ var Compiler;
                 this.compareX(tempAddr);
             }
             else {
+                // check first variable
                 var var1Type = this.createExpr(boolNode.childrenNodes[0], this.XREG);
                 var var2Node = boolNode.childrenNodes[1];
                 var isId = /^[a-z]$/;
                 var isDigit = /^[0-9]$/;
                 var isString = /^\"([a-zA-Z]|\s)*\"$/;
+                // then check second varible
                 if (isString.test(var2Node.value)) {
                     var stringPointer = void 0;
                     var stringVal = var2Node.value.substring(1, var2Node.value.length - 1);
+                    // add to heap if string does not already exist
                     if (this.stringTable.get(stringVal) == null) {
                         this.addString(stringVal); // ignore the quotes
-                        stringPointer = 255 - this.tempStringMem.length;
+                        stringPointer = 255 - this.heap.length;
                         this.stringTable.set(stringVal, stringPointer);
                     }
                     else {
@@ -322,9 +333,10 @@ var Compiler;
             if (isString.test(value)) {
                 var stringPointer = void 0;
                 var stringVal = value.substring(1, value.length - 1);
+                // add to heap if string does not already exist
                 if (this.stringTable.get(stringVal) == null) {
                     this.addString(stringVal); // ignore the quotes
-                    stringPointer = 255 - this.tempStringMem.length;
+                    stringPointer = 255 - this.heap.length;
                     this.stringTable.set(stringVal, stringPointer);
                 }
                 else {
@@ -347,7 +359,6 @@ var Compiler;
                 return this.findType(value);
             }
             else if (isDigit.test(value)) {
-                // convert value to hex
                 var intValue = parseInt(value);
                 this.loadRegConst(intValue, register[0]);
                 return "int";
@@ -363,23 +374,21 @@ var Compiler;
             var staticKeys = this.staticTable.keys();
             var key = staticKeys.next();
             var tempTable = new Map();
+            // make table with just TXXX and offset
             while (!key.done) {
                 var locInfo = this.staticTable.get(key.value);
                 tempTable.set(locInfo[1], locInfo[2] + tempCodeLen);
                 key = staticKeys.next();
             }
-            console.log(this.staticTable);
             this.backpatch(tempTable, tempCodeLen);
-            // console.log(tempTable);
         };
         CodeGen.prototype.backpatch = function (tempTable, tempCodeLen) {
-            // console.log(this.code);
             var isTemp = /^T/;
             for (var i = 0; i < tempCodeLen; i++) {
+                // walkthrough the code and replace with correct addresses
                 if (isTemp.test(this.code[i])) {
                     var staticKeys = this.code[i] + " " + this.code[i + 1];
                     var index = tempTable.get(staticKeys);
-                    // console.log("i " + i);
                     this.code[i] = this.decimalToHex(index);
                     this.code[i + 1] = "00";
                     _OutputLog += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" + this.code[i] + this.code[i + 1] + "] ...";
@@ -420,9 +429,6 @@ var Compiler;
             this.pushByte(memAddr[0]);
             this.pushByte(memAddr[1]);
         };
-        CodeGen.prototype.noOperation = function () {
-            this.pushByte("EA");
-        };
         CodeGen.prototype.addBreak = function () {
             this.pushByte("00");
         };
@@ -431,15 +437,6 @@ var Compiler;
             var memAddr = tempAddr.split(" ");
             this.pushByte(memAddr[0]);
             this.pushByte(memAddr[1]);
-        };
-        CodeGen.prototype.incrementByte = function (tempAddr) {
-            this.pushByte("EE");
-            var memAddr = tempAddr.split(" ");
-            this.pushByte(memAddr[0]);
-            this.pushByte(memAddr[1]);
-        };
-        CodeGen.prototype.systemCall = function () {
-            this.pushByte("FF");
         };
         return CodeGen;
     }());
