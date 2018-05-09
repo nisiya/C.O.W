@@ -11,6 +11,7 @@ var Compiler;
         function Control() {
         }
         Control.startCompile = function (btn) {
+            console.time('someFunction');
             var log = document.getElementById("log");
             var csTreeOut = document.getElementById("cst");
             var asTreeOut = document.getElementById("ast");

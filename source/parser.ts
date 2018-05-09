@@ -286,7 +286,7 @@ module Compiler {
         this.csTree.addBranchNode("digit", [currentToken.tLine, currentToken.tColumn]);
         this.csTree.addLeafNode(currentToken.tValue, [currentToken.tLine, currentToken.tColumn]);
         this.csTree.moveUp(); // to IntExpr
-        
+
         // check for [+]
         currentToken = this.tokenBank.pop();
         if(this.match(currentToken, "T_Addition")){
