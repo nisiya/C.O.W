@@ -422,7 +422,6 @@ module Compiler {
     
     // IntExprChildren: [digit] or [digit, intop, Expr]
     public analyzeIntExpr(IntChildren: TreeNode[]): void{
-      // console.log(IntChildren);
       if(IntChildren.length == 1){
         this.asTree.addLeafNode(IntChildren[0].childrenNodes[0].value, IntChildren[0].childrenNodes[0].location); // the digit
         // asTree.current = parent of digit

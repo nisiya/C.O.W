@@ -69,8 +69,10 @@ var Compiler;
             this.currentScope = tempScope;
         };
         CodeGen.prototype.createCode = function (currentNode) {
-            _OutputLog += "\n   CODEGEN --> Found [" + currentNode.value
-                + "] on line " + currentNode.location[0] + " and column " + currentNode.location[1];
+            if (_VerboseMode) {
+                _OutputLog += "\n   CODEGEN --> Found [" + currentNode.value
+                    + "] on line " + currentNode.location[0] + " and column " + currentNode.location[1];
+            }
             switch (currentNode.value) {
                 case "VarDecl":
                     this.createVarDecl(currentNode);
@@ -167,8 +169,10 @@ var Compiler;
         };
         // does addition by adding to accumulator and storing at temp location
         CodeGen.prototype.calculateSum = function (additionNode) {
-            _OutputLog += "\n   CODEGEN --> Found [" + additionNode.value
-                + "] on line " + additionNode.location[0] + " and column " + additionNode.location[1];
+            if (_VerboseMode) {
+                _OutputLog += "\n   CODEGEN --> Found [" + additionNode.value
+                    + "] on line " + additionNode.location[0] + " and column " + additionNode.location[1];
+            }
             var isDigit = /^[0-9]$/;
             // load Acc with value
             var digit = additionNode.childrenNodes[0].value;
@@ -391,7 +395,9 @@ var Compiler;
                     var index = tempTable.get(staticKeys);
                     this.code[i] = this.decimalToHex(index);
                     this.code[i + 1] = "00";
-                    _OutputLog += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" + this.code[i] + this.code[i + 1] + "] ...";
+                    if (_VerboseMode) {
+                        _OutputLog += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" + this.code[i] + this.code[i + 1] + "] ...";
+                    }
                 }
             }
         };
@@ -405,7 +411,9 @@ var Compiler;
         };
         CodeGen.prototype.pushByte = function (value) {
             this.code.push(value);
-            _OutputLog += "\n   CODEGEN --> Pushing byte [" + value + "] to memory...";
+            if (_VerboseMode) {
+                _OutputLog += "\n   CODEGEN --> Pushing byte [" + value + "] to memory...";
+            }
         };
         CodeGen.prototype.loadRegConst = function (value, register) {
             this.pushByte(register);

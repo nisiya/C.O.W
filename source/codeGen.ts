@@ -91,8 +91,10 @@ module Compiler {
     }
 
     public createCode(currentNode:TreeNode): void{
-      _OutputLog += "\n   CODEGEN --> Found [" + currentNode.value 
-                 + "] on line " + currentNode.location[0] + " and column " + currentNode.location[1];
+      if(_VerboseMode){
+        _OutputLog += "\n   CODEGEN --> Found [" + currentNode.value 
+                  + "] on line " + currentNode.location[0] + " and column " + currentNode.location[1];
+      }
       switch(currentNode.value){
         case "VarDecl":
           this.createVarDecl(currentNode);
@@ -204,8 +206,10 @@ module Compiler {
 
     // does addition by adding to accumulator and storing at temp location
     public calculateSum(additionNode:TreeNode): string{
-      _OutputLog += "\n   CODEGEN --> Found [" + additionNode.value 
-                 + "] on line " + additionNode.location[0] + " and column " + additionNode.location[1];
+      if(_VerboseMode){
+        _OutputLog += "\n   CODEGEN --> Found [" + additionNode.value 
+                   + "] on line " + additionNode.location[0] + " and column " + additionNode.location[1];
+      }
       let isDigit:RegExp = /^[0-9]$/;
       // load Acc with value
       let digit:string = additionNode.childrenNodes[0].value;
@@ -451,7 +455,9 @@ module Compiler {
           let index = tempTable.get(staticKeys);
           this.code[i] = this.decimalToHex(index);
           this.code[i+1] = "00";
-          _OutputLog += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" + this.code[i] + this.code[i+1] + "] ...";
+          if(_VerboseMode){
+            _OutputLog += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" + this.code[i] + this.code[i+1] + "] ...";
+          }
         }
       }
     }
@@ -466,7 +472,9 @@ module Compiler {
     
     public pushByte(value:string): void{
       this.code.push(value);
-      _OutputLog += "\n   CODEGEN --> Pushing byte [" + value + "] to memory...";
+      if(_VerboseMode){
+        _OutputLog += "\n   CODEGEN --> Pushing byte [" + value + "] to memory...";
+      }
       
     }
 
