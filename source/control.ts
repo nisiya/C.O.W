@@ -12,9 +12,6 @@ module Compiler {
   export class Control {
 
     public static startCompile(btn): void {
-      // let compileBtnLbl: HTMLDivElement = <HTMLDivElement> document.getElementById("compileBtnLbl");
-      // compileBtnLbl.innerHTML = "";
-      // compileBtnLbl.className = "spinner-1";
       console.time('someFunction1');
       let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
       let csTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("cst");
@@ -129,8 +126,7 @@ module Compiler {
       }
       _GrandCST.displayTree("cst");
       _GrandAST.displayTree("ast");
-      // compileBtnLbl.innerHTML = "Compile";
-      // compileBtnLbl.className = "";
+
       log.scrollTop = log.scrollHeight;
       console.timeEnd('someFunction1');
     }

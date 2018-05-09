@@ -11,9 +11,6 @@ var Compiler;
         function Control() {
         }
         Control.startCompile = function (btn) {
-            // let compileBtnLbl: HTMLDivElement = <HTMLDivElement> document.getElementById("compileBtnLbl");
-            // compileBtnLbl.innerHTML = "";
-            // compileBtnLbl.className = "spinner-1";
             console.time('someFunction1');
             var log = document.getElementById("log");
             var csTreeOut = document.getElementById("cst");
@@ -125,8 +122,6 @@ var Compiler;
             }
             _GrandCST.displayTree("cst");
             _GrandAST.displayTree("ast");
-            // compileBtnLbl.innerHTML = "Compile";
-            // compileBtnLbl.className = "";
             log.scrollTop = log.scrollHeight;
             console.timeEnd('someFunction1');
         };

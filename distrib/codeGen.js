@@ -25,7 +25,6 @@ var Compiler;
             this.stringTable = new Map();
             this.currentScope = scopeTree.root;
             this.varOffset = 0;
-            this.hasError = false;
             // front load the true and false values
             this.addString("false");
             this.falseAddr = 255 - this.tempStringMem.length;
@@ -275,15 +274,17 @@ var Compiler;
                 var var2Node = boolNode.childrenNodes[1];
                 var isId = /^[a-z]$/;
                 var isDigit = /^[0-9]$/;
-                var isString = /^\"[a-zA-Z]*\"$/;
+                var isString = /^\"([a-zA-Z]|\s)*\"$/;
                 if (isString.test(var2Node.value)) {
                     var stringPointer = void 0;
-                    if (this.stringTable.get(var2Node.value) == null) {
-                        this.addString(var2Node.value.substring(1, var2Node.value.length - 1)); // ignore the quotes
-                        var stringPointer_1 = 255 - this.tempStringMem.length;
+                    var stringVal = var2Node.value.substring(1, var2Node.value.length - 1);
+                    if (this.stringTable.get(stringVal) == null) {
+                        this.addString(stringVal); // ignore the quotes
+                        stringPointer = 255 - this.tempStringMem.length;
+                        this.stringTable.set(stringVal, stringPointer);
                     }
                     else {
-                        stringPointer = this.stringTable.get(var2Node.value);
+                        stringPointer = this.stringTable.get(stringVal);
                     }
                     this.loadRegConst(stringPointer, this.ACC[0]); // pointer to string
                     tempAddr = this.addToStatic("string" + this.tempNum, "string");

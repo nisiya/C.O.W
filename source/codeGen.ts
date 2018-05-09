@@ -21,7 +21,6 @@ module Compiler {
     public tempStringMem:string[];
     public trueAddr:number; // where string true and false
     public falseAddr:number; // are stored for printing boolean
-    public hasError:boolean;
 
     readonly ACC:[string,string] = ["A9","AD"];
     readonly XREG:[string,string] = ["A2","AE"];
@@ -40,7 +39,6 @@ module Compiler {
       this.stringTable = new Map<string, number>();
       this.currentScope = scopeTree.root;
       this.varOffset = 0;
-      this.hasError = false;
 
       // front load the true and false values
       this.addString("false");
@@ -318,15 +316,17 @@ module Compiler {
         let var2Node:TreeNode = boolNode.childrenNodes[1];
         let isId:RegExp = /^[a-z]$/;
         let isDigit:RegExp = /^[0-9]$/;
-        let isString:RegExp = /^\"[a-zA-Z]*\"$/;
+        var isString:RegExp = /^\"([a-zA-Z]|\s)*\"$/;
 
         if(isString.test(var2Node.value)){
           let stringPointer:number;
-          if(this.stringTable.get(var2Node.value) == null){
-            this.addString(var2Node.value.substring(1,var2Node.value.length-1)); // ignore the quotes
-            let stringPointer:number = 255 - this.tempStringMem.length;
+          let stringVal:string = var2Node.value.substring(1,var2Node.value.length-1);
+          if(this.stringTable.get(stringVal) == null){
+            this.addString(stringVal); // ignore the quotes
+            stringPointer = 255 - this.tempStringMem.length;
+            this.stringTable.set(stringVal, stringPointer);
           } else{
-            stringPointer = this.stringTable.get(var2Node.value);
+            stringPointer = this.stringTable.get(stringVal);
           }
           this.loadRegConst(stringPointer, this.ACC[0]); // pointer to string
           tempAddr = this.addToStatic("string" + this.tempNum, "string");
