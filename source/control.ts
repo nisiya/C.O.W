@@ -12,7 +12,6 @@ module Compiler {
   export class Control {
 
     public static startCompile(btn): void {
-      console.time('someFunction');
       let log: HTMLInputElement = <HTMLInputElement> document.getElementById("log");
       let csTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("cst");
       let asTreeOut: HTMLInputElement = <HTMLInputElement> document.getElementById("ast");
@@ -287,7 +286,7 @@ module Compiler {
           editor.setValue("{int a string a}$");
           break;
         case "cdWhileNeq":
-          editor.setValue("{ int a \n int b \n a = 0 \n b = 0 \n if(false != (true == (a == 2))) \n { print(a)}}$");
+          editor.setValue("    {\n int a \n a = 1 \n  while (a != 5) { \n  a = 1 + a \n print(a)\n }\n  } $");
           break;
         case "cgScope":
           editor.setValue("{ \n int b\n int a \n {\n a = 0 \n boolean a\n a = true\n {" 
@@ -295,12 +294,11 @@ module Compiler {
                           + "\n } \n }\n {\n a = 1 \n boolean b \n b = true \n } \n b = 1\n }$");
           break;
         case "cgAddition":
-          editor.setValue("    {\n int a \n a = 1 \n  while (a != 5) { \n  a = 1 + a \n print(a)\n }\n  } $");
+          editor.setValue("{\n int a\n int b\n b = 0\n a = 1 + 2 + 3 + 4 + 5 + b\n print(a)\n }");
           break;
         case "cgExceedMem":
-          editor.setValue("{\n  \/\/ there is no line wrap in console only here"
-                          + "\n print(\"i see trees of green red roses too i see em bloom for me and for you and i think to myself what a wonderful world i see skies of blue clouds of white bright blessed days dark sacred nights and i think to myself what a wonderful world the colors of the rainbow so pretty in the sky\")"
-                          + "\n \/\/ but this exceeds 256 bytes}$");
+          editor.setValue("{\n print(\"i see trees of green red roses too i see em bloom for me and for you and i think to myself what a wonderful world i see skies of blue clouds of white bright blessed days dark sacred nights and i think to myself what a wonderful world the colors of the rainbow so pretty in the sky\")"
+                          + "\n}$");
           break;          
         default:
           editor.setValue("clearing");
