@@ -58,6 +58,7 @@ var Compiler;
                 if (childNode.value == "Block") {
                     this.currentScope = tempScope.childrenScopes[childScopeIndex];
                     this.handleBlock(childNode);
+                    this.currentScope = this.currentScope.parentScope;
                     childScopeIndex++;
                 }
                 else {
@@ -82,10 +83,6 @@ var Compiler;
                     break;
                 case "print":
                     this.createPrint(currentNode);
-                    break;
-                case "NotEqual":
-                    break;
-                case "Equal":
                     break;
             }
         };
@@ -127,6 +124,7 @@ var Compiler;
             var tempAddr;
             if (varType == "string") {
                 tempAddr = this.findTempAddr(id);
+                console.log("id " + id + " scope " + this.currentScope.level);
                 if (tempAddr == null) {
                     tempAddr = this.addToStatic(id, "string");
                 }
@@ -369,14 +367,18 @@ var Compiler;
                 tempTable.set(locInfo[1], locInfo[2] + tempCodeLen);
                 key = staticKeys.next();
             }
+            // console.log(this.staticTable);
             this.backpatch(tempTable, tempCodeLen);
+            // console.log(tempTable);
         };
         CodeGen.prototype.backpatch = function (tempTable, tempCodeLen) {
+            // console.log(this.code);
             var isTemp = /^T/;
             for (var i = 0; i < tempCodeLen; i++) {
                 if (isTemp.test(this.code[i])) {
                     var staticKeys = this.code[i] + " " + this.code[i + 1];
                     var index = tempTable.get(staticKeys);
+                    // console.log("i " + i);
                     this.code[i] = this.decimalToHex(index);
                     this.code[i + 1] = "00";
                     _OutputLog += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" + this.code[i] + this.code[i + 1] + "] ...";

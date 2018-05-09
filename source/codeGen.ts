@@ -78,7 +78,8 @@ module Compiler {
         if (childNode.value == "Block"){
           this.currentScope = tempScope.childrenScopes[childScopeIndex]; 
           this.handleBlock(childNode);
-          childScopeIndex++;
+          this.currentScope = this.currentScope.parentScope;
+          childScopeIndex++;          
         } else{
           this.createCode(childNode);
         }
@@ -103,10 +104,6 @@ module Compiler {
           break;
         case "print":
           this.createPrint(currentNode);
-          break;
-        case "NotEqual":
-          break;
-        case "Equal":
           break;
       }
     }
@@ -156,6 +153,7 @@ module Compiler {
 
       if (varType == "string"){
         tempAddr = this.findTempAddr(id);
+        console.log("id " + id + " scope " + this.currentScope.level);
         if(tempAddr == null){
           tempAddr = this.addToStatic(id, "string");
         }
@@ -415,15 +413,20 @@ module Compiler {
         tempTable.set(locInfo[1], locInfo[2]+tempCodeLen);
         key = staticKeys.next();
       }
+      console.log(this.staticTable);
       this.backpatch(tempTable, tempCodeLen);
+      // console.log(tempTable);
     }
 
     public backpatch(tempTable:Map<string, number>, tempCodeLen:number): void{
+      // console.log(this.code);
+      
       let isTemp:RegExp = /^T/;
       for(var i=0; i<tempCodeLen; i++){
         if(isTemp.test(this.code[i])){
           let staticKeys = this.code[i] + " "+ this.code[i+1];
           let index = tempTable.get(staticKeys);
+          // console.log("i " + i);
           this.code[i] = this.decimalToHex(index);
           this.code[i+1] = "00";
           _OutputLog += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" + this.code[i] + this.code[i+1] + "] ...";
