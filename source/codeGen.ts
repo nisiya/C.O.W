@@ -167,7 +167,6 @@ module Compiler {
 
     public createPrint(printNode:TreeNode): void{
       let varType:string = this.createExpr(printNode.childrenNodes[0], this.YREG);
-      console.log(varType);
       if(varType == "int"){
         this.loadRegConst(1, this.XREG[0])
       } else{
@@ -205,7 +204,6 @@ module Compiler {
 
       // check for more addition
       while(rightOperand.value == "Add"){
-        console.log("Add");
         // load Acc with value
         digit = rightOperand.childrenNodes[0].value;
         this.loadRegConst(parseInt(digit), this.ACC[0]);
@@ -233,7 +231,6 @@ module Compiler {
     }
 
     public findTempAddr(id:string): string{
-      console.log(this.currentScope);
       let locInfo:[string, string, number] = this.staticTable.get(id + "@" + this.currentScope.level);
       if (locInfo == null){
         let tempScope = this.currentScope.parentScope;
@@ -296,7 +293,6 @@ module Compiler {
 
     public createBool(boolNode:TreeNode):void{
       let tempAddr:string;
-      console.log("BOOL " + boolNode.value);
 
       if(boolNode.value == "true"){
         this.loadRegConst(this.trueAddr, this.XREG[0]);
@@ -406,7 +402,6 @@ module Compiler {
     }
 
     public handleBackpatch(tempCodeLen:number): void{
-      console.log(this.staticTable);
       let staticKeys = this.staticTable.keys();
       let key = staticKeys.next();
       let tempTable = new Map<string, number>();
@@ -415,8 +410,6 @@ module Compiler {
         tempTable.set(locInfo[1], locInfo[2]+tempCodeLen);
         key = staticKeys.next();
       }
-      console.log(this.code);
-      console.log(tempTable);
       this.backpatch(tempTable, tempCodeLen);
     }
 
@@ -427,10 +420,10 @@ module Compiler {
         if(isTemp.test(this.code[i])){
           let staticKeys = this.code[i] + " "+ this.code[i+1];
           let index = tempTable.get(staticKeys);
-          console.log("index " + index);
           this.code[i] = this.decimalToHex(index);
           this.code[i+1] = "00";
-          log.value += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" + this.code[i] + this.code[i+1] + "] ...";
+          log.value += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" 
+                    + this.code[i] + " " +this.code[i+1] + "] ...";
         }
       }
     }

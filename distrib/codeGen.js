@@ -139,7 +139,6 @@ var Compiler;
         };
         CodeGen.prototype.createPrint = function (printNode) {
             var varType = this.createExpr(printNode.childrenNodes[0], this.YREG);
-            console.log(varType);
             if (varType == "int") {
                 this.loadRegConst(1, this.XREG[0]);
             }
@@ -174,7 +173,6 @@ var Compiler;
             var rightOperand = additionNode.childrenNodes[1];
             // check for more addition
             while (rightOperand.value == "Add") {
-                console.log("Add");
                 // load Acc with value
                 digit = rightOperand.childrenNodes[0].value;
                 this.loadRegConst(parseInt(digit), this.ACC[0]);
@@ -200,7 +198,6 @@ var Compiler;
             return sumAddr;
         };
         CodeGen.prototype.findTempAddr = function (id) {
-            console.log(this.currentScope);
             var locInfo = this.staticTable.get(id + "@" + this.currentScope.level);
             if (locInfo == null) {
                 var tempScope = this.currentScope.parentScope;
@@ -257,7 +254,6 @@ var Compiler;
         };
         CodeGen.prototype.createBool = function (boolNode) {
             var tempAddr;
-            console.log("BOOL " + boolNode.value);
             if (boolNode.value == "true") {
                 this.loadRegConst(this.trueAddr, this.XREG[0]);
                 this.loadRegConst(this.trueAddr, this.ACC[0]);
@@ -362,7 +358,6 @@ var Compiler;
             }
         };
         CodeGen.prototype.handleBackpatch = function (tempCodeLen) {
-            console.log(this.staticTable);
             var staticKeys = this.staticTable.keys();
             var key = staticKeys.next();
             var tempTable = new Map();
@@ -371,8 +366,6 @@ var Compiler;
                 tempTable.set(locInfo[1], locInfo[2] + tempCodeLen);
                 key = staticKeys.next();
             }
-            console.log(this.code);
-            console.log(tempTable);
             this.backpatch(tempTable, tempCodeLen);
         };
         CodeGen.prototype.backpatch = function (tempTable, tempCodeLen) {
@@ -382,10 +375,10 @@ var Compiler;
                 if (isTemp.test(this.code[i])) {
                     var staticKeys = this.code[i] + " " + this.code[i + 1];
                     var index = tempTable.get(staticKeys);
-                    console.log("index " + index);
                     this.code[i] = this.decimalToHex(index);
                     this.code[i + 1] = "00";
-                    log.value += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to [" + this.code[i] + this.code[i + 1] + "] ...";
+                    log.value += "\n   CODEGEN --> Backpatching memory location for  [" + staticKeys + "] to ["
+                        + this.code[i] + " " + this.code[i + 1] + "] ...";
                 }
             }
         };
