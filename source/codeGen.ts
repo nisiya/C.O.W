@@ -328,6 +328,7 @@ module Compiler {
           }
           this.loadRegConst(stringPointer, this.ACC[0]); // pointer to string
           tempAddr = this.addToStatic("string" + this.tempNum, "string");
+          this.storeAcc(tempAddr);
           
         } else if(var2Node.value == "true"){
           this.loadRegConst(this.trueAddr, this.ACC[0]);

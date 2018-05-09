@@ -286,6 +286,7 @@ var Compiler;
                     }
                     this.loadRegConst(stringPointer, this.ACC[0]); // pointer to string
                     tempAddr = this.addToStatic("string" + this.tempNum, "string");
+                    this.storeAcc(tempAddr);
                 }
                 else if (var2Node.value == "true") {
                     this.loadRegConst(this.trueAddr, this.ACC[0]);
@@ -367,7 +368,7 @@ var Compiler;
                 tempTable.set(locInfo[1], locInfo[2] + tempCodeLen);
                 key = staticKeys.next();
             }
-            // console.log(this.staticTable);
+            console.log(this.staticTable);
             this.backpatch(tempTable, tempCodeLen);
             // console.log(tempTable);
         };

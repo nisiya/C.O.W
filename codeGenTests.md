@@ -1,5 +1,5 @@
 ## Scope
-
+### Passed
 ```javascript
 {
     int b
@@ -29,4 +29,36 @@
     b = 1
 }$
 ```
-##
+
+### Failed but passed
+```javascript
+{
+    int a
+    a = 5
+    {
+        string c
+        c = "apple"
+    }
+    // error occurred here
+    // scope did not go from 1 to 0
+    string c
+    c = "banana"
+}
+```
+
+## String comparisons
+```javascript
+{
+    string a
+    a = "apple"
+    if (a == "apple"){
+        print(a)
+    }
+    while ("apple" == a){
+        print(a)
+        print("banana")
+        a = "kiwi"
+    }
+    print(a)
+}
+```
