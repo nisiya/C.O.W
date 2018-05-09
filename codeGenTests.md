@@ -75,6 +75,7 @@
         a = "kiwi"
     }
     print(a)
+    // result: appleapplebananakiwi
 }
 ```
 
@@ -88,6 +89,7 @@
     a = 1 + a
     print(a)
     }
+    // result: 2345
     } $
 ```
 
@@ -102,6 +104,7 @@
         print("banana")
     }
 
+    // result: apple
 }
 ```
 
@@ -113,6 +116,7 @@
     if(a != 3){
         print("kiwi")
     }
+    // result: kiwi
 }
 ```
 ## Addition
@@ -123,6 +127,7 @@
     b = 0
     a = 1 + 2 + 3 + 4 + 5 + b
     print(a)
+    // result: 15
 }
 ```
 
@@ -169,5 +174,6 @@
     print(a)
     a = "banana"
     print(a)
+    // result: applebanana
 }
 ```
