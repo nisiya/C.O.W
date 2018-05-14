@@ -8,18 +8,18 @@ Tree Node - Has a Value, Parent Node, and array of Children Nodes
 var Compiler;
 (function (Compiler) {
     var Tree = /** @class */ (function () {
-        function Tree(value, location) {
-            this.root = new TreeNode(value, location, null);
+        function Tree(value, token) {
+            this.root = new TreeNode(value, token, null);
             this.outputTree = "";
             this.current = this.root;
         }
-        Tree.prototype.addBranchNode = function (value, location) {
-            var node = new TreeNode(value, location, this.current);
+        Tree.prototype.addBranchNode = function (value, token) {
+            var node = new TreeNode(value, token, this.current);
             this.current.childrenNodes.push(node);
             this.current = node;
         };
-        Tree.prototype.addLeafNode = function (value, location) {
-            var node = new TreeNode(value, location, this.current);
+        Tree.prototype.addLeafNode = function (value, token) {
+            var node = new TreeNode(value, token, this.current);
             this.current.childrenNodes.push(node);
         };
         Tree.prototype.removeCurrentNode = function () {
@@ -95,9 +95,10 @@ var Compiler;
     }());
     Compiler.Tree = Tree;
     var TreeNode = /** @class */ (function () {
-        function TreeNode(value, location, parentNode) {
+        function TreeNode(value, token, parentNode) {
             this.value = value;
-            this.location = location;
+            // this.location = location;
+            this.token = token;
             this.parentNode = parentNode;
             this.childrenNodes = new Array();
         }

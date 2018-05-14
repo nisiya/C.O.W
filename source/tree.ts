@@ -9,24 +9,24 @@ Tree Node - Has a Value, Parent Node, and array of Children Nodes
 module Compiler {
     
   export class Tree {
-    public root: TreeNode;
-    public current: TreeNode;
-    public outputTree: string;
+    public root:TreeNode;
+    public current:TreeNode;
+    public outputTree:string;
 
-    constructor(value:string, location:[number, number]) {
-      this.root = new TreeNode(value, location, null);
+    constructor(value:string, token:Token) {
+      this.root = new TreeNode(value, token, null);
       this.outputTree = "";
       this.current = this.root;
     }
     
-    public addBranchNode(value:string, location:[number, number]): void{
-      let node:TreeNode = new TreeNode(value, location, this.current);
+    public addBranchNode(value:string, token:Token): void{
+      let node:TreeNode = new TreeNode(value, token, this.current);
       this.current.childrenNodes.push(node);
       this.current = node;
     }
 
-    public addLeafNode(value:string, location:[number, number]): void{
-      let node:TreeNode = new TreeNode(value, location, this.current);
+    public addLeafNode(value:string, token:Token): void{
+      let node:TreeNode = new TreeNode(value, token, this.current);
       this.current.childrenNodes.push(node);
     }
 
@@ -113,16 +113,18 @@ module Compiler {
 
   export class TreeNode {
     public value: string;
-    public location: [number, number]; // line and column
-    public parentNode: TreeNode;
-    public childrenNodes: Array<TreeNode>;
+    // public location: [number, number]; // line and column
+    public token:Token;
+    public parentNode:TreeNode;
+    public childrenNodes:Array<TreeNode>;
 
     constructor(value:string, 
-                location:[number, number],
+                token:Token,
                 parentNode:TreeNode){
       this.value = value;
-      this.location = location;
-      this. parentNode = parentNode;
+      // this.location = location;
+      this.token = token;
+      this.parentNode = parentNode;
       this.childrenNodes = new Array<TreeNode>();
     }
   }

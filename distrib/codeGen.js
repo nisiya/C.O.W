@@ -132,7 +132,7 @@ var Compiler;
             var tempAddr;
             if (varType == "string") {
                 tempAddr = this.findTempAddr(id); // string reassignment
-                if (tempAddr == null) {
+                if (tempAddr == null) { // new string assignment
                     tempAddr = this.addToStatic(id, "string");
                 }
             }

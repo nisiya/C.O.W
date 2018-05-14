@@ -7,19 +7,19 @@ Symbol - Has a key (id) and type of a variable
 module Compiler {
 
   export class Symbol {
-    public key: string;
-    public type: string;
-    public scope: number;
-    public location: [number, number];
-    public accessed: number;
+    public key:string;
+    public type:string;
+    public scope:number;
+    public token:Token;
+    public accessed:number;
 
     constructor(key:string, 
                 type:string,
-                location:[number, number]){
+                token:Token){
       this.key = key;
       this.type = type;
       this.scope = -1;
-      this.location = location;
+      this.token = token;
       this.accessed = 0;
                   
     }

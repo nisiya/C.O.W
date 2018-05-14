@@ -91,7 +91,7 @@ var Compiler;
                 case "VarDecl":
                     varType = currentNode.childrenNodes[0];
                     varId = currentNode.childrenNodes[1];
-                    symbol = new Compiler.Symbol(varId.value, varType.value, varId.location);
+                    symbol = new Compiler.Symbol(varId.value, varType.value, varId.token);
                     if (this.scopeTree.currentScope.addSymbol(symbol)) {
                         return true;
                     }
@@ -199,7 +199,7 @@ var Compiler;
             var isPlus = /^Add$/;
             var isId = /^[a-z]$/;
             var isBoolVal = /^true|false$/;
-            var isBoolOp = /^Equal|Not Equal$/;
+            var isBoolOp = /^Equal|NotEqual$/;
             if (isDigit.test(expr.value)) {
                 return "int";
             }
@@ -334,6 +334,7 @@ var Compiler;
                     break;
                 default:
                     break;
+                // nothing
             }
         };
         // PrintChildren: [print, ( , Expr, ) ]
@@ -376,7 +377,7 @@ var Compiler;
                 case "IntExpr":
                     this.analyzeIntExpr(exprType.childrenNodes); // currentNode: parent of Expr
                     break;
-                case "StringExpr":// really analyze the CharList
+                case "StringExpr": // really analyze the CharList
                     var stringVal = this.analyzeCharList(exprType.childrenNodes[1], "\"");
                     this.asTree.addLeafNode(stringVal + "\"", exprType.childrenNodes[1].location); // currentNode: parent of Expr
                     break;

@@ -9,13 +9,26 @@ tColumn - the column index of the token
 ------------ */
 var Compiler;
 (function (Compiler) {
+    var TokenKind;
+    (function (TokenKind) {
+    })(TokenKind = Compiler.TokenKind || (Compiler.TokenKind = {}));
+    {
+        Idle,
+            Loading,
+            Ready,
+            Error;
+    }
     var Token = /** @class */ (function () {
-        function Token(tid, tValue, tLine, tColumn) {
+        function Token(tid, tValue, tType, tLine, tColumn) {
             this.tid = tid;
             this.tValue = tValue;
+            this.tType = tType;
             this.tLine = tLine;
             this.tColumn = tColumn;
         }
+        Token.prototype.setType = function (tType) {
+            this.tType = tType;
+        };
         Token.prototype.isEqual = function (tid) {
             return this.tid == tid;
         };
