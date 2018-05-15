@@ -16,9 +16,17 @@ module Compiler {
     EOP = "EOP",
     OPEN_PAREN = "OpenParen",
     CLOSE_PAREN = "CloseParen",
-    PRINT = "Print",
-    
-
+    PRINT_STMT = "Print",
+    WHILE_STMT = "While",
+    IF_STMT = "If",
+    ADD_OP = "Addition",
+    NOT_EQUAL_OP = "NotEqual",
+    EQUAL_OP = "Equals",
+    ASSIGN_OP = "Assignment",
+    QUOTE = "Quote",
+    CHAR = "Char",
+    SPACE = "Space",
+    DIGIT = "Digit"
   }
 
   export class Token {

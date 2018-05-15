@@ -11,13 +11,13 @@ var Compiler;
 (function (Compiler) {
     var TokenKind;
     (function (TokenKind) {
+        TokenKind["OPEN_BRACKET"] = "OpenBracket";
+        TokenKind["CLOSE_BRACKET"] = "CloseBraket";
+        TokenKind["EOP"] = "EOP";
+        TokenKind["OPEN_PAREN"] = "OpenParen";
+        TokenKind["CLOSE_PAREN"] = "CloseParen";
+        TokenKind["PRINT"] = "Print";
     })(TokenKind = Compiler.TokenKind || (Compiler.TokenKind = {}));
-    {
-        Idle,
-            Loading,
-            Ready,
-            Error;
-    }
     var Token = /** @class */ (function () {
         function Token(tid, tValue, tType, tLine, tColumn) {
             this.tid = tid;
