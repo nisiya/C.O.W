@@ -127,11 +127,11 @@
     b = 0
     a = 1 + 2 + 3 + 4 + 5 + b
     print(a)
-    // result: 15
+    // result: 15 
 }
 ```
 
-## Exceeds 256byte
+## Exceeds 256 bytes
 
 
 ## Strings

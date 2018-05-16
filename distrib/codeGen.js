@@ -199,7 +199,7 @@ var Compiler;
             // the last value in IntExpr
             if (isDigit.test(rightOperand.value)) {
                 // load Acc with value
-                digit = rightOperand.childrenNodes[0].value;
+                digit = rightOperand.value;
                 this.loadRegConst(parseInt(digit), this.ACC[0]);
                 // add value from sum storage
                 this.addAcc(sumAddr);

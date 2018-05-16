@@ -203,7 +203,7 @@ module Compiler {
       let isPlus:RegExp = /^Add$/;
       let isId:RegExp = /^[a-z]$/;
       let isBoolVal:RegExp = /^true|false$/;
-      let isBoolOp:RegExp = /^Equal|Not Equal$/;
+      let isBoolOp:RegExp = /^Equal|NotEqual$/;
 
       if(isDigit.test(expr.value)){
         return "int";

@@ -199,7 +199,7 @@ var Compiler;
             var isPlus = /^Add$/;
             var isId = /^[a-z]$/;
             var isBoolVal = /^true|false$/;
-            var isBoolOp = /^Equal|Not Equal$/;
+            var isBoolOp = /^Equal|NotEqual$/;
             if (isDigit.test(expr.value)) {
                 return "int";
             }
