@@ -1,5 +1,3 @@
-*Note to Professor Labouseur:* Please grade the master branch. Thank you.
-
 Browser-based Compiler in TypeScript
 ============================================
 
