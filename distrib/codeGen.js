@@ -146,14 +146,41 @@ var Compiler;
             this.storeAcc(tempAddr);
         };
         CodeGen.prototype.createPrint = function (printNode) {
-            var varType = this.createExpr(printNode.childrenNodes[0], this.YREG);
-            if (varType == "int") {
-                this.loadRegConst(1, this.XREG[0]);
+            var isBoolOp = /^Equal|NotEqual$/;
+            console.log(printNode.childrenNodes[0].value);
+            if (isBoolOp.test(printNode.childrenNodes[0].value)) {
+                console.log("est");
+                this.createBool(printNode.childrenNodes[0]);
+                // NotEqual case
+                if (printNode.childrenNodes[0].value == "NotEqual") {
+                    this.handleNotEq();
+                }
+                var jumpNdx1 = this.addToJump();
+                this.loadRegConst(this.trueAddr, this.YREG[0]);
+                this.loadRegConst(2, this.XREG[0]);
+                this.pushByte("FF");
+                this.loadRegConst(2, this.XREG[0]);
+                this.loadRegConst(1, this.ACC[0]);
+                var tempAddr = this.addToStatic("CpX" + this.tempNum, "int");
+                this.storeAcc(tempAddr);
+                this.compareX(tempAddr);
+                var jumpNdx2 = this.addToJump();
+                this.code[jumpNdx2] = "05";
+                this.code[jumpNdx1] = this.decimalToHex(this.code.length - jumpNdx1 - 1);
+                this.loadRegConst(this.falseAddr, this.YREG[0]);
+                this.loadRegConst(2, this.XREG[0]);
+                this.pushByte("FF");
             }
             else {
-                this.loadRegConst(2, this.XREG[0]);
+                var varType = this.createExpr(printNode.childrenNodes[0], this.YREG);
+                if (varType == "int") {
+                    this.loadRegConst(1, this.XREG[0]);
+                }
+                else {
+                    this.loadRegConst(2, this.XREG[0]);
+                }
+                this.pushByte("FF"); //system call
             }
-            this.pushByte("FF"); //system call
         };
         // identify type of variable
         CodeGen.prototype.findType = function (id) {
